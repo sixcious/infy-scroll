@@ -9,11 +9,11 @@
 <a href="https://microsoftedge.microsoft.com/addons/detail/infy-scroll/fmdemgjiipojpgemeljnbaabjeinicba" title="Microsoft Edge Extension Download"><img src="https://raw.githubusercontent.com/roysix/url-incrementer/master/assets/edge.png" height="64" alt="Microsoft Edge, Icon: By Source, Fair use, https://en.wikipedia.org/w/index.php?curid=62848768"></a>
 
 <br><br>
-<img src="https://raw.githubusercontent.com/roysix/infy-scroll/master/assets/infy.png" height="500" alt="Infy" title="Infy" align="left">
+<img src="https://raw.githubusercontent.com/roysix/infy-scroll/master/assets/infy.png" height="600" alt="Infy" title="Infy" align="left">
 
 ## Important Note
 Infy is currently in beta. Unfortunately, this means it might contain a few bugs and it might not work on every website you try it on! But I really want you to be 100% happy with Infy, so if something isn't working right, or if there's a feature you think is missing, please email me and give me a chance to fix it before leaving a low rating/review, and I promise I will.
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
 
 ## About
 Infy Scroll is an extension in beta that lets you add customized infinite scrolling to websites. It's also compatible with the AutoPagerize Database, which means it supports thousands of websites automatically. Infy supports 4 different actions and 4 different append modes so you can customize each site's infinite scrolling to how you want it to be. Infy understands both CSS Selector and XPath rules for finding next links. It can also increment URLs and perform special actions, like clicking "Load More" buttons. You can save your settings for each URL and Infy will auto-activate the next time you visit them.
