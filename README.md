@@ -16,7 +16,7 @@ Infy is currently in beta. Unfortunately, this means it might contain a few bugs
 <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
 
 ## About
-Infy Scroll is an extension in beta that lets you add customized infinite scrolling to websites. It's also compatible with the AutoPagerize Database, which means it supports thousands of websites automatically. Infy supports 4 different actions and 4 different append modes so you can customize each site's infinite scrolling to how you want it to be. Infy understands both CSS Selector and XPath rules for finding next links. It can also increment URLs and perform special actions, like clicking "Load More" buttons. You can save your settings for each URL and Infy will auto-activate the next time you visit them.
+Infy Scroll is an extension in beta that can auto-load the next page and let you add customized infinite scrolling to websites. It's also compatible with the AutoPagerize Database, which means it supports thousands of websites automatically. Infy supports 4 different actions and 4 different append modes so you can customize each site's infinite scrolling to how you want it to be. Infy understands both CSS Selector and XPath rules for finding next links. It can also increment URLs and perform special actions, like clicking "Load More" buttons. You can save your settings for each URL and Infy will auto-activate the next time you visit them.
 
 ## Features
 - 4 Actions: Next Link, Increment URL, Click Button, URL List
@@ -25,9 +25,25 @@ Infy Scroll is an extension in beta that lets you add customized infinite scroll
 - AutoPagerize Database: Infy can use the AP Database to pre-configure thousands of websites for you automatically
 - Save URLs: Infy can save custom site-specific settings and then auto-activate on your favorite URLs
 - Custom Scripts: Infy has custom scripts for a few popular websites (such as Google Search) that may fix missing image thumbnails
+- Advanced Features: Fix lazy loading or use the Element Iframe mode to fix missing images while in AutoPagerize mode
 - Chrome / Edge: Uses 0 Background Memory when inactive
 - Firefox: Support for Firefox for Android (Fenix Nightly with Collections Workaround, Some features may not work perfectly)
 - No Ads, No Tracking, No Bloat
+
+## Support for Anti-Infinite Scrolling Sites Like Pixiv*
+<img src="https://i.imgur.com/Ja7ieng.png" height="361" alt="Pixiv Infinite Scrolling (Infy Scroll)" title="Pixiv Infinite Scrolling (Infy Scroll)">
+
+<br>
+
+#### Settings Used:
+- Example URL: [https://www.pixiv.net/tags/Re:ゼロから始める異世界生活/illustrations"](https://www.pixiv.net/tags/Re%3A%E3%82%BC%E3%83%AD%E3%81%8B%E3%82%89%E5%A7%8B%E3%82%81%E3%82%8B%E7%95%B0%E4%B8%96%E7%95%8C%E7%94%9F%E6%B4%BB/illustrations)
+- Action: `Next Link`
+- Append: `Element (Check: Element Iframe and set Iframe Height Wait: 3000 ms)`
+- Saved URL (Regular Expression): `^https://www\.pixiv\.net/.*/?tags/.*/(illustrations|manga|novels)`
+- Next Rule (Selector): `nav > button:not(:disabled) + a`
+- Page Element Rule (Selector): `div.l7cibp-0.hVbyIZ,div.sc-1dvz9fa-0.dROxDU`
+
+`*`*Tested on March 30, 2021. Requires page refresh due to SPA (Single Page Application) nature. Links must be opened in new tab due to the nature of Iframes. Websites are subject to change their code at any time and break these settings. This is just a simple example to show Infy's potential.*
 
 ## Help Guide
 [View the Help Guide!](https://github.com/roysix/infy-scroll/wiki/Help)
@@ -71,7 +87,7 @@ Infy Scroll does *not* track you. It does *not* use analytic services. It does *
 ## Credits and Special Thanks
 <ul>
   <li>Infy: <a href="https://twitter.com/thejoyfool" target="_blank">Joyfool</a></li>
-  <li>Database: <a href="http://wedata.net/databases/AutoPagerize/items" target="_blank">AutoPagerize | Wedata</a></li>
+  <li>Database: <a href="http://wedata.net/databases/AutoPagerize/items" target="_blank">AutoPagerize Contributors | Wedata</a></li>
   <li>UI: <a href="https://material.io/" target="_blank">Material Design</a></li>
   <li>Fonts: <a href="https://fonts.google.com/specimen/Roboto" target="_blank">Roboto</a></li>
   <li>Icons: <a href="https://fontawesome.com/" target="_blank">FontAwesome</a></li>
