@@ -12,6 +12,7 @@ Please describe what went wrong and any other details you want about the issue.
 
 **URL**
 If you feel OK to do so, it would really help to specify the URL the extension isn't working on.
+**However, please do not post NSFW (Not Safe For Work) URLs.** This is a public repository and I want to protect your privacy as much as possible. (Feel free to email me instead if you like.)
 
 **Environment**
 If you can, please fill out as much as you can about your environment.
@@ -23,3 +24,4 @@ If you can, please fill out as much as you can about your environment.
 
  **Screenshots**
 If applicable, please add any screenshots to help explain the problem.
+**However, please do not post any screenshots of the extension.** For example, please do not post screenshots of the User Interface, Options Screen, or of the Mascot Character.

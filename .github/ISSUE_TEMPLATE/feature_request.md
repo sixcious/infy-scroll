@@ -12,3 +12,4 @@ Please describe what the feature request is. The more detailed you can be, the b
 
 **Screenshots**
 If applicable, please add any screenshots that might help explain your feature request better.
+**However, please do not post any screenshots of the extension.** For example, please do not post screenshots of the User Interface, Options Screen, or of the Mascot Character.
