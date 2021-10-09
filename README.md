@@ -36,10 +36,10 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 #### Infy Settings Used:
 - Example URL: [https://www.pixiv.net/tags/Re:ゼロから始める異世界生活/illustrations](https://www.pixiv.net/tags/Re%3A%E3%82%BC%E3%83%AD%E3%81%8B%E3%82%89%E5%A7%8B%E3%82%81%E3%82%8B%E7%95%B0%E4%B8%96%E7%95%8C%E7%94%9F%E6%B4%BB/illustrations)
 - Action: `Next Link`
-- Append: `Element (Check: Element Iframe and set Iframe Height Wait: 3000 ms)`
-- Saved URL (Regular Expression): `^https://www\.pixiv\.net/.*/?tags/.*/(illustrations|manga|novels)`
 - Next Rule (Selector): `nav > button:not(:disabled) + a`
+- Append: First select `Iframe` and set `Iframe Height Wait` to 3000 ms. Then select `Element` and check `Element Iframe`
 - Page Element Rule (Selector): `div.l7cibp-0.hVbyIZ,div.sc-1dvz9fa-0.dROxDU`
+- Saved URL (Regular Expression): `^https://www\.pixiv\.net/.*/?tags/.*/(illustrations|manga|novels)`
 
 `*`*Tested on March 30, 2021. Requires page refresh due to SPA (Single Page Application) nature. Links must be opened in new tab due to the nature of Iframes. Websites are subject to change their code at any time and break these settings. This is just a simple example to show Infy's potential.*
 
