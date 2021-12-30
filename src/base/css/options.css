@@ -1,0 +1,413 @@
+/**
+ * Infy Scroll
+ * @copyright © 2020 Roy Six
+ * @license https://github.com/roysix/infy-scroll/blob/main/LICENSE
+ */
+
+/* Variables */
+
+/* Default --mdc-typography-body2-font-size: 0.875rem; */
+/* Make mdc body2 font size bigger since we're Options. body1 font size is 1rem by default but set it just in case */
+/*
+:root {
+  --mdc-typography-body2-font-size: 1rem;
+}
+*/
+
+/* Media */
+
+/* Make the version theme and tagline disappear when the screen is small */
+@media (max-width: 530px) {
+  .version-theme-medium {
+    display: none;
+  }
+}
+
+@media (max-width: 690px) {
+  .version-theme-large {
+    display: none;
+  }
+}
+
+@media (max-width: 820px) {
+  #version-theme-tagline {
+    display: none;
+  }
+}
+
+@media (max-width: 949px) {
+  #version-tagline, #version-name-edition {
+    display: none;
+  }
+}
+
+/* Native */
+
+body {
+  max-width: 1000px;
+  margin: 2rem auto;
+}
+
+header#options-header {
+  margin-bottom: 1rem;
+  font-size: 1.75rem;
+  font-weight: 500;
+}
+
+header#options-header img {
+  width: 64px;
+  height: 64px;
+  vertical-align: middle;
+}
+
+header#options-header > #options-header-buttons > *:not(:last-child) {
+  margin-right: 1rem;
+}
+
+section header {
+  font-size: 1.2rem;
+  font-weight: 500;
+  border-bottom: 1px solid #333333;
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+}
+
+input[type="image"] {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+input[type="image"]:focus {
+  outline: none;
+}
+
+/* Classes */
+
+.column {
+  padding-bottom: 24px;
+}
+
+.row-column:not(:last-child) {
+  padding-bottom: 24px;
+}
+
+.column:not(:last-child) {
+  padding-right: 10px;
+}
+
+/* Dialogs */
+
+/* infy-large Bigger image requires more max-width */
+.mdc-dialog:not(#reset-options-dialog):not(#keyboard-shortcuts-dialog) .mdc-dialog__surface {
+  max-width: 660px;
+}
+
+#install-dialog-content, #error-dialog-content, #shortcuts-dialog-content {
+  margin-top: 1rem;
+}
+
+#install-dialog-icon {
+  fill: var(--mdc-theme-primary);
+  margin-left: 0.25rem;
+}
+
+#error-dialog-icon {
+  fill: var(--error-color);
+  margin-right: 0.25rem;
+}
+
+#install-dialog .mdc-dialog__title svg, #error-dialog .mdc-dialog__title svg {
+  width: 24px;
+  height: 24px;
+}
+
+#install-dialog-text, #error-dialog-text, #shortcuts-dialog-text {
+  font-size: 1rem;
+}
+
+#install-dialog-list, #error-dialog-list {
+  color: var(--mdc-theme-primary);
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+#shortcuts-dialog-list {
+  margin-left: 2rem;
+}
+
+#shortcuts-dialog-disclaimer {
+  color: var(--mdc-theme-primary);
+  font-weight: 500;
+}
+
+/* May scare away the users! */
+#bugs {
+  display: none;
+  position: absolute;
+  bottom: 42px;
+  right: 28px;
+  font-size: 12px;
+}
+
+/* MDC */
+
+.mdc-tab-bar {
+  margin-bottom: 2rem;
+}
+
+.mdc-switch__icon {
+  width: 24px;
+  height: 24px;
+}
+
+.mdc-switch__label {
+  font-size: 1.4rem;
+  margin-right: 4px;
+}
+
+/* User Interface */
+
+#interface-image-disclaimer {
+  font-size: 0.8rem;
+  color: var(--mdc-theme-error);
+  margin-top: 1rem;
+  width: 600px;
+}
+
+#button-size-div {
+  margin-bottom: 24px;
+}
+
+#button-size-label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+#button-size-icon {
+  vertical-align: top;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+#dynamic-settings-current {
+  color: var(--mdc-theme-primary);
+  font-weight: 500;
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+/* Saved URLs */
+
+#saved-urls-none, #saved-urls-stats {
+  color: var(--mdc-theme-primary);
+  font-weight: 500;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+#saved-urls-buttons {
+  margin-top: 2em;
+}
+
+.mdc-data-table__table {
+  min-width: initial;
+  width: 100%;
+}
+
+table .checkbox-cell, table .id-cell {
+  width: 10%;
+}
+
+table .url-cell {
+  width: 60%;
+}
+
+table .date-cell {
+  width: 20%;
+}
+
+table tbody .url-cell .saved-urls-details {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+#saved-urls-dialog-content .table .row > .column:first-child {
+  font-weight: 500;
+}
+
+#saved-urls-dialog-url-value {
+  word-break: break-all;
+}
+
+#saved-urls-dialog-json-title {
+  font-weight: 500;
+  color: var(--mdc-theme-primary);
+  border-bottom: 1px dotted;
+  margin-bottom: 1rem;
+}
+
+/* Pre tag also need the white-space: pre-wrap to break all properly */
+#saved-urls-dialog-json-data {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+#whitelist {
+  margin-top: 2rem;
+}
+
+#whitelist-dynamic-settings-note {
+  font-weight: 500;
+  color: var(--mdc-theme-primary);
+}
+
+/* Database */
+
+#database-disclaimer-icon {
+  fill: var(--error-color);
+}
+
+#database-stats {
+  color: var(--mdc-theme-primary);
+  font-weight: 500;
+}
+
+#database-buttons {
+  margin-bottom: 2rem;
+}
+
+#database-buttons > button:not(last-child) {
+  margin-right: 2rem;
+}
+
+#database-auto-update {
+  margin-bottom: 1rem;
+}
+
+#database-auto-update-text-field {
+  margin: 0 1rem;
+}
+
+/* Shortcuts */
+
+#shortcuts-dynamic-settings-note {
+  font-weight: 500;
+  color: var(--mdc-theme-primary);
+}
+
+/* Scroll */
+
+/* Next Prev */
+
+/* Increment Decrement */
+
+#selection-custom {
+  margin: 1rem 0;
+}
+
+/* Add spacing between the Base Select and the Base Details divs like Date Time (only when they're visible) */
+#base-details > div {
+  margin-top: 1rem;
+}
+
+/* Give spacing between error skip input and checkboxes */
+#error-skip-text-field {
+  margin-bottom: 1rem;
+}
+
+/* About */
+
+#about-floats-div {
+  margin-bottom: 17px;
+}
+
+#name-version {
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+#manifest-name {
+  font-size: 1.5rem;
+  vertical-align: middle;
+}
+
+#version {
+  margin-top: -8px;
+  display: inline-block;
+}
+
+#email-website div {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+#reset-options-disclaimer {
+  font-size: 10px;
+  color: var(--mdc-theme-primary);
+  margin-top: 0.5rem;
+}
+
+#thank-you {
+  width: 100%;
+  vertical-align: top;
+  padding-top: 2px;
+}
+
+#thank-you svg {
+  width: 24px;
+  height: 24px;
+}
+
+#thank-you-rainbow-underline {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+#credits {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+/* TODO: Sticky Footer */
+#credits-footer {
+  margin-top: 150px;
+}
+
+#credits-icon-label {
+  display: inline-block;
+  font-weight: 500;
+  font-size: 1.2rem;
+  border-bottom: 2px solid var(--mdc-theme-primary);
+  padding-bottom: 4px;
+}
+
+#thank-you-icon, #credits-icon {
+  fill: var(--mdc-theme-primary);
+}
+
+#credits-everyone ul {
+  list-style: none;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  font-size: 1em;
+}
+
+#credits-you {
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+#license, #copyright {
+  font-size: 0.9rem;
+  text-align: right;
+  margin-top: 8px;
+}
+
+#thank-you-rainbow-underline:after {
+  content: '';
+  display: block;
+  margin-top: 2px;
+  height: 2px;
+  background: linear-gradient(to right, var(--mdc-theme-primary) 0%, #AAAAAA 100%);
+}

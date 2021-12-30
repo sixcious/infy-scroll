@@ -1,0 +1,16 @@
+{
+  "manifest_version": 2,
+  "name": "__MSG_name__",
+  "short_name": "__MSG_short_name__",
+  "description": "__MSG_description__",
+  "version": "0.6.6.0",
+  "default_locale": "en",
+  "icons": { "16": "img/icon.png", "48": "img/icon.png", "128": "img/icon.png" },
+  "browser_action": { "default_title": "__MSG_title__", "default_icon": { "16": "img/icon.png", "24": "img/icon.png", "32": "img/icon.png" }, "default_popup": "html/popup.html" },
+  "options_ui": {"page": "html/options.html", "open_in_tab": true },
+  "background": { "scripts": ["js/promisify.js", "js/background.js"] },
+  "commands": { "down": { "description": "Down one page"}, "up": { "description": "Up one page" }, "off": { "description": "Turn off" }, "auto": { "description": "Auto pause or resume" }},
+  "permissions": ["activeTab", "storage", "*://wedata.net/*", "*://*.github.io/*"],
+  "content_scripts": [ { "matches": ["<all_urls>"], "run_at": "document_idle", "js": ["js/infy-scroll.js"] } ],
+  "applications": { "gecko": { "id": "infy-scroll@webextensions", "strict_min_version": "77.0" } }
+}
