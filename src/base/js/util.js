@@ -2,8 +2,6 @@
  * Infy Scroll
  * @copyright © 2020 Roy Six
  * @license https://github.com/roysix/infy-scroll/blob/main/LICENSE
- * This software is a copyrighted work and its usage is governed by a proprietary-style license
- * You may not copy, modify, or distribute this software without express permission from the copyright holders
  */
 
 /**
