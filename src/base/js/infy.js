@@ -98,7 +98,8 @@ const Infy = (() => {
         insertBefore: '//*[contains(@class, "autopagerize_insert_before")]',
         pageElement:  '//*[contains(@class, "autopagerize_page_element")]'
       };
-      for (const d of items.database.concat(microformat)) {
+      // TODO: items.database.push(microformat);
+      for (const d of items.database) {
         try {
           // Requirement 1: Check if this database url matches this url
           if (new RegExp(d.url).test(tab.url)) {
