@@ -40,7 +40,7 @@ const Action = (() => {
   /**
    * Performs an action.
    *
-   * After the action is called, a message is sent to the Popup to update the instance if and only if the action was
+   * After the action is performed, a message is sent to the Popup to update the instance if and only if the action was
    * called by the Popup.
    *
    * @param action     the action (e.g. "increment")
