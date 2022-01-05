@@ -41,7 +41,7 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 - Page Element Rule (Selector): `div.sc-l7cibp-0.juyBTC,div.sc-1eop7y7-0.cJYTWr`
 - Saved URL (Regular Expression): `^https://www\.pixiv\.net/.*/?tags/.*/(illustrations|manga|novels)`
 
-`*`*Tested on December 16, 2021. Requires page refresh due to SPA (Single Page Application) nature. Links must be opened in new tab due to the nature of Iframes. Websites can change their code at any time and break these settings. `AUTO` mode may not work due to the complexity involved. Firefox users will need to use the regular `Iframe` append mode. This is just a simple example to show Infy's potential.*
+`*`*Tested on December 16, 2021. Requires page refresh due to SPA (Single Page Application) nature. Links must be opened in a new tab due to the nature of Iframes. Websites can change their code at any time and break these settings. `AUTO` mode may not work due to the complexity involved. Firefox users will need to use the regular `Iframe` append mode. This is just a simple example to show Infy's potential.*
 
 ## Help Guide
 [View the Help Guide!](https://github.com/roysix/infy-scroll/wiki/Help)
