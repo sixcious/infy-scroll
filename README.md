@@ -1,12 +1,12 @@
 # Infy Scroll
-<img src="https://raw.githubusercontent.com/roysix/infy-scroll/master/assets/icon-dark.svg?sanitize=true" width="196" height="196" alt="Infy Scroll" title="Infy Scroll">
+<img src="https://raw.githubusercontent.com/roysix/infy-scroll/master/assets/icon-medium.svg?sanitize=true" width="196" height="196" alt="Infy Scroll" title="Infy Scroll">
 
 ## Available For
 <a href="https://chrome.google.com/webstore/detail/infy-scroll/gdnpnkfophbmbpcjdlbiajpkgdndlino" title="Chrome Web Store Download"><img src="https://raw.githubusercontent.com/roysix/url-incrementer/master/assets/chrome.svg?sanitize=true" height="64" alt="Google Chrome"></a>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://addons.mozilla.org/firefox/addon/infy-scroll/" title="Firefox Addon Download"><img src="https://raw.githubusercontent.com/roysix/url-incrementer/master/assets/firefox.svg?sanitize=true" height="64" alt="Mozilla Firefox"></a>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <a href="https://microsoftedge.microsoft.com/addons/detail/infy-scroll/fmdemgjiipojpgemeljnbaabjeinicba" title="Microsoft Edge Extension Download"><img src="https://raw.githubusercontent.com/roysix/url-incrementer/master/assets/edge.png" height="64" alt="Microsoft Edge, Icon: By Source, Fair use, https://en.wikipedia.org/w/index.php?curid=62848768"></a>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://addons.mozilla.org/firefox/addon/infy-scroll/" title="Firefox Addon Download"><img src="https://raw.githubusercontent.com/roysix/url-incrementer/master/assets/firefox.svg?sanitize=true" height="64" alt="Mozilla Firefox"></a>
 
 <br><br>
 <img src="https://raw.githubusercontent.com/roysix/infy-scroll/master/assets/infy.png" height="600" alt="Infy" title="Infy" align="left">
