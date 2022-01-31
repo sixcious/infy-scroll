@@ -1,15 +1,15 @@
 # Infy Scroll
-<img src="https://raw.githubusercontent.com/roysix/infy-scroll/master/assets/icon-medium.svg?sanitize=true" width="196" height="196" alt="Infy Scroll" title="Infy Scroll">
+<img src="https://raw.githubusercontent.com/sixcious/infy-scroll/main/assets/icon-medium.svg?sanitize=true" width="196" height="196" alt="Infy Scroll" title="Infy Scroll">
 
 ## Available For
-<a href="https://chrome.google.com/webstore/detail/infy-scroll/gdnpnkfophbmbpcjdlbiajpkgdndlino" title="Download for Google Chrome"><img src="https://raw.githubusercontent.com/roysix/url-incrementer/master/assets/chrome.svg?sanitize=true" height="64" alt="Google Chrome"></a>
+<a href="https://chrome.google.com/webstore/detail/infy-scroll/gdnpnkfophbmbpcjdlbiajpkgdndlino" title="Download for Google Chrome"><img src="https://raw.githubusercontent.com/sixcious/infy-scroll/main/assets/chrome.svg?sanitize=true" height="64" alt="Google Chrome"></a>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://microsoftedge.microsoft.com/addons/detail/infy-scroll/fmdemgjiipojpgemeljnbaabjeinicba" title="Download for Microsoft Edge"><img src="https://raw.githubusercontent.com/roysix/url-incrementer/master/assets/edge.png" height="64" alt="Microsoft Edge, Icon: By Source, Fair use, https://en.wikipedia.org/w/index.php?curid=62848768"></a>
+<a href="https://microsoftedge.microsoft.com/addons/detail/infy-scroll/fmdemgjiipojpgemeljnbaabjeinicba" title="Download for Microsoft Edge"><img src="https://raw.githubusercontent.com/sixcious/infy-scroll/main/assets/edge.png" height="64" alt="Microsoft Edge, Icon: By Source, Fair use, https://en.wikipedia.org/w/index.php?curid=62848768"></a>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://addons.mozilla.org/firefox/addon/infy-scroll/" title="Download for Mozilla Firefox"><img src="https://raw.githubusercontent.com/roysix/url-incrementer/master/assets/firefox.svg?sanitize=true" height="64" alt="Mozilla Firefox"></a>
+<a href="https://addons.mozilla.org/firefox/addon/infy-scroll/" title="Download for Mozilla Firefox"><img src="https://raw.githubusercontent.com/sixcious/infy-scroll/main/assets/firefox.svg?sanitize=true" height="64" alt="Mozilla Firefox"></a>
 
 <br><br>
-<img src="https://raw.githubusercontent.com/roysix/infy-scroll/master/assets/infy.png" height="600" alt="Infy" title="Infy" align="left">
+<img src="https://raw.githubusercontent.com/sixcious/infy-scroll/main/assets/infy.png" height="600" alt="Infy" title="Infy" align="left">
 
 ## Important Note
 Infy is currently in beta. Unfortunately, this means it might contain a few bugs and it might not work on every website you try it on! But I really want you to be 100% happy with Infy, so if something isn't working right, or if there's a feature you think is missing, please email me and give me a chance to fix it before leaving a low rating/review, and I promise I will.
@@ -44,7 +44,7 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 `*`*Tested on December 16, 2021. Requires page refresh due to SPA (Single Page Application) nature. Links must be opened in a new tab due to the nature of Iframes. Websites can change their code at any time and break these settings. `AUTO` mode may not work due to the complexity involved. Firefox users will need to use the regular `Iframe` append mode. This is just a simple example to show Infy's potential.*
 
 ## Help Guide
-[View the Help Guide!](https://github.com/roysix/infy-scroll/wiki/Help)
+[View the Help Guide!](https://github.com/sixcious/infy-scroll/wiki/Help)
 
 ## Mini FAQ
 
@@ -97,9 +97,9 @@ Infy Scroll does *not* track you. It does *not* use analytic services. It does *
 </ul>
 
 ## License
-<a href="https://github.com/roysix/infy-scroll/blob/master/LICENSE">View License</a>
+<a href="https://github.com/sixcious/infy-scroll/blob/main/LICENSE">View License</a>
 
 ## Copyright
 Infy Scroll  
-Copyright &copy; 2015-2020 <a href="https://github.com/roysix" target="_blank">Roy Six</a>  
+Copyright &copy; 2015-2020 <a href="https://github.com/sixcious" target="_blank">Roy Six</a>  
 Character Design and Artwork Copyright &copy; 2020 <a href="https://twitter.com/thejoyfool" target="_blank">Joyfool</a>
