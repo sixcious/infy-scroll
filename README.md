@@ -92,6 +92,7 @@ Infy Scroll does *not* track you. It does *not* use analytic services. It does *
   <li>Animations: <a href="https://ianlunn.github.io/Hover/" target="_blank">Hover.css</a></li>
   <li>Tooltips: <a href="https://kazzkiq.github.io/balloon.css/" target="_blank">Balloon.css</a></li>
   <li>Loading: <a href="https://loading.io/" target="_blank">Loading.io</a></li>
+  <li>Shout-out To: <a href="#byWindLi">AutoPager</a>, <a href="https://github.com/swdyh/autopagerize" target="_blank">AutoPagerize</a>, <a href="https://github.com/jkoomjian/PageZipper" target="_blank">PageZipper</a>, <a href="https://github.com/machsix/Super-preloader" target="_blank">Super-Preloader</a></li>
   <li>With Special Thanks: <a href="#">LostPacket</a></li>
 </ul>
 
