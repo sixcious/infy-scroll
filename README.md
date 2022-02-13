@@ -12,7 +12,7 @@
 <img src="https://raw.githubusercontent.com/sixcious/infy-scroll/main/assets/infy.png" height="600" alt="Infy" title="Infy" align="left">
 
 ## Important Note
-Infy is currently in beta. Unfortunately, this means it might contain a few bugs and it might not work on every website you try it on! But I really want you to be 100% happy with Infy, so if something isn't working right, or if there's a feature you think is missing, please email me and give me a chance to fix it before leaving a low rating/review, and I promise I will.
+Infy is currently in beta. This means it might contain a few bugs and it might not work on every website you try it on! But I really want you to be 100% happy with Infy, so if something isn't working right, or if there's a feature you think is missing, please open an issue on GitHub and give me a chance to fix it before leaving a low rating/review, and I promise I will.
 <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
 
 ## About
@@ -48,21 +48,6 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 
 ## Mini FAQ
 
-#### Is Infy Scroll like AutoPagerize and PageZipper?
-No, they're quite different. AutoPagerize is a great and simple to use extension that relies on a database to work. PageZipper is another great and simple to use extension that can work generically across many websites. Infy is a more complex extension that can work both ways, while featuring more actions and append modes of its own (Infy was primarily developed for scroll incrementing). It can work just like AutoPagerize due to its database support and Append Element mode, and it can work similar to PageZipper due to its generic algorithm and Append Page and Iframe modes. It's also customizable. You can also use both Infy and AutoPagerize/PageZipper simultaneously, and only use Infy for websites that AP or PZ don't support (e.g. incrementing URLs or other such things).
-
-##### Comparison Table
-|                   | AutoPagerize | PageZipper | Infy Scroll |
-| ----------------- | ------------ | ---------- | ----------- |
-| Database Support  | ✔️        |            | ✔️       |
-| Works Generically |              | ✔️      | ✔️       |
-| Customizable      |              |            | ✔️       |
-
-##### Notes
-1. <code>Works Generically</code> means that it can work without relying on a database.
-2. Infy's <code>Element</code> Append Mode is similar to AutoPagerize's Append Mode.
-3. Infy's <code>Iframe</code> Append Mode is similar to PageZipper's <code>Compatibility</code> Mode.
-
 #### Why Can't Infy Scroll Execute Custom Scripts (Besides Button Clicks)?
 Unfortunately, because Browsers strongly discourage this from a security standpoint. This is easily possible, and something I really wanted to include, but having something like `eval()` or `chrome.tabs.executeScript(code: <CustomScriptString>)` in the public release would likely result in either a rejection or extremely long extension review times (especially when Chrome's Manifest v3 comes out).
 
@@ -75,9 +60,6 @@ It depends, but implementing something that works generically (across many websi
 ## Permissions Justification
 - `Read and change all your data on the websites you visit` - Infy needs to request this permission so that its content script can auto-activate on any Saved URL or Database URL you want it to.
 - `wedata.net` and `github.io` - Infy needs to request permissions to these domains so it can download and use the AutoPagerize Database.
-
-## Remote Code Policy
-Infy Scroll does *not* use any remote code. All code is included locally in the software package and goes under review before being published.
 
 ## Privacy Policy
 Infy Scroll does *not* track you. It does *not* use analytic services. It does *not* collect or transmit any data from your device or computer. All your data is stored locally on your device. Your data is *your* data.
@@ -92,7 +74,7 @@ Infy Scroll does *not* track you. It does *not* use analytic services. It does *
   <li>Animations: <a href="https://ianlunn.github.io/Hover/" target="_blank">Hover.css</a></li>
   <li>Tooltips: <a href="https://kazzkiq.github.io/balloon.css/" target="_blank">Balloon.css</a></li>
   <li>Loading: <a href="https://loading.io/" target="_blank">Loading.io</a></li>
-  <li>Shout-out To: <a href="#byWindLi">AutoPager</a>, <a href="https://github.com/swdyh/autopagerize" target="_blank">AutoPagerize</a>, <a href="https://github.com/jkoomjian/PageZipper" target="_blank">PageZipper</a>, <a href="https://github.com/machsix/Super-preloader" target="_blank">Super-Preloader</a></li>
+  <li>Inspiration: <a href="#byWindLi">AutoPager</a>, <a href="https://github.com/swdyh/autopagerize" target="_blank">AutoPagerize</a>, <a href="https://github.com/jkoomjian/PageZipper" target="_blank">PageZipper</a>, <a href="https://github.com/machsix/Super-preloader" target="_blank">Super-preloader</a></li>
   <li>With Special Thanks: <a href="#">LostPacket</a></li>
 </ul>
 
