@@ -54,7 +54,7 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 #### Why Can't Infy Scroll Execute Custom Scripts (Besides Button Clicks)?
 Unfortunately, because Browsers strongly discourage this from a security standpoint. This is easily possible, and something I really wanted to include, but having something like `eval()` or `chrome.tabs.executeScript(code: <CustomScriptString>)` in the public release would likely result in either a rejection or extremely long extension review times (especially when Chrome's Manifest v3 comes out).
 
-###### A Workaround: Hardcoded Custom Scripts and Userscript Managers
+###### A Workaround: Hardcoded Custom Scripts and using a Userscript Manager
 Infy now ships with its own unique `scripts.js` file with hardcoded custom scripts inside of it. The scripts are for a few popular websites (including Google Search and Microsoft Bing Search) that fixes missing images and broken HTML. The script will execute on each new page that is appended. However, because the scripts are hardcoded, an update will be required if the website changes and the script no longer works.
 
 Also, you can write your own custom scripts inside a Userscript Manager (like Violentmonkey) by listening for Custom Events that Infy triggers whenever a new node or page has been appended. You can also implement a MutationObserver. Feel free to see the Help Guide on [Custom Scripts](https://github.com/sixcious/infy-scroll/wiki/Help#custom-scripts) for more details.
