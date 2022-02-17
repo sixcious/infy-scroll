@@ -54,10 +54,10 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 #### Why Can't Infy Scroll Execute Custom Scripts (Besides Button Clicks)?
 Unfortunately, because Browsers strongly discourage this from a security standpoint. This is easily possible, and something I really wanted to include, but having something like `eval()` or `chrome.tabs.executeScript(code: <CustomScriptString>)` in the public release would likely result in either a rejection or extremely long extension review times (especially when Chrome's Manifest v3 comes out).
 
-###### A Workaround: Hardcoded Custom Scripts and Custom Events
+###### A Workaround: Hardcoded Custom Scripts and Userscript Managers
 Infy now ships with its own unique `scripts.js` file with hardcoded custom scripts inside of it. The scripts are for a few popular websites (including Google Search and Microsoft Bing Search) that fixes missing images and broken HTML. The script will execute on each new page that is appended. However, because the scripts are hardcoded, an update will be required if the website changes and the script no longer works.
 
-Also, Infy can now trigger Custom Events whenever a new node or page has been appended. You can write JavaScript code using a Userscript Manager like Violentmonkey that can listen for these events and then execute your custom code that way. Feel free to [see the Help Guide](https://github.com/sixcious/infy-scroll/wiki/Help) for more details.
+Also, you can write your own custom scripts inside a Userscript Manager (like Violentmonkey) by listening for Custom Events that Infy triggers whenever a new node or page has been appended. You can also implement a MutationObserver. Feel free to see the Help Guide on [Custom Scripts](https://github.com/sixcious/infy-scroll/wiki/Help#custom-scripts) for more details.
 
 #### Can Infy work on websites that auto-load the next page via AJAX?
 It depends, but implementing something that works generically (across many websites) would be extremely difficult without allowing custom scripts for each site. The most Infy can do is click a button for you and rely on the website itself to append the content asynchronously, but if the website *replaces* the previous page with the next page's content, this probably won't be what you're looking for.
