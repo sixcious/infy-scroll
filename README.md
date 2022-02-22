@@ -55,13 +55,16 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 Unfortunately, because Browsers strongly discourage this from a security standpoint. This is easily possible, and something I really wanted to include, but having something like `eval()` or `chrome.tabs.executeScript(code: <CustomScriptString>)` in the public release would likely result in either a rejection or extremely long extension review times (especially when Chrome's Manifest v3 comes out).
 
 ###### A Workaround
-You can write your own custom scripts inside a Userscript Manager (like Violentmonkey) by listening for Custom Events that Infy triggers whenever a new node or page has been appended. You can also implement a MutationObserver. Feel free to see the Help Guide on [Custom Scripts](https://github.com/sixcious/infy-scroll/wiki/Help#custom-scripts) for more information.
+You can write your own custom scripts inside a Userscript Manager (like [Violentmonkey](https://github.com/violentmonkey/violentmonkey)) by listening for Custom Events that Infy triggers whenever a new node or page has been appended. You can also implement a MutationObserver. Feel free to see the Help Guide on [Custom Scripts](https://github.com/sixcious/infy-scroll/wiki/Help#custom-scripts) for more information.
 
 #### Can Infy work on websites that auto-load the next page via AJAX?
 It depends, but implementing something that works generically (across many websites) would be extremely difficult without allowing custom scripts for each site. The most Infy can do is click a button for you and rely on the website itself to append the content asynchronously, but if the website *replaces* the previous page with the next page's content, this probably won't be what you're looking for.
 
+#### What is the minimum browser version (and why is it to so high)?
+Infy currently requires Chrome/Edge/Firefox `90` and higher to run. I tend to update the minimum browser version about once a year so I can use the latest and greatest ECMAScript features without worry. It also significantly saves in my testing time in having to maintain older Chromium builds. In the past, I used to offer "modified" builds with a lower minimum version, but I can no longer do this. If your browser doesn't support Infy, I'm afraid you'll have to use another app/extension (sorry).
+
 #### Why is the production version's source code minified?
-I use [Terser](https://github.com/terser/terser) to minify the source code for production releases that I upload to your browser's web store. I mainly do this because I write a lot of comments and `console.log()` statements for debugging that you don't want to have and it cuts the file size down significantly. That said, you can always view a "Pretty Print" of the source code by using a [CRX Viewer](https://robwu.nl/crxviewer/) to inspect it before installing it.
+I use [Terser](https://github.com/terser/terser) to minify the source code for production releases that I upload to your browser's web store. I mainly do this because I write a lot of comments and `console.log()` statements for debugging that you don't want to have and because it cuts down the file size significantly. That said, you can always view a "Pretty Print" of the source code by using a [CRX Viewer](https://robwu.nl/crxviewer/) to inspect it before installing it.
 
 ## Permissions Justification
 - `Read and change all your data on the websites you visit` - Infy needs to request this permission so that its content script can auto-activate on any Saved URL or Database URL you want it to.
