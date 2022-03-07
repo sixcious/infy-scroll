@@ -68,7 +68,6 @@ I use [Terser](https://github.com/terser/terser) to minify the source code for p
 
 ## Permissions Justification
 - `Read and change all your data on the websites you visit` - Infy needs to request this permission so that its content script can auto-activate on any Saved URL or Database URL you want it to.
-- `wedata.net` and `github.io` - Infy needs to request permissions to these domains so it can download and use the AutoPagerize Database.
 
 ## Privacy Policy
 Infy Scroll does *not* track you. It does *not* use analytic services. It does *not* collect or transmit any data from your device or computer. All your data is stored locally on your device. Your data is *your* data.
