@@ -52,13 +52,10 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 ## FAQ
 
 #### Why Can't Infy Scroll Execute Custom Scripts?
-Unfortunately, because Browsers strongly discourage this from a security standpoint. This is easily possible, and something I really wanted to include, but having something like `eval()` or `chrome.tabs.executeScript(code: <CustomScriptString>)` in the public release would likely result in either a rejection or extremely long extension review times (especially when Chrome's Manifest v3 comes out).
+Unfortunately, because Browsers strongly discourage this from a security standpoint. This is easily possible, and something I really wanted to include, but having something like `eval()` or `chrome.tabs.executeScript(code: <CustomScriptString>)` in the public release would likely result in either a rejection or extremely long extension review times (especially with Chrome's Manifest V3!).
 
 ###### A Workaround
 You can write your own custom scripts inside a Userscript Manager (like [Violentmonkey](https://github.com/violentmonkey/violentmonkey)) by listening for Custom Events that Infy triggers whenever a new node or page has been appended or by implementing a [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver). Feel free to read the [Custom Scripts and Styles](https://github.com/sixcious/infy-scroll/wiki/Custom-Scripts-and-Styles) section for examples and more information.
-
-#### Can Infy work on websites that auto-load the next page via AJAX?
-It depends, but implementing something that works generically (across many websites) would be extremely difficult without allowing custom scripts for each site. The most Infy can do is click a button for you and rely on the website itself to append the content asynchronously, but if the website *replaces* the previous page with the next page's content, this probably won't be what you're looking for.
 
 #### What is the minimum browser version (and why is it to so high)?
 Infy currently requires Chrome/Edge/Firefox `90` and higher to run. I tend to update the minimum browser version about once a year so I can use the latest and greatest ECMAScript features without worry. It also significantly saves in my testing time in having to maintain older Chromium builds. In the past, I used to offer "modified" builds with a lower minimum version, but I can no longer do this. If your browser doesn't support Infy, I'm afraid you'll have to use another app/extension (sorry).
