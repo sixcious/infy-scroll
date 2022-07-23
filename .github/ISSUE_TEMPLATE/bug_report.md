@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 **Describe the bug**
-Please describe what went wrong.
+Please describe what went wrong. **However, please do not open an issue asking how to make it work with a specific website unless you think there is an actual bug or issue.**
 
 **Website**
 If applicable, please post the specific URL that the problem is occurring on.
