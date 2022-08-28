@@ -52,9 +52,9 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 ## FAQ
 
 #### Can you help me make it work for a specific website?
-I really wish I could! I've spent the last couple years helping people both privately and on GitHub, but there's just too many websites out there for one person to help *everyone* with. I totally understand that "Actions," "Append Modes," "Selectors," "XPath," and all the settings may be difficult to learn, so I've poured lots of time into writing descriptive tooltips and a [help guide](https://github.com/sixcious/infy-scroll/wiki). If you think there may be a bug with Infy, by all means [open an issue](https://github.com/sixcious/infy-scroll/issues). I'll try my best to reply as soon as I can.
+I can't, but I really wish I could! I've spent the last couple years helping people both privately and on GitHub, but there's just too many websites out there for one person to help *everyone* with. I totally understand that "Actions," "Append Modes," "Selectors," "XPath," and all the settings may be difficult to learn, so I've poured lots of time into writing descriptive tooltips and a [help guide](https://github.com/sixcious/infy-scroll/wiki). If you think there may be a bug with Infy, by all means [open an issue](https://github.com/sixcious/infy-scroll/issues). I'll try my best to reply as soon as I can.
 
-#### Why Can't Infy Scroll Execute Custom Scripts?
+#### Why can't Infy Scroll execute custom scripts?
 Unfortunately, because browsers strongly discourage this from a security standpoint (especially now that Manifest V3 is out!). However, there's a workaround: you can write your own custom scripts inside a Userscript Manager (like [Violentmonkey](https://github.com/violentmonkey/violentmonkey)) by listening for Custom Events that Infy triggers whenever a new node or page has been appended or by implementing a [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver). Feel free to read the [Scripts and Styles](https://github.com/sixcious/infy-scroll/wiki/Scripts-and-Styles) section for examples and more information.
 
 #### What is the minimum browser version (and why is it to so high)?
