@@ -52,7 +52,7 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 ## FAQ
 
 #### Can you help me make it work for a specific website?
-I can't, but I really wish I could! I've spent the last couple years helping people both privately and on GitHub, but there's just too many websites out there for one person to help *everyone* with. I totally understand that "Actions," "Append Modes," "Selectors," "XPath," and all the settings may be difficult to learn, so I've poured lots of time into writing descriptive tooltips and a [help guide](https://github.com/sixcious/infy-scroll/wiki). If you think there may be a bug with Infy, by all means [open an issue](https://github.com/sixcious/infy-scroll/issues). I'll try my best to reply as soon as I can.
+I'm sorry, I can't, but I really wish I could. I've spent the last couple years helping people both privately and on GitHub, but there's just too many websites out there for one person to help *everyone* with. I totally understand that "Actions," "Append Modes," "Selectors," "XPath," and all the settings may be difficult to learn, so I've poured lots of time into writing descriptive tooltips and a [help guide](https://github.com/sixcious/infy-scroll/wiki). You may also want to check to make sure that the [website isn't incompatible](https://github.com/sixcious/infy-scroll/wiki/Incompatible-Websites) with Infy. If you think there may be a bug with Infy, by all means [open an issue](https://github.com/sixcious/infy-scroll/issues). I'll try my best to reply as soon as I can.
 
 #### Why can't Infy Scroll execute custom scripts?
 Unfortunately, because browsers strongly discourage this from a security standpoint (especially now that Manifest V3 is out!). However, there's a workaround: you can write your own custom scripts inside a Userscript Manager (like [Violentmonkey](https://github.com/violentmonkey/violentmonkey)) by listening for Custom Events that Infy triggers whenever a new node or page has been appended or by implementing a [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver). Feel free to read the [Scripts and Styles](https://github.com/sixcious/infy-scroll/wiki/Scripts-and-Styles) section for examples and more information.
@@ -82,7 +82,7 @@ Infy Scroll does *not* track you. It does *not* use analytic services. It does *
   <li>Hover Box: <a href="https://github.com/AlienKevin" target="_blank">AlienKevin</a></li>
   <li>DOM Paths: <a href="https://github.com/chromium/chromium" target="_blank">Chromium</a></li>
   <li>Database: <a href="http://wedata.net/users/" target="_blank">AutoPagerize Contributors | Wedata</a></li>
-  <li>Inspiration: <a href="#byWindLi">AutoPager</a>, <a href="https://github.com/swdyh/autopagerize" target="_blank">AutoPagerize</a>, <a href="https://github.com/jkoomjian/PageZipper" target="_blank">PageZipper</a>, <a href="https://github.com/machsix/Super-preloader" target="_blank">Super-preloader</a></li>
+  <li>Shoutout To: <a href="#byWindLi">AutoPager</a>, <a href="https://github.com/swdyh/autopagerize" target="_blank">AutoPagerize</a>, <a href="https://github.com/jkoomjian/PageZipper" target="_blank">PageZipper</a>, <a href="https://github.com/machsix/Super-preloader" target="_blank">Super-preloader</a></li>
   <li>With Special Thanks:
     <a href="#lostpacket">LostPacket</a> and <a href="#daydreaming5">DayDreaming</a></li>
 </ul>
