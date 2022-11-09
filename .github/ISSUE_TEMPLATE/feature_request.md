@@ -9,6 +9,7 @@ assignees: ''
 
 **Feature request**
 Please describe your feature request. The more detailed you can be, the better.
+**However, please do not open an issue asking to make it work with a specific website.**
 
 **Screenshots**
 If applicable, please add any screenshots that might help explain your feature request better.
