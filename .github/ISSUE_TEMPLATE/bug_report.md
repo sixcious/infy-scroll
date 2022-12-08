@@ -9,7 +9,7 @@ assignees: ''
 
 **Describe the bug**  
 Please describe what went wrong.  
-*Note: Please do not open an issue asking how to make it work with a specific website unless you think there is an actual bug or issue.*
+*Note: Please be sure to read the [Help Guide](https://github.com/sixcious/infy-scroll/wiki) and [Incompatible Websites](https://github.com/sixcious/infy-scroll/wiki/Incompatible-Websites) section first before opening an issue asking how to make it work with a specific website.*
 
 **Website**  
 If applicable, please post a specific URL that the problem is occurring on (to use as a testable example).  
