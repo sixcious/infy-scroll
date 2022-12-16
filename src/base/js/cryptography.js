@@ -1,7 +1,7 @@
 /**
  * Infy Scroll
  * @copyright (c) 2020 Roy Six
- * @license https://github.com/sixcious/infy-scroll/blob/main/LICENSEP
+ * @license https://github.com/sixcious/infy-scroll/blob/main/LICENSE
  */
 
 /**
@@ -27,14 +27,12 @@
  * 1. Random Numbers:
  * Generate a random number between a minimum and maximum value by supplying the two arguments to the function
  *
- * const number1 = Cryptography.randomNumber();
- * const number2 = Cryptography.randomNumber(1, 100);
+ * const number = Cryptography.randomNumber(1, 100);
  *
  * 2. Random Strings:
  * Generate a random string of any length and alphabet by supplying the two arguments to the function
  *
- * const string1 = Cryptography.randomString();
- * const string2 = Cryptography.randomString(16, "abc123!");
+ * const string = Cryptography.randomString(16, "abc123!");
  *
  * 3/4. Hashing/Salting:
  * You can use this to store hashes of sensitive data (e.g. passwords) and then run the hash function against the
@@ -55,22 +53,21 @@
 const Cryptography = (() => {
 
   /**
-   * Generates a securely random number in the range of min (inclusive) and max (inclusive or exclusive).
-   * For example, randomNumber(0,10) will return a number between 0-10, whereas randomNumber(0,10,false) returns 0-9.
+   * Generates a securely random number in the range of min (inclusive) and max (inclusive).
+   * For example, randomNumber(0,16) will return a number between 0-16.
    *
    * @param min       the minimum number in the range (inclusive)
-   * @param max       the maximum number in the range (inclusive or exclusive)
-   * @param inclusive true if the maximum number is inclusive, false if exclusive
+   * @param max       the maximum number in the range (inclusive)
    * @returns {number} the random number
    * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random#getting_a_random_integer_between_two_values
    * @see https://stackoverflow.com/a/62792582
    * @public
    */
-  function randomNumber(min = 0, max = 16, inclusive = true) {
+  function randomNumber(min = 0, max = 16) {
     min = Math.ceil(min);
     max = Math.floor(max);
     const random = crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff + 1);
-    return Math.floor(random * (max - min + (inclusive ? 1 : 0)) + min);
+    return Math.floor(random * (max - min + 1) + min);
   }
 
   /**
@@ -84,7 +81,7 @@ const Cryptography = (() => {
   function randomString(length = 16, alphabet = "abcdefghijklmnopqrstuvwxyz") {
     let result = "";
     for (let i = 0; i < length; i++) {
-      result += alphabet.charAt(randomNumber(0, alphabet.length, false));
+      result += alphabet.charAt(randomNumber(0, alphabet.length - 1));
     }
     return result;
   }
