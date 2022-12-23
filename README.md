@@ -49,7 +49,7 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 ## Help Guide
 [View the Help Guide!](https://github.com/sixcious/infy-scroll/wiki)
 
-## Install
+## Installing
 Installing the latest version here on GitHub is easy! First, [download the zip](https://github.com/sixcious/infy-scroll/archive/refs/heads/main.zip) or clone the repository. Unzip it to your preferred location and follow the below steps, depending on your browser:
 
 #### Chrome/Edge
@@ -73,13 +73,13 @@ I'm real sorry, but due to the new Manifest V3 (MV3) restrictions, I was forced 
 I'm super sorry, but starting in Version 0.8, these two collections have been merged into your [Saves](https://github.com/sixcious/infy-scroll/wiki/Saves). The reason I had to merge them is because of how complex the activation code has become. As you can imagine, it became extremely hard to manage four different collections: Saves, Regular Database, Save Whitelist, and Custom Database. I decided to invest heavily into further developing Saves, and because you can now add and edit Saves in the Options, and because the save keys now use the the same naming convention of the Custom Database, I really hope that this helps make up for this change. Even though Infy is still in beta, please know that I will always make sure that your data is *never* lost. With this said, I totally understand that the convenience of maintaining a simple list of URLs and database rules as a single text input is now gone, and for that I'm very sorry.
 
 #### Can you help me make it work for a specific website?
-I really wish I could. I've spent the last couple years helping people both privately and on GitHub, but there's just too many websites out there for one person to help *everyone* with. I totally understand that "Actions," "Append Modes," "Selectors," "XPath," and all the settings may be difficult to learn, so I've poured lots of time into writing descriptive tooltips and a [help guide](https://github.com/sixcious/infy-scroll/wiki). You may also want to check to make sure that the [website isn't incompatible](https://github.com/sixcious/infy-scroll/wiki/Incompatible-Websites) with Infy. If you're still stumped, or think there may be a bug with Infy, by all means, please [open an issue](https://github.com/sixcious/infy-scroll/issues). I'll try my best to reply as soon as I can.
+I really wish I could. I've spent the last couple years helping people both privately and on GitHub, but there's just too many websites out there for one person to help *everyone* with. I totally understand that "Actions," "Append Modes," "Selectors," "XPath," and all the settings may be difficult to learn, so I've poured lots of time into writing descriptive tooltips and a [help guide](https://github.com/sixcious/infy-scroll/wiki). You may also want to check to make sure that the [website isn't incompatible](https://github.com/sixcious/infy-scroll/wiki/Incompatible-Websites) with Infy. If you're still stumped, by all means, please [open an issue](https://github.com/sixcious/infy-scroll/issues). I'll try my best to reply as soon as I can.
 
 #### Why can't Infy Scroll execute custom scripts?
 Unfortunately, because browsers strongly discourage this from a security standpoint (especially now that Manifest V3 is out!). However, there's a workaround: you can write your own custom scripts inside a Userscript Manager (like [Violentmonkey](https://github.com/violentmonkey/violentmonkey)) by listening for Custom Events that Infy triggers whenever a new node or page has been appended or by implementing a [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver). Feel free to read the [Scripts and Styles](https://github.com/sixcious/infy-scroll/wiki/Scripts-and-Styles) section for examples and more information.
 
 #### What is the minimum browser version (and why is it to so high)?
-Infy currently requires Chrome/Edge/Firefox `90` and higher to run. I tend to update the minimum browser version about once a year so I can use the latest and greatest ECMAScript features without worry. It also significantly saves in my testing time in having to maintain older Chromium builds. In the past, I used to offer "modified" builds with a lower minimum version, but I can no longer do this. If your browser doesn't support Infy, I'm afraid you'll have to use another app/extension (sorry!).
+Infy currently requires Chrome/Edge/Firefox `102` and higher to run. I tend to update the minimum browser version about once a year so I can use the latest and greatest ECMAScript features without worry. It also significantly saves in my testing time in having to maintain older Chromium builds. In the past, I used to offer "modified" builds with a lower minimum version, but I can no longer do this. If your browser doesn't support Infy, I'm afraid you'll have to use another app/extension (sorry!).
 
 #### Why is the production version's source code minified?
 I use [Terser](https://github.com/terser/terser) to minify the source code for production releases that I upload to your browser's web store. I mainly do this because I write a lot of comments and `console.log()` statements for debugging that you don't want to have and because it cuts down the file size significantly. That said, you can always view a "Pretty Print" of the source code by using a [CRX Viewer](https://robwu.nl/crxviewer/) to inspect it before installing it.
@@ -115,8 +115,6 @@ Aw, thanks for considering! I'm currently not setup to accept PRs just yet, but 
 
 ## License
 <a href="https://github.com/sixcious/infy-scroll/blob/main/LICENSE">View License</a>  
-
-<a href="https://github.com/sixcious/infy-scroll/blob/main/LICENSEP">View Production Version License</a>
 
 ## Copyright
 Infy Scroll  
