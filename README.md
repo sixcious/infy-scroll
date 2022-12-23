@@ -54,15 +54,15 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what my "holy 
 
 ##### Settings Used (Version 0.8):
 ````
- {
-    "action": "button",
-    "append": "ajax",
-    "button": "//nav/button[@aria-current='true']/following-sibling::a[not(@hidden)]",
-    "pageElement": "//ul[@class='sc-l7cibp-1 krFoBL']/*",
-    "removeElement": "//li[@class='sc-l7cibp-2 gpVAva'][./div[@class='sc-rp5asc-0 fxGVAF']]|//li[not(div)]",
-    "spa": "https://www.pixiv.net",
-    "url": "^https://www\\.pixiv\\.net/.*/?tags/.*/(illustrations|manga)"
-  }
+{
+  "action": "button",
+  "append": "ajax",
+  "button": "//nav/button[@aria-current='true']/following-sibling::a[not(@hidden)]",
+  "pageElement": "//ul[@class='sc-l7cibp-1 krFoBL']/*",
+  "removeElement": "//li[@class='sc-l7cibp-2 gpVAva'][./div[@class='sc-rp5asc-0 fxGVAF']]|//li[not(div)]",
+  "spa": "https://www.pixiv.net",
+  "url": "^https://www\\.pixiv\\.net/.*/?tags/.*/(illustrations|manga)"
+}
 ````
 *You can copy and paste these settings using the new Add Save feature in the Options Screen. But please note that these settings only work with the Japanese language version of Pixiv. You must change the language to be 日本語 on the bottom of the site (if not signed in).*
 
