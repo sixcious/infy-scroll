@@ -1,0 +1,639 @@
+/**
+ * Infy Scroll
+ * @copyright (c) 2020 Roy Six
+ * @license https://github.com/sixcious/infy-scroll/blob/main/LICENSE
+ */
+
+/* Variables */
+
+/* --mdc-theme-primary - URL Incrementer: #33335B Infy Scroll: #615492 Downloadyze: #262626 */
+:root {
+  --action-color: #1779BA;
+  --increment-decrement-m-color: #4AACED;
+  --increment-decrement-1-color: #1779BA;
+  --increment-decrement-2-color: #004687;
+  --increment-decrement-3-color: #001354;
+  --return-color: #000000;
+  --auto-color: #FF6600;
+  --shuffle-color: #BA1F40;
+  --error-skip-color: #000000;
+  --success-color: var(--mdc-theme-secondary);
+  --error-color: var(--mdc-theme-error);
+  --error-light-color: #FF4D8B;
+  --info-color: #999999;
+  --default-color: #333333;
+  --balloon-color: #333333;
+  --mdc-theme-primary: #615492;
+  --mdc-theme-primary-on-background: white;
+/*--google-blue-color: #1A73E8;*/
+/*  --mdc-theme-primary-on-background: #121212;
+  --mdc-theme-text-primary-on-background: rgba(255,255,255,0.60);
+  --mdc-theme-text-secondary-on-background: rgba(255,255,255,0.60);*/
+}
+/*
+rbga(255,255,255,0)
+mdc-theme--primary	Sets the text color to the theme primary color.
+mdc-theme--primary-bg	Sets the background color to the theme primary color.
+mdc-theme--on-primary	Sets the text color to the color configured for text on the primary color.
+mdc-theme--secondary	Sets the text color to the theme secondary color.
+mdc-theme--secondary-bg	Sets the background color to the theme secondary color.
+mdc-theme--on-secondary	Sets the text color to the color configured for text on the secondary color.
+mdc-theme--surface	Sets the background color to the surface background color.
+mdc-theme--on-surface	Sets the text color to the color configured for text on the surface color.
+mdc-theme--background
+*/
+
+  /* mdc-theme-primary required overrides */
+.mdc-select:not(.mdc-select--disabled):not(.mdc-select--invalid).mdc-select--focused .mdc-floating-label,
+.mdc-text-field:not(.mdc-text-field--disabled):not(.mdc-text-field--invalid).mdc-text-field--focused .mdc-floating-label {
+  color: var(--mdc-theme-primary);
+}
+
+/* mdc-theme-primary required overrides - mdc-select dropdown icon requires mask */
+.mdc-select--focused .mdc-select__dropdown-icon {
+  background: var(--mdc-theme-primary);
+  mask: url("data:image/svg+xml,%3Csvg%20width%3D%2210px%22%20height%3D%225px%22%20viewBox%3D%227%2010%2010%205%22%20version%3D%221.1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%3E%0A%20%20%20%20%3Cpolygon%20id%3D%22Shape%22%20stroke%3D%22none%22%20fill%3D%22%236200ee%22%20fill-rule%3D%22evenodd%22%20opacity%3D%221%22%20points%3D%227%2010%2012%2015%2017%2010%22%3E%3C%2Fpolygon%3E%0A%3C%2Fsvg%3E") no-repeat center;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20width%3D%2210px%22%20height%3D%225px%22%20viewBox%3D%227%2010%2010%205%22%20version%3D%221.1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%3E%0A%20%20%20%20%3Cpolygon%20id%3D%22Shape%22%20stroke%3D%22none%22%20fill%3D%22%236200ee%22%20fill-rule%3D%22evenodd%22%20opacity%3D%221%22%20points%3D%227%2010%2012%2015%2017%2010%22%3E%3C%2Fpolygon%3E%0A%3C%2Fsvg%3E") no-repeat center;
+}
+
+/* Fonts */
+/* Locally include 300, 400, and 500 (latin) fonts. This is essentially equivalent to remotely doing: */
+/* <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500"> */
+
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('../lib/roboto/roboto-light.woff2') format("woff2");
+}
+
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../lib/roboto/roboto-regular.woff2') format("woff2");
+}
+
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../lib/roboto/roboto-medium.woff2') format("woff2");
+}
+
+/* Native */
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+/* TODO: Make font size using typography? e.g. font-size: var(--mdc-typography-body1-font-size); */
+body {
+  font-size: 85%;
+  font-family: Roboto, 'Segoe UI', Arial, Meiryo, sans-serif;
+  background: #FFFFFF;
+  color: #000000;
+}
+
+a {
+  color: var(--mdc-theme-primary);
+  font-weight: 500;
+}
+
+p {
+  margin-bottom: 1rem;
+}
+
+img {
+  vertical-align: middle;
+}
+
+svg:not(.mdc-checkbox__checkmark):not(.mdc-tab__icon):not(.mdc-fab--icon) {
+  width: 20px;
+  height: 20px;
+  vertical-align: text-bottom;
+}
+
+svg:not(.mdc-checkbox__checkmark):not(.mdc-tab__icon):not(.mdc-fab--icon).smaller-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* TODO: Do we still need this? Only Infy had it */
+svg:not(.mdc-checkbox__checkmark):not(.mdc-tab__icon):not(.mdc-switch__icon):not(.mdc-fab--icon).separator-icon {
+  width: 20px;
+  height: 20px;
+  fill: #333333;
+  margin: -4px 4px;
+  vertical-align: initial;
+}
+
+textarea {
+  word-break: break-all;
+}
+
+/* Grid */
+
+.grid-row {
+  display: grid;
+  grid-auto-flow: column;
+}
+
+/* Flex */
+
+.flex-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.flex-row.align-start > * {
+  align-self: start;
+}
+
+.flex-row.align-center > * {
+  align-self: center;
+}
+
+/* Table */
+
+.table {
+  display: table;
+}
+
+.table .row {
+  display: table-row;
+}
+
+.table .row .column {
+  display: table-cell;
+}
+
+.row {
+  margin-bottom: 2rem;
+}
+
+.sub-row {
+  margin-bottom: 1rem;
+}
+
+/* Float */
+
+.float-left {
+  float: left;
+}
+
+.float-right {
+  float: right;
+}
+
+.clear-both {
+  clear: both;
+}
+
+/* Display */
+
+.display-inline {
+  display: inline;
+}
+
+.display-block {
+  display: block;
+}
+
+.display-none {
+  display: none;
+}
+
+.display-flex {
+  display: flex;
+}
+
+.visibility-hidden {
+  visibility: hidden;
+}
+
+/* Classes */
+
+.below-table-row {
+  margin-top: 2rem;
+}
+
+.button-group > button:not(last-child) {
+  margin-right: 1rem;
+}
+
+.separator {
+  margin-right: 8px;
+}
+
+.indent-list {
+  margin-left: 2rem;
+}
+
+.help-title {
+  color: var(--mdc-theme-primary);
+  font-weight: 500;
+}
+
+.help-title-margin {
+  font-weight: 500;
+  margin-top: 1rem;
+}
+
+.notice {
+  color: var(--mdc-theme-primary);
+  font-weight: 500;
+}
+
+.superscript {
+  font-size: 10px;
+  vertical-align: super;
+}
+
+.subscript {
+  font-size: 10px;
+}
+
+/* SVG Fill Colors */
+
+.success-icon {
+  fill: var(--success-color);
+}
+
+.error-icon {
+  fill: var(--error-color);
+}
+
+.theme-icon {
+  fill: var(--mdc-theme-primary);
+}
+
+/* Fade */
+
+@keyframes fade-in-opacity {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-in-transform {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+@keyframes fade-in-max-height {
+  from { max-height: 0; }
+  to { max-height: 1000px; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0); }
+}
+
+@keyframes fade-out-max-height {
+  from { max-height: 1000px; }
+  to { max-height: 0; }
+}
+
+.fade-in {
+  animation: fade-in-opacity 0.3s ease-out, fade-in-transform 0.3s ease-out;
+}
+
+.fade-out {
+  animation: fade-out 0.3s ease-out, fade-out-max-height 0.3s ease-out;
+}
+
+/* Generate Alert */
+/* Generates an alert box (e.g. to show error messages) using an overlay */
+/* Derived from the sample Google extension, Proxy Settings by Mike West */
+
+.overlay {
+  display: block;
+  text-align: center;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 240px;
+  padding: 10px;
+  margin: -40px 0 0 -120px;
+  opacity: 0;
+  background: #333;
+  letter-spacing: .0178571429em;
+  border-radius: 5px;
+  color: rgba(255,255,255,.87);
+  font-size: .875rem;
+  line-height: 1.25rem;
+  transition: all 1.0s ease;
+  transform: scale(0);
+}
+
+.overlay ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.overlay ul li {
+  text-align: center;
+}
+
+.overlay ul.error li:first-child {
+  color: var(--error-light-color);
+}
+
+.overlay-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Firefox */
+
+/* Firefox: input[type=number] Change input type number to hide spinner up/down arrows unless focused/hovered */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="number"]:hover, input[type="number"]:focus {
+  -moz-appearance: initial;
+}
+
+/* Material Design Overrides */
+
+/* mdc-button */
+
+.mdc-button {
+  text-transform: none;
+}
+
+.mdc-button svg.mdc-button__icon {
+  fill: white;
+  width: 16px;
+  height: 16px;
+}
+
+.mdc-button svg.mdc-button__icon.smaller-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.mdc-button--raised svg {
+  fill: white;
+}
+
+.mdc-button--outlined svg {
+  fill: var(--mdc-theme-primary);
+}
+
+/* mdc-card */
+
+.mdc-card {
+  padding: 0;
+  color: initial !important;
+  width: 130px;
+  height: 100px;
+  display: inline-block;
+  user-select: none;
+}
+
+.mdc-card .mdc-list-item__graphic {
+  fill: rgba(0,0,0,.6);
+}
+
+.mdc-card.mdc-list-item--selected .mdc-list-item__graphic, .mdc-card.mdc-list-item--activated .mdc-list-item__graphic {
+  fill: var(--mdc-theme-primary);
+}
+
+.mdc-list-item .mdc-card-title svg {
+  margin-right: 4px;
+}
+
+.mdc-card-title {
+  font-weight: 500;
+  border-bottom: 1px solid #E0E0E0;
+  padding: 4px;
+}
+
+.mdc-card-subtitle {
+  font-size: 0.75rem;
+  font-style: italic;
+  padding: 4px;
+}
+
+.mdc-card-description {
+  font-size: 0.75rem;
+  padding: 0 4px;
+}
+
+/* mdc-fab */
+
+.mdc-fab {
+  background-color: var(--mdc-theme-primary);
+}
+
+.mdc-fab--mini {
+  width: 34px;
+  height: 34px;
+}
+
+.mdc-fab--mini > svg.mdc-fab--icon {
+  width: 17px;
+  height: 17px;
+}
+
+.mdc-fab--mini.mdc-fab--minix2 {
+  width: 28px;
+  height: 28px;
+}
+
+.mdc-fab--mini.mdc-fab--minix2 > svg.mdc-fab--icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* mdc-list */
+
+.mdc-list {
+  padding-bottom: 0;
+}
+
+.mdc-list-item svg {
+  margin-right: 12px;
+}
+
+/* mdc-tab */
+
+/* Smooshes the tabs but keeps all the tabs still visible when screen width is small */
+.mdc-tab {
+  font-size: 12px;
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.mdc-tab__icon {
+  width: 20px;
+  height: 20px;
+}
+
+.mdc-tab-content:not(.mdc-tab-content--active) {
+  display: none;
+}
+
+.mdc-tab-content--active {
+  display: block;
+}
+
+/* mdc-dialog */
+
+.mdc-dialog__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-dialog__title svg:not(.mdc-checkbox__checkmark):not(.mdc-tab__icon):not(.mdc-fab--icon) {
+  vertical-align: initial;
+}
+
+.mdc-dialog ul:not(.mdc-list), ol:not(.mdc-list) {
+  margin-left: 2rem;
+}
+
+/* Removes the auto-focus on anchors in mdc-dialogs. Note: This is a band-aid fix as it doesn't solve the root of the problem (why is the a getting autofocused?) */
+.mdc-dialog a:focus {
+  outline: 0;
+}
+
+/* Footer for long GitHub link, disclaimer, and so on. Used by both popup and options dialogs */
+.dialog-footer {
+  margin-top: 1rem;
+  text-align: right;
+}
+
+/* mdc-snackbar */
+
+/* Custom snackbar icon that is shown left of the labelText */
+.mdc-snackbar-icon {
+  fill: rgba(255,255,255,.87);
+  margin-left: 1rem;
+}
+
+/* mdc-select */
+
+/* Must specify width manually starting in MDC 6.0 */
+.mdc-select__anchor {
+  min-width: initial;
+  width: 180px;
+  height: 40px;
+}
+
+/* Adjust mdc-select label float above due to adjusting the height */
+.mdc-select--outlined .mdc-select__anchor.mdc-notched-outline--upgraded .mdc-floating-label--float-above,
+.mdc-select--outlined .mdc-select__anchor .mdc-notched-outline--upgraded .mdc-floating-label--float-above {
+  transform: translateY(-27px) scale(0.75);
+}
+
+/* Adjust dropdown icon due to changing height */
+.mdc-select__dropdown-icon {
+  bottom: 10px;
+}
+
+.mdc-select__selected-text, .mdc-list {
+  font-size: 0.8rem;
+}
+
+/* mdc-chip */
+
+.mdc-chip {
+  font-size: 12px;
+}
+
+.mdc-chip:not(.mdc-chip--selected) svg.mdc-chip__icon {
+  visibility: hidden;
+}
+
+.mdc-chip.mdc-chip--selected svg.mdc-chip__icon {
+  visibility: initial;
+  fill: var(--mdc-theme-primary);
+}
+
+/* mdc-text-field */
+
+/* Resize and adjust label above to accommodate shorter height */
+.mdc-text-field {
+  height: 40px;
+}
+
+.mdc-text-field--outlined .mdc-floating-label--float-above {
+  top: 69%;
+}
+
+.mdc-text-field textarea, .mdc-text-field input {
+  font-size: 0.8rem;
+}
+
+.mdc-text-field--textarea .mdc-text-field__input {
+  height: 64px;
+  line-height: 1rem;
+}
+
+.mdc-text-field.mdc-text-field--textarea {
+  height: auto;
+}
+
+/* .mdc-form-field label */
+
+/* Removes padding left on labels next to form fields like checkboxes and radios to save 4 pixels. Ripple won't overlap */
+.mdc-form-field > label {
+  padding-left: 0;
+}
+
+/* .mdc-switch */
+
+.mdc-switch__prefix {
+  display: inline-block;
+  margin-bottom: -2px;
+}
+
+.mdc-switch__icon {
+  vertical-align: text-bottom;
+}
+
+/* Balloon */
+
+/* Don't put color on border-bottom so success and error tooltips can override this color via a class selector */
+[aria-describedby="tooltip"]:not(.tooltip-without-underline) {
+  border-bottom: 1px dotted;
+  padding-bottom: 3px;
+  width: fit-content;
+}
+
+/* line-height: normal to keep the line-height normal in mdc-dialogs */
+[aria-label][data-balloon-pos]:after {
+  color: white;
+  padding: 4px 8px;
+  font-size: 13px;
+  border-radius: 4px;
+  line-height: normal;
+  max-width: 350px;
+}
+
+/* Needed to keep the letter spacing normal when balloon tooltips are placed on mdc-buttons */
+[aria-label][data-balloon-pos]:after {
+  letter-spacing: normal;
+}
+
+/* Mascot */
+
+/* width/height - URL Incrementer: 200 Infy Scroll: 345/567 Downloadyze: 200 */
+/* Important: URLI/Downloadyze need only width (leave height alone to center them in dialogs/messages) */
+.mascot {
+  width: 345px;
+  height: 567px;
+  z-index: 2147483647;
+}
