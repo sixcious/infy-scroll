@@ -50,7 +50,7 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 Since releasing Infy Scroll in August 2020, if you were to ask me what my "holy grail" was — that is, the one feature I had been working my hardest to implement — it's always been an append mode for AJAX websites. After two years of on and off development, I'm really proud to offer this completely new and innovative append mode in Version 0.8, The Eightfinity Edition. AJAX is mostly in the proof of concept stage right now, but does currently work on the Japanese version of Pixiv.
 
 #### AJAX Demo (Pixiv JP)
-
+<img src="https://raw.githubusercontent.com/sixcious/infy-scroll/main/assets/ajax.gif">
 
 ##### Settings Used (Version 0.8):
 ````
