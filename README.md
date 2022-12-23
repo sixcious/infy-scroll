@@ -46,6 +46,29 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 
 `*`*Tested on March 30, 2021. Requires page refresh due to SPA (Single Page Application) nature. Links must be opened in a new tab due to the nature of Iframes. Websites can change their code at any time and break these settings. `AUTO` mode may not work due to the complexity involved. Firefox users will need to use the regular `Iframe` append mode. This is just a simple example to show Infy's potential.*
 
+## Introducing AJAX
+Since releasing Infy Scroll in August 2020, if you were to ask me what my "holy grail" was — that is, the one feature I had been working my hardest to implement — it's always been an append mode for AJAX websites. After two years of on and off development, I'm really proud to offer this completely new and innovative append mode in Version 0.8, The Eightfinity Edition. AJAX is mostly in the proof of concept stage right now, but does currently work on the Japanese version of Pixiv.
+
+#### AJAX Demo (Pixiv JP)
+
+
+##### Settings Used (Version 0.8):
+````
+ {
+    "action": "button",
+    "append": "ajax",
+    "button": "//nav/button[@aria-current='true']/following-sibling::a[not(@hidden)]",
+    "pageElement": "//ul[@class='sc-l7cibp-1 krFoBL']/*",
+    "removeElement": "//li[@class='sc-l7cibp-2 gpVAva'][./div[@class='sc-rp5asc-0 fxGVAF']]|//li[not(div)]",
+    "spa": "https://www.pixiv.net",
+    "url": "^https://www\\.pixiv\\.net/.*/?tags/.*/(illustrations|manga)"
+  }
+````
+*You can copy and paste these settings using the new Add Save feature in the Options Screen. But please note that these settings only work with the Japanese language version of Pixiv. You must change the language to be 日本語 on the bottom of the site (if not signed in).*
+
+## SPA Support
+[SPAs (Single-page Applications)](https://developer.mozilla.org/docs/Glossary/SPA) are tricky to deal with because they update their page content dynamically, and sometimes don't even update the address bar. However, Infy can now watch for changes on the page and auto-activate and auto-deactivate itself if the website changes its content dynamically. It even works here on GitHub and on Pixiv. Just check the setting in the Scripts dialog in the UI Window (Version 0.8) and save it. No more refreshing the page!
+
 ## Help Guide
 [View the Help Guide!](https://github.com/sixcious/infy-scroll/wiki)
 
