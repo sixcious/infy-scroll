@@ -49,6 +49,21 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 ## Help Guide
 [View the Help Guide!](https://github.com/sixcious/infy-scroll/wiki)
 
+## Install
+Installing the latest version here on GitHub is easy! First, [download the zip](https://github.com/sixcious/infy-scroll/archive/refs/heads/main.zip) or clone the repository. Unzip it to your preferred location and follow the below steps, depending on your browser:
+
+#### Chrome/Edge
+1. [Follow these instructions](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked) to enable Developer Mode and load an Unpacked Extension
+2. When prompted for the location, select the `src/base` folder and the extension should install
+
+#### Firefox
+1. Copy the `src/firefox/manifest.json` file and paste/overwrite the `src/base/manifest.json` file
+2. [Follow these instructions](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Your_first_WebExtension#installing) to load a Temporary Add-on
+2. When prompted for the location, select the `src/base` folder and the extension should install (until you close your browser)
+
+#### GitHub Install Important Note
+I will make breaking changes as I develop and update Infy here on GitHub, so there is no version update path for installing from GitHub. For Saving URLs, I recommend instead using the [official web store versions](https://github.com/sixcious/infy-scroll/edit/main/README.md#available-for) as your main version and waiting until I publish the next version update.
+
 ## FAQ
 
 #### What happened to the Append Scripts and Styles options?
