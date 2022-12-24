@@ -47,7 +47,7 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 `*`*Tested on March 30, 2021. Requires page refresh due to SPA (Single Page Application) nature. Links must be opened in a new tab due to the nature of Iframes. Websites can change their code at any time and break these settings. `AUTO` mode may not work due to the complexity involved. Firefox users will need to use the regular `Iframe` append mode. This is just a simple example to show Infy's potential.*
 
 ## Introducing AJAX
-Since releasing Infy Scroll in August 2020, if you were to ask me what my "holy grail" was — that is, the one feature I had been working my hardest to implement — it's always been an append mode for AJAX websites. After two years of on and off development, I'm really proud to offer this completely new and innovative append mode in Version 0.8, The Eightfinity Edition. AJAX is mostly in the proof of concept stage right now, but does currently work on the Japanese version of Pixiv.
+Since releasing Infy Scroll in August 2020, if you were to ask me what my "holy grail" was — that is, the one feature I had been working my hardest to implement — it's always been an append mode for AJAX websites. After two years of on and off development, I'm really proud to offer this completely new and innovative append mode in Version 0.8, The Eightfinity Edition. AJAX is mostly in the proof of concept stage right now, but does work on a small number of sites, including the Japanese version of Pixiv.
 
 #### AJAX Demo (Pixiv JP)
 <img src="https://raw.githubusercontent.com/sixcious/infy-scroll/main/assets/ajax.gif">
@@ -73,19 +73,18 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what my "holy 
 [View the Help Guide!](https://github.com/sixcious/infy-scroll/wiki)
 
 ## Installing
-Installing the latest version here on GitHub is easy! First, [download the zip](https://github.com/sixcious/infy-scroll/archive/refs/heads/main.zip) or clone the repository. Unzip it to your preferred location and follow the below steps, depending on your browser:
+Installing the latest version here on GitHub is easy! First, [download the zip](https://github.com/sixcious/infy-scroll/archive/refs/heads/main.zip) and unzip it or clone the repo. Then:
 
-#### Chrome/Edge
+#### Chrome and Edge
 1. [Follow these instructions](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked) to enable Developer Mode and load an Unpacked Extension
-2. When prompted for the location, select the `src/base` folder and the extension should install
 
 #### Firefox
 1. Copy the `src/firefox/manifest.json` file and paste/overwrite the `src/base/manifest.json` file
 2. [Follow these instructions](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Your_first_WebExtension#installing) to load a Temporary Add-on
-2. When prompted for the location, select the `src/base` folder and the extension should install (until you close your browser)
 
-#### GitHub Install Important Note
-I will make breaking changes as I develop and update Infy here on GitHub, so there is no version update path for installing from GitHub. For Saving URLs, I recommend instead using the [official web store versions](https://github.com/sixcious/infy-scroll/edit/main/README.md#available-for) as your main version and waiting until I publish the next version update.
+**Finally**: When prompted for the location, select the `src/base` folder (Firefox: select `manifest.json`) and it will install.
+
+**Important**: There is no version update path for the GitHub build, so use the [web store version](https://github.com/sixcious/infy-scroll#available-for) as your main version.
 
 ## FAQ
 
