@@ -64,7 +64,7 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what my "holy 
   "url": "^https://www\\.pixiv\\.net/.*/?tags/.*/(illustrations|manga)"
 }
 ````
-*You can copy and paste these settings using the new Add Save feature in the Options Screen. But please note that these settings only work with the Japanese language version of Pixiv. You must change the language to be 日本語 on the bottom of the site (if not signed in).*
+*You can copy and paste these settings using the new Add Save feature in the Options Screen. But please note that these settings only work with the Japanese language version of Pixiv. You must change the language to be 日本語 on the bottom of the site (if not signed in). Tested on December 22, 2022.*
 
 ## SPA Support
 [SPAs (Single-page Applications)](https://developer.mozilla.org/docs/Glossary/SPA) are tricky to deal with because they update their page content dynamically, and sometimes don't even update the address bar. However, Infy can now watch for changes on the page and auto-activate and auto-deactivate itself if the website changes its content dynamically. It even works here on GitHub and on Pixiv. Just check the setting in the Scripts dialog in the UI Window (Version 0.8) and save it. No more refreshing the page!
