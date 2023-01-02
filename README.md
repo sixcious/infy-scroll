@@ -72,7 +72,7 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what my "holy 
 ## Help Guide
 [View the Help Guide!](https://github.com/sixcious/infy-scroll/wiki)
 
-## Installing
+## Installation
 Installing the latest version here on GitHub is easy! First, [download the zip](https://github.com/sixcious/infy-scroll/archive/refs/heads/main.zip) and unzip it or clone the repo. Then:
 
 #### Chrome and Edge
