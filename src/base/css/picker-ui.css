@@ -1,0 +1,255 @@
+/**
+ * Infy Scroll
+ * @copyright (c) 2020 Roy Six
+ * @license https://github.com/sixcious/infy-scroll/blob/main/LICENSE
+ */
+
+/* This doesn't look very good, but gives us a transparent iframe based on hover */
+
+/*
+:root:hover {
+  opacity: 1 !important;
+  background: initial !important;
+}
+
+:root {
+  opacity: 0.4 !important;
+  background: transparent !important;
+}
+*/
+
+/* Header */
+
+header {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+
+svg#header-svg {
+  width: 40px;
+  height: 40px;
+  margin-top: -2px;
+}
+
+#picker-header {
+  position: absolute;
+  top: 6px;
+  left: 46px;
+  font-weight: 500;
+  font-size: 1.3rem;
+}
+
+/* Save Button */
+
+#save-fab-div, #copy-fab-div {
+  position: absolute;
+  top: 4px;
+}
+
+#save-fab-div {
+  left: 90px;
+}
+
+#copy-fab-div {
+  left: 32px;
+}
+
+/* Type Chip-Set (Selector, XPath, Property) */
+
+#type-chip-set {
+  position: absolute;
+  top: -6px;
+  left: 130px;
+}
+
+#selector-chip {
+  position: absolute;
+}
+
+#xpath-chip {
+  position: absolute;
+  left: 104px;
+}
+
+#property-chip {
+  position: absolute;
+  left: 184px;
+}
+
+/* Options Button */
+
+#options-button {
+  position: absolute;
+  top: -2px;
+  left: 330px;
+}
+
+#options-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Nav */
+
+nav {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+/* Options Dialog */
+
+.mdc-dialog__title:before {
+  height: initial;
+}
+
+.mdc-dialog--scrollable .mdc-dialog__title {
+  font-size: 0.9rem;
+  padding: 8px 0 0 0;
+  border: 0;
+}
+
+/* Noticing a vertical scrollbar if we don't lower the padding-bottom from 8px (mdc default) to 4px */
+.mdc-dialog--scrollable .mdc-dialog__content {
+  padding-top: 0;
+  padding-bottom: 4px;
+}
+
+/* Need to remove padding to squeeze it in */
+.mdc-text-field+.mdc-text-field-helper-line {
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.mdc-dialog #property-text-field {
+  margin: 8px 0;
+}
+
+.mdc-dialog #property-input {
+  width: 200px;
+}
+
+/* Because we have the helper line, it tries to take up the full width, not giving the user more room to click out of the dialog */
+#property-dialog .mdc-dialog__surface {
+  width: 370px;
+}
+
+/* margin-top due to the position absolute of the header and nav */
+main {
+  max-width: 500px;
+  margin-top: 50px;
+  border-top: 1px solid var(--mdc-theme-on-surface);
+  padding: 8px;
+}
+
+#tips {
+  word-break: break-word;
+}
+
+#content {
+  word-break: break-all;
+}
+
+#element-current-label, #data-label {
+  color: var(--mdc-theme-primary);
+  font-weight: 500;
+}
+
+#element-current, #element-list span, #data-value  {
+  font-size: 12px;
+}
+
+#element-list {
+  padding-top: 0;
+}
+
+#element-list .icon-button label {
+  padding: 5px;
+}
+
+#data {
+  margin-top: 1rem;
+}
+
+footer {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--mdc-theme-primary);
+}
+
+/* Icon Button */
+
+.icon-button {
+  display: inline-block;
+  user-select: none;
+}
+
+.icon-button label, .icon-button a {
+  padding: 8px;
+  cursor: pointer;
+}
+
+/* grid-row */
+
+.grid-row-2c {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 0;
+}
+
+.grid-row-2c > * {
+  min-width: 50%;
+}
+
+/* minimize css */
+
+#minimize #ui {
+  width: 256px;
+  height: 80px;
+}
+
+#minimize #type-chip-set, #minimize #options-button, #minimize #tips, #minimize #element-list, #minimize #data, #minimize footer {
+  display: none;
+}
+
+#minimize .grid-row-2c {
+  grid-template-columns: 1fr;
+}
+
+/* Only show first line of element-current text in minimize view */
+#minimize #element-current {
+  height: 17px;
+  overflow: hidden;
+}
+
+/* miscellaneous */
+
+/* Snackbar - Hide OK and other action buttons as they aren't needed */
+.mdc-snackbar__actions {
+  display: none;
+}
+
+/* Debatable, but monospace arguably looks better here */
+#element-current, #data-value, #element-parent, #element-child, #element-next, #element-previous {
+  font-family: "RobotoMono", monospace;
+}
+
+/* Keeps the elements to one line of text space, note that we do not set overflow: hidden on the li itself or else we lose the balloon tooltip */
+#element-current-div, #element-list > li {
+  white-space: nowrap;
+}
+
+#element-current-div, #element-list > li > span {
+  overflow: hidden;
+}
+
+/* Firefox - The icons look clipped due to the hvr-grow effect for some reason. Adding height seems to resolve this */
+@-moz-document url-prefix() {
+  svg:not(.mdc-checkbox__checkmark):not(.mdc-tab__icon):not(.mdc-fab--icon).smaller-icon {
+    height: 18px;
+  }
+}
