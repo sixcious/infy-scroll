@@ -230,7 +230,7 @@ const Background = (() => {
         chrome.tabs.sendMessage(tabId, {receiver: "contentscript", greeting: "movePicker", corner: request.corner});
         break;
       case "updatePickerUI":
-        chrome.tabs.sendMessage(tabId, {receiver: "picker-ui", greeting: "updatePickerUI", picker: request.picker, type: request.type, data: request.data, element: request.element});
+        chrome.tabs.sendMessage(tabId, {receiver: "picker-ui", greeting: "updatePickerUI", picker: request.picker, type: request.type, data: request.data, meta: request.meta, element: request.element});
         break;
       default:
         break;

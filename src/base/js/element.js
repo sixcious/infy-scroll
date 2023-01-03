@@ -54,7 +54,7 @@ const Element_ = (() => {
       }
       el = elements.entries().next().value[0];
       // How does DOMPath know which document we're using?
-      path = DOMPath.generatePath(el, type, algorithm, quote, optimized) + (type === "xpath" ? "/*" : " > *");
+      path = DOMPath.generatePath(el, type, algorithm, quote, optimized).path + (type === "xpath" ? "/*" : " > *");
       // new HoverBox().highlightElement(el, true);
       console.log("autoDetectPageElement() - rule=" + path);
     } catch (e) {

@@ -221,6 +221,7 @@ const PickerUI = (() => {
           DOM["#element-next"].textContent = request.element.next;
           DOM["#element-previous"].textContent = request.element.previous;
           DOM["#data-value"].textContent = request.data;
+          DOM["#data-value"].style.color = request.meta === "error" ? "var(--mdc-theme-error)" : request.meta === "fallback" ? "var(--auto-color)": "";
         }
         break;
       default:

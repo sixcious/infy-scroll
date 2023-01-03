@@ -29,6 +29,7 @@ var Picker = Picker || (() => {
    * @param element   the current element to generate a DOM Path or DOM Property value from
    * @param picker    the picker type ("next", "prev", "button", "element", "remove", or "")
    * @param data      the CSS selector, XPath expression, or DOM Property value for the current element
+   * @param meta      the metadata from DOMPath, e.g. "error" or "fallback"
    * @param type      the path type ("selector" or "xpath")
    * @param algorithm the DOM Path algorithm ("internal" or "chromium")
    * @param quote     the DOM Path quote ("double" or "single")
@@ -46,6 +47,7 @@ var Picker = Picker || (() => {
   let element;
   let picker;
   let data;
+  let meta;
   let type;
   let algorithm;
   let quote;
@@ -412,7 +414,9 @@ var Picker = Picker || (() => {
       data = getElementPropertyValue(element);
     } else {
       // Selector or XPath
-      data = DOMPath.generatePath(element, type, algorithm, quote, optimized, js);
+      const domPath = DOMPath.generatePath(element, type, algorithm, quote, optimized, js);
+      data = domPath.path;
+      meta = domPath.meta;
     }
     // Build out the element object we will send to the UI to update
     const elementObject = {};
@@ -422,7 +426,7 @@ var Picker = Picker || (() => {
     elementObject.next = getElementDetails(element.nextElementSibling);
     elementObject.previous = getElementDetails(element.previousElementSibling);
     // Note do not send out the type as that is how we differentiate between first-time updates (type only) and successive updates
-    Promisify.runtimeSendMessage({receiver: "background", greeting: "updatePickerUI", data: data, element: elementObject});
+    Promisify.runtimeSendMessage({receiver: "background", greeting: "updatePickerUI", data: data, meta: meta, element: elementObject});
     // console.log("parents:");
     // let parent = element.parentNode;
     // while (parent) {
