@@ -73,7 +73,7 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
 [View the Help Guide!](https://github.com/sixcious/infy-scroll/wiki)
 
 ## Installation
-Installing the latest version here on GitHub is easy! First, [download the zip](https://github.com/sixcious/infy-scroll/archive/refs/heads/main.zip) and unzip it or clone the repo. Then:
+Installing from GitHub is super simple. First, [download the zip](https://github.com/sixcious/infy-scroll/archive/refs/heads/main.zip) and unzip it. Then:
 
 #### Chrome and Edge
 1. [Follow these instructions](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked) to enable Developer Mode and load an Unpacked Extension
