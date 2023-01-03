@@ -18,7 +18,7 @@ var DOMPath = DOMPath || (() => {
    * @param quote     the path quote style to use ("single" or "double")
    * @param optimized the path optimization to use (true generates the shortest path and false generates the full path)
    * @param js        the path js boolean (true generates a JavaScript path and false generates a regular DOM path)
-   * @returns {string|null} the CSS Selector or XPath expression
+   * @returns {{path: string, meta: string}} the CSS Selector or XPath expression along with metadata (e.g. "error")
    * @public
    */
   function generatePath(node, type = "selector", algorithm = "internal", quote = "single", optimized=  true, js = false) {
@@ -36,7 +36,7 @@ var DOMPath = DOMPath || (() => {
       chromiumPath = ChromiumPath.generatePath(node, type, quote, optimized);
       if (evaluatePath(chromiumPath, type) === node) {
         console.log("generatePath() - returning chromiumPath");
-        return jsPrefix + chromiumPath + jsSuffix;
+        return { path: jsPrefix + chromiumPath + jsSuffix, meta: "" };
       }
       console.log("generatePath() - chromiumPath failed, checking internalPath ...");
     }
@@ -44,28 +44,28 @@ var DOMPath = DOMPath || (() => {
     internalPath = InternalPath.generatePath(node, type, quote, optimized, false, false);
     if (evaluatePath(internalPath, type) === node) {
       console.log("generatePath() - returning internalPath");
-      return jsPrefix + internalPath + jsSuffix;
+      return { path: jsPrefix + internalPath + jsSuffix, meta: algorithm === "chromium" ? "fallback" : ""};
     }
     internalPath = InternalPath.generatePath(node, type, quote, optimized, true, false);
     if (evaluatePath(internalPath, type) === node) {
       console.log("generatePath() - returning internalPath (fallback)");
-      return jsPrefix + internalPath + jsSuffix;
+      return { path: jsPrefix + internalPath + jsSuffix, meta: algorithm === "chromium" ? "fallback" : ""};
     }
     internalPath = InternalPath.generatePath(node, type, quote, optimized, true, true);
     if (evaluatePath(internalPath, type) === node) {
       console.log("generatePath() - returning internalPath (fallback2)");
-      return jsPrefix + internalPath + jsSuffix;
+      return { path: jsPrefix + internalPath + jsSuffix, meta: algorithm === "chromium" ? "fallback" : "" };
     }
-    if (!chromiumPath) {
+    if (algorithm === "internal") {
       chromiumPath = ChromiumPath.generatePath(node, type, quote, optimized);
       if (evaluatePath(chromiumPath, type) === node) {
         console.log("generatePath() - returning chromiumPath (fallback because internalPath failed)");
-        return jsPrefix + chromiumPath + jsSuffix;
+        return { path: jsPrefix + chromiumPath + jsSuffix, meta: "fallback" };
       }
     }
     console.log("generatePath() - both the internalPath and chromiumPath failed! The alternate path was:");
     console.log(algorithm === "chromium" ? internalPath : chromiumPath);
-    return jsPrefix + (algorithm === "chromium" ? chromiumPath : internalPath) + jsSuffix;
+    return { path: jsPrefix + (algorithm === "chromium" ? chromiumPath : internalPath) + jsSuffix, meta: "error" };
   }
 
   /**
@@ -179,7 +179,7 @@ var InternalPath = InternalPath || (() => {
     const nodes = document.getElementsByTagName("*");
     const segments = [];
     for (let i = 0; node && node.nodeType === Node.ELEMENT_NODE; node = node.parentNode, i++) {
-      const tag = node.localName.toLowerCase();
+      let tag = node.localName.toLowerCase();
       // html/head/body - In a valid HTML document, there should only be one of these elements. Also, we don't need id or text, and do not want to do class name for html or body because we add the ext-ep-ui-overlay class to either of these two elements
       if (tag === "body" || tag === "html" || tag === "head") {
         segments.unshift(tag);
@@ -189,6 +189,12 @@ var InternalPath = InternalPath || (() => {
         } else {
           continue;
         }
+      }
+      // XPath only: svg elements belong to a different namespace and need to be handled via name() or local-name()
+      // Note: There are an abundance of SVG elements (e.g. path, use) but we'll only check for svg for brevity
+      // @see https://developer.mozilla.org/en-US/docs/Web/SVG/Element
+      if (tag === "svg" && type === "xpath") {
+        tag = "*[name()=" + quote + tag + quote + "]";
       }
       // id() or [@id] - if the id is unique among all the nodes, we'll stop and return. otherwise, we continue on below
       let id = "";
