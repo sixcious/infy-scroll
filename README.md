@@ -47,7 +47,7 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 `*`*Tested on March 30, 2021. Requires page refresh due to SPA (Single Page Application) nature. Links must be opened in a new tab due to the nature of Iframes. Websites can change their code at any time and break these settings. `AUTO` mode may not work due to the complexity involved. Firefox users will need to use the regular `Iframe` append mode. This is just a simple example to show Infy's potential.*
 
 ## Introducing AJAX
-Since releasing Infy Scroll in August 2020, if you were to ask me what is the one feature I was working my hardest to implement — it's always been an append mode for AJAX websites. After two years of on and off development, I'm really proud to offer this completely new and innovative append mode in Version 0.8, The Eightfinity Edition. AJAX is mostly in the proof of concept stage right now, but does work on a small number of sites, including Pixiv.
+Since releasing Infy Scroll in August 2020, if you were to ask me what is the one feature I was working my hardest to implement — it's always been an append mode for [AJAX websites](https://developer.mozilla.org/docs/Glossary/AJAX). After two years of on and off development, I'm really proud to offer this completely new and innovative append mode in Version 0.8, The Eightfinity Edition. AJAX is mostly in the proof of concept stage right now, but does work on a small number of sites, including Pixiv.
 
 #### AJAX Demo (Pixiv)
 <img src="https://raw.githubusercontent.com/sixcious/infy-scroll/main/assets/ajax.gif">
