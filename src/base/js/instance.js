@@ -131,7 +131,8 @@ const Instance = (() => {
       ["insertBefore", "insertBeforePath"],
       ["removeElement", "removeElementPath"],
       ["disableScrollElement", "disableScrollElementPath"],
-      ["disableRemoveElement", "disableRemoveElementPath"]
+      ["disableRemoveElement", "disableRemoveElementPath"],
+      ["hideElement", "hideElementPath"]
     ]);
     if (direction === "source>instance") {
       for (const [key, value] of translations) {
@@ -164,7 +165,7 @@ const Instance = (() => {
     // Return the newly built instance using tab, items, and source (scrollEnabled for Infy-specific logic in shared JS)
     const _ = {};
     _.enabled = items.on && !!(source.saveActivate || source.databaseActivate);
-    _.previouslyEnabled = _.enabled;
+    // _.previouslyEnabled = _.enabled;
     _.scrollEnabled = true;
     _.autoEnabled = false;
     _.multiEnabled = false;
@@ -185,6 +186,7 @@ const Instance = (() => {
     _.databaseActivate = !!source.databaseActivate;
     _.databaseURL = source.databaseURL;
     _.databaseResourceURL = source.databaseResourceURL;
+    _.databaseUpdatedAt = source.databaseUpdatedAt;
     _.databaseBlacklisted = !!source.databaseBlacklisted;
     _.databaseWhitelisted = !!source.databaseWhitelisted;
     _.databaseBlacklistWhitelistURL = source.databaseBlacklistWhitelistURL;
@@ -240,6 +242,7 @@ const Instance = (() => {
     _.disableScrollFunctions = source.disableScrollFunctions || "";
     _.disableRemoveElementPath = source.disableRemoveElementPath || "";
     _.disableRemoveFunctions = source.disableRemoveFunctions || "";
+    _.hideElementPath = source.hideElementPath || "";
     _.autoTimes = items.autoTimes;
     _.autoTimesOriginal = items.autoTimes;
     _.autoSeconds = items.autoSeconds;
@@ -425,6 +428,7 @@ const Instance = (() => {
           source.databaseBlacklistWhitelistURL = databaseActivate.databaseBlacklistWhitelistURL;
           source.databaseURL = is.url;
           source.databaseResourceURL = is.resource_url;
+          source.databaseUpdatedAt = is.updated_at;
           source.databaseFound = true;
           source.databaseISFound = true;
           // Use Save's selection if this is an exact URL save; otherwise calculate the selection as normal later
@@ -499,6 +503,7 @@ const Instance = (() => {
               source.insertBeforePath = ap.insertBefore;
               source.databaseURL = ap.url;
               source.databaseResourceURL = ap.resource_url;
+              source.databaseUpdatedAt = ap.updated_at;
               source.databaseFound = true;
               source.databaseAPFound = true;
               source.via = "database";

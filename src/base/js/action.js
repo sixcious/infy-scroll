@@ -108,7 +108,7 @@ const Action = (() => {
         actionPerformed = increment(action, caller, instance, items);
         break;
       case "button":
-        actionPerformed = button(caller, instance);
+        actionPerformed = button(caller, instance, iframeDocument);
         break;
       // For modes that only have one action like Auto, Toolkit, and Scroll, we treat "list" the same as an "increment" of an array (only one possible direction in list - increment)
       case "list":
@@ -361,9 +361,9 @@ const Action = (() => {
    * @returns {boolean|*} true if the action was performed, false otherwise
    * @private
    */
-  function button(caller, instance) {
+  function button(caller, instance, iframeDocument) {
     console.log("button() - type=" + instance.buttonType + ", rule="  + instance.buttonPath);
-    let actionPerformed = Button.clickButton(instance.buttonType, instance.buttonPath);
+    let actionPerformed = instance.append === "ajax" ? Button.clickButton(instance.buttonType, instance.buttonPath, iframeDocument) : Button.clickButton(instance.buttonType, instance.buttonPath);
     if (actionPerformed) {
       updateTab(caller, instance);
     } else {
@@ -575,7 +575,8 @@ const Action = (() => {
       //   instance = Scroll.getInstance();
       // }
       // Down action while not enabled allows it to start using default settings or re-start if it was previously enabled already
-      if (!instance.previouslyEnabled && instance.via === "items") {
+      // if (!instance.previouslyEnabled && instance.via === "items") {
+      if (!instance.started && instance.via === "items") {
         // // This is the only opportunity (besides the Popup) that we have of getting the tab ID to identify this instance
         // instance.tabId = await Promisify.runtimeSendMessage({receiver: "background", greeting: "setBadge", badge: "on", temporary: false, needsTabId: true});
         // We only use the default action and append (next page) if we didn't find a save/whitelist/database URL

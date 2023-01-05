@@ -587,6 +587,11 @@ svg.mdc-chip__icon--leading {
   line-height: 1rem;
 }
 
+/* This is normally set as mdc-theme-primary by mdc, but it's a little hard to see the caret cursor on dark themes */
+.mdc-text-field .mdc-text-field__input {
+  caret-color: var(--mdc-text-field__input_color);
+}
+
 .mdc-text-field.mdc-text-field--textarea {
   height: auto;
 }

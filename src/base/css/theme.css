@@ -19,6 +19,7 @@
   --mdc-theme-secondary-dark: #009A86;
   --mdc-theme-error-light: #B00020;
   --mdc-theme-error-dark: #B64D60;
+  --mdc-theme-warning: var(--auto-color);
   --light-background: #FFFFFF;
   --light-background-rgb: 255,255,255;
   --dark-background: #202124; /* #202124 is by Google, also consider: #1C1B22 (Firefox), #0D1117 (GitHub), #1A1E24 (?), #1E1E1E, #191919, #121212 */

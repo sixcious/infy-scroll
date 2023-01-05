@@ -21,16 +21,17 @@ var DOMPath = DOMPath || (() => {
    * @returns {{path: string, meta: string}} the CSS Selector or XPath expression along with metadata (e.g. "error")
    * @public
    */
-  function generatePath(node, type = "selector", algorithm = "internal", quote = "single", optimized=  true, js = false) {
+  function generatePath(node, type = "selector", algorithm = "internal", quote = "single", optimized =  true, js = false) {
     console.log("generatePath() - type=" + type + ", algorithm=" + algorithm + ", quote=" + quote + ", optimized=" + optimized + ", node=");
     console.log(node);
     quote = quote === "single" ? "\'" : "\"";
+    // When constructing the JS Path, we use the inverse of quote and come up with a prefix and suffix based on the type. If jspath is false, these will be empty
+    const jsQuote = quote === "\"" ? "\'" : "\"";
+    const jsPrefix = js ? type === "selector" ? "document.querySelector(" + jsQuote : "document.evaluate(" + jsQuote  : "";
+    const jsSuffix = js ? type === "selector" ? jsQuote + ");" : jsQuote + ", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;" : "";
+    // Paths will be continue to be generated if they fail to match the node as this function progresses
     let internalPath = "";
     let chromiumPath = "";
-    // When constructing the JS Path, we use the inverse of quote and come up with a prefix and suffix based on the type. If jspath is false, these will be empty
-    let jsQuote = quote === "\"" ? "\'" : "\"";
-    let jsPrefix = js ? type === "selector" ? "document.querySelector(" + jsQuote : "document.evaluate(" + jsQuote  : "";
-    let jsSuffix = js ? type === "selector" ? jsQuote + ");" : jsQuote + ", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;" : "";
     // algorithm = "chromium"
     if (algorithm === "chromium") {
       chromiumPath = ChromiumPath.generatePath(node, type, quote, optimized);
@@ -191,9 +192,9 @@ var InternalPath = InternalPath || (() => {
         }
       }
       // XPath only: svg elements belong to a different namespace and need to be handled via name() or local-name()
-      // Note: There are an abundance of SVG elements (e.g. path, use) but we'll only check for svg for brevity
+      // Note: There are an abundance of SVG elements (e.g. path, use) but we'll only check for the popular ones for brevity
       // @see https://developer.mozilla.org/en-US/docs/Web/SVG/Element
-      if (tag === "svg" && type === "xpath") {
+      if ((tag === "svg" || tag === "path" || tag === "use") && type === "xpath") {
         tag = "*[name()=" + quote + tag + quote + "]";
       }
       // id() or [@id] - if the id is unique among all the nodes, we'll stop and return. otherwise, we continue on below

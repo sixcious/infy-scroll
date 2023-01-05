@@ -20,9 +20,9 @@
  */
 (() => {
 
-  // TODO: Make the CustomEvent random for better security. This is hard to achieve in a static script file...
-  const EVENT_AJAX = new URLSearchParams(document.currentScript.src.split("?")[1]).get("eventName");
-  // const EVENT_AJAX = "InfyScrollAJAX";
+  // TODO: We can make the event name random by passing in a parameter to this script, like this:
+  // const EVENT_AJAX = new URLSearchParams(document.currentScript.src.split("?")[1]).get("eventName");
+  const EVENT_AJAX = "InfyScrollAJAX";
 
   /**
    * Listens to the {@link EVENT_AJAX} event.

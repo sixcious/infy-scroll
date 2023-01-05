@@ -563,7 +563,8 @@ const Options = (() => {
         const usersArray = [];
         creators.forEach((key, value) => { usersArray.push(value + " - " + key); });
         let keys = new Map();
-        database.forEach(d => { const iterations = Object.keys(d).filter(k => !["created_by", "resource_url", "updated_at"].includes(k)); for (const key of iterations) { keys.set(key, (keys.get(key) || 0) + 1); } });
+        // database.forEach(d => { const iterations = Object.keys(d).filter(k => !["created_by", "resource_url", "updated_at"].includes(k)); for (const key of iterations) { keys.set(key, (keys.get(key) || 0) + 1); } });
+        database.forEach(d => { for (const key of Object.keys(d.data)) { keys.set(key, (keys.get(key) || 0) + 1); } });
         keys = new Map([...keys].sort((a, b) => b[1] - a[1]));
         const keysArray = [];
         keys.forEach((key, value) => { keysArray.push(value + " - " + key); });

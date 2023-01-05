@@ -479,7 +479,11 @@ const Popup = (() => {
     DOM["#database-whitelist-icon"].style.display = !instance.saveFound && instance.databaseFound && instance.databaseWhitelisted ? "" : "none";
     DOM["#database-whitelist-icon-title"].textContent = instance.databaseWhitelisted ? chrome.i18n.getMessage("database_whitelist_icon_title") + " " + instance.databaseBlacklistWhitelistURL : "";
     DOM["#database-icon"].style.display = !instance.saveFound && instance.databaseFound ? "" : "none";
-    DOM["#database-icon-title"].textContent = instance.databaseFound ? chrome.i18n.getMessage("database_" + (instance.databaseISFound ? "is_" : "ap_") + "icon_title") + " " + (instance.databaseResourceURL ? chrome.i18n.getMessage("database_click_icon_title") + " " : "") + instance.databaseURL : "";
+    DOM["#database-icon-title"].textContent = instance.databaseFound ?
+      chrome.i18n.getMessage("database_" + (instance.databaseISFound ? "is_" : "ap_") + "icon_title") +
+      " " +
+      (instance.databaseResourceURL ? chrome.i18n.getMessage("database_click_icon_title") + " " : "") + instance.databaseURL + " " +
+      (instance.databaseUpdatedAt ? chrome.i18n.getMessage("database_updated_icon_title").replace("?", instance.databaseUpdatedAt) : "") : "";
     DOM["#auto-slideshow-icon"].style.display = instance.autoEnabled && instance.autoSlideshow ? "" : "none";
     DOM["#shuffle-icon"].style.display = instance.enabled && instance.shuffleEnabled ? "" : "none";
     DOM["#down-button"].style.display = "";
@@ -1021,7 +1025,7 @@ const Popup = (() => {
     }
     // No errors: good to go and finish setting up _ to re-set the new instance (clicking Accept enables this instance)
     _.enabled = true;
-    _.previouslyEnabled = true;
+    // _.previouslyEnabled = true;
     // Need this to reset the URLs array if changing the selection or adjusting other properties:
     _.urls = [];
     const precalculateProps = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "incrementPrecalculateURLs", instance: _});

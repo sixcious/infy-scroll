@@ -76,7 +76,7 @@ const Scroll = (() => {
    * @param ajaxObserver         the mutation observer object that observes the mutations in the AJAX Append mode
    * @param spaObserver          the mutation observer object that observes the mutations if this is an SPA that changes its page content dynamically
    */
-  let EVENT_AJAX = "InfyScrollAJAX";
+  const EVENT_AJAX = "InfyScrollAJAX";
   const EVENT_ON = "GM_AutoPagerizeLoaded";
   const EVENT_PAGE_APPENDED = "GM_AutoPagerizeNextPageLoaded";
   const EVENT_NODE_APPENDED = "AutoPagerize_DOMNodeInserted";
@@ -96,6 +96,7 @@ const Scroll = (() => {
   let iframeDocument;
   let insertionPoint;
   let pageElements;
+  let pageElementsInnerHTML;
   // let allElements;
   let button_;
   let iframe_;
@@ -189,13 +190,6 @@ const Scroll = (() => {
       // Scroll Listener passive should already be the default on scroll events
       window.addEventListener("scroll", scrollListener, { passive: true });
     }
-    // The AJAX Observer is only added if we are removing elements
-    if (instance.append === "ajax" && instance.removeElementPath) {
-      ajaxObserver = new MutationObserver(ajaxObserverCallback);
-      // TODO: Switch back to false subtree
-      // ajaxObserver.observe(insertionPoint && insertionPoint.parentNode ? insertionPoint.parentNode : document.body, { childList: true, subtree: false });
-      ajaxObserver.observe(insertionPoint && insertionPoint.parentNode ? insertionPoint.parentNode : document.body, { childList: true, subtree: true });
-    }
   }
 
   /**
@@ -213,11 +207,6 @@ const Scroll = (() => {
       intersectionObserver = undefined;
     } else {
       window.removeEventListener("scroll", scrollListener);
-    }
-    // AJAX MutationObserver
-    if (ajaxObserver) {
-      ajaxObserver.disconnect();
-      ajaxObserver = undefined;
     }
   }
 
@@ -262,20 +251,16 @@ const Scroll = (() => {
         // // [...node.getElementsByTagName("*")].concat(node).forEach(n => {
         // //   // sanitize(n);
         // // });
-        let removeElements = [];
-        if (instance.pageElementType === "selector") {
-          const result = document.querySelectorAll(instance.removeElementPath);
-          removeElements = Array.from(result);
-        } else {
-          const result = document.evaluate(instance.removeElementPath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-          if (result && result.snapshotLength > 0) {
-            for (let i = 0; i < result.snapshotLength; i++) {
-              removeElements.push(result.snapshotItem(i));
-            }
-          }
-        }
+        const removeElements = getElements(instance.removeElementPath, instance.pageElementType).elements;
         for (const element of removeElements) {
           element.remove();
+        }
+        const hideElements = getElements(instance.hideElementPath, instance.pageElementType).elements;
+        for (const element of hideElements) {
+          console.log("hiding element!!!!! " + element.className);
+          // element.style.visibility = "hidden !important";
+          element.style.display = "none";
+//          element.setProperty("display", "none", "important");
         }
         break;
       }
@@ -300,7 +285,7 @@ const Scroll = (() => {
           if (!document.contains(page.element)) {
             console.log("spaObserverCallback() - stopping!");
             check = true;
-            await stop();
+            await stop("spaObserverCallback");
             break;
           }
         }
@@ -528,7 +513,7 @@ const Scroll = (() => {
       case "element": appendDivider(); appendElement(caller); appendLoading(); break;
       case "media":   appendDivider(); appendMedia(caller);   appendLoading(); break;
       case "none":                     appendNone(caller);                     break;
-      case "ajax":    appendDivider(); appendAjax(caller);                     break;
+      case "ajax":    appendDivider(); appendElement(caller); appendLoading(); break;
       default:                                                                 break;
     }
   }
@@ -653,7 +638,8 @@ const Scroll = (() => {
       // Element Iframe (Import) is super simple and just reuses the same appendElement code we've been using
       else if (iframeMode === "import") {
         // TODO: Note that we already set the height to 0px in the initial IFRAME_STYLE. Is this display: none style necessary?
-        iframe_.style.setProperty("display", "none", "important");
+        // iframe_.style.setProperty("display", "none", "important");
+        iframe_.style.setProperty("height", "1px", "important");
         // TODO: pageElementIframeWait is a hidden variable not exposed to the user, but can bet set in a save or database URL. Remove this in the future when we're sure we don't need it
         await Promisify.sleep(instance.pageElementIframeWait);
         // iframeMutationObserver Method (Bailing on this approach as it isn't reliable):
@@ -711,10 +697,13 @@ const Scroll = (() => {
   async function appendElement(caller) {
     console.log("appendElement() - caller=" + caller);
     // If we are in Element Iframe (Import) mode, we need to use the iframe obtained in appendIframe()
-    if (instance.pageElementIframe) {
+    if (instance.pageElementIframe || instance.append === "ajax") {
+      if (instance.append === "ajax") {
+        await scrollIframe(iframe_);
+      }
       // To be safe, we'll await both promises and wait for the next link as well as the page elements even though it's not necessary
       // pageElements = await getPageElementsFromIframe(nextDocument);
-      [pageElements] = await Promise.all([getPageElementsFromIframe(iframeDocument), instance.action === "next" || instance.action === "prev" ? getNextLinkFromIframe(iframeDocument) : 1]);
+      [pageElements] = await Promise.all([getPageElementsFromIframe(iframeDocument), instance.action === "next" || instance.action === "prev" ? getNextLinkFromIframe(iframeDocument) : instance.append === "ajax" ? getButtonFromIframe(iframeDocument) : 1]);
       // TODO: See if we can refactor this so we can place this consistently in all append modes. This is normally done in getNextDocument(), but in Element Iframe mode we aren't sure if the elements have loaded till now
       setLinksNewTab(pageElements);
       // We store a clone of the iframeDocument after we have successfully retrieved the page elements and next link
@@ -757,7 +746,7 @@ const Scroll = (() => {
       insertionPoint.parentNode.insertBefore(observableElement, insertionPoint);
       pageElements.unshift(observableElement);
     }
-    // We must calculate the insert element now before this function is called again and we get the next document
+    // We must calculate the insertion point now before this function is called again and we get the next document
     insertionPoint = getInsertionPoint(pageElements, false);
     // resizeMedia("element", undefined, welements);
     appendFinally("element", observableElement, caller);
@@ -854,7 +843,7 @@ const Scroll = (() => {
       insertionPoint.parentNode.insertBefore(observableElement, insertionPoint);
       pageElements.unshift(observableElement);
     }
-    // We must calculate the insert element now before this function is called again and we get the next document
+    // We must calculate the insertion point now before this function is called again and we get the next document
     insertionPoint = getInsertionPoint(pageElements, false);
     triggerCustomEvent(EVENT_AJAX, document, {
       "disableRemoveElementPath": instance.disableRemoveElementPath || DOMPath.generatePath(insertionPoint.parentNode, instance.pageElementType).path,
@@ -901,6 +890,22 @@ const Scroll = (() => {
       // Action.performAction("stop", "appendFinally", instance, items, currentDocument, iframeDocument);
       return;
     }
+    // AJAX?
+    if (instance.append === "ajax") {
+      // await Promisify.sleep(2000);
+      // Button.clickButton(instance.buttonType, instance.buttonPath, iframeDocument || {});
+      // await Promisify.sleep(1000);
+      // iframe_.contentWindow.scrollTo({top: 0, behavior: "smooth"});
+      // await Promisify.sleep(1000);
+      // iframe_.contentWindow.scrollTo({top: 10000, behavior: "smooth"});
+      //window.scrollTo({ top: 0, behavior: 'smooth' })
+      //nestedElement.scrollTo(0, nestedElement.scrollHeight);
+      //myIframe.contentWindow.scrollTo(xcoord,ycoord);
+      // setTimeout(() => {
+      //   Button.clickButton(instance.buttonType, instance.buttonPath, iframeDocument || {});
+      // }, 2000);
+
+    }
     // Fix Lazy Loading Post
     fixLazyLoadingPost();
     // Execute Custom Scripts at this point on the root document if we need to (always *after* we append the page's scripts)
@@ -925,7 +930,7 @@ const Scroll = (() => {
     // Store a reference to the current iframe and pageElements for this page in case we need to remove them
     if (iframe_) {
       page.iframe = iframe_;
-      iframe_ = undefined;
+      // iframe_ = undefined;
     }
     if (pageElements) {
       page.pageElements = pageElements;
@@ -1499,15 +1504,16 @@ const Scroll = (() => {
       case "ajax":
         pageElements = getPageElements(document);
         // allElements = new Set(elements);
+        // TODO: This isn't needed anymore due to the new multiple activation check
         // Certain websites (p) sometimes load really slow, so we need to wait a few seconds and try prepareFirstPage again
         // This logic, in reality, only applies to Saved URLs as Database URLs won't be "found" if their elements are 0 initially in buildInstance()
-        if (!pageElements || pageElements.length <= 0) {
-          console.log("prepareFirstPage() - no elements, so retrying again using setTimeout...");
-          if (instance.scrollPrepareFirstPageAttempts <= 5) {
-            setTimeout(() => { instance.scrollPrepareFirstPageAttempts++; prepareFirstPage(); instance.isLoading = false; }, 1000 * (instance.scrollPrepareFirstPageAttempts));
-          }
-          return;
-        }
+        // if (!pageElements || pageElements.length <= 0) {
+        //   console.log("prepareFirstPage() - no elements, so retrying again using setTimeout...");
+        //   if (instance.scrollPrepareFirstPageAttempts <= 5) {
+        //     setTimeout(() => { instance.scrollPrepareFirstPageAttempts++; prepareFirstPage(); instance.isLoading = false; }, 1000 * (instance.scrollPrepareFirstPageAttempts));
+        //   }
+        //   return;
+        // }
         // In ajax mode, we need to store the elements in a variable outside this function for later use
         // if (instance.append === "ajax") {
         //   allElements = new Set(elements);
@@ -1516,18 +1522,15 @@ const Scroll = (() => {
         // if (items.debugEnabled && insertionPoint && insertionPoint.nodeType === Node.TEXT_NODE) {
         //  insertionPoint.textContent = "Infy Scroll (Debug Mode) Insertion Point";
         // }
-        // TODO: Decide on how the parent is decided. Should it be the lastElement's parentNode or insert's parentNode? What if the insert element is NOT among the elements. Should we validate this?
+        // TODO: Decide on how the parent is decided. Should it be the lastElement's parentNode or insert's parentNode? What if the insertion point is NOT among the elements. Should we validate this?
         // The parent should prioritize being the insertionPoint's parentNode instead of the lastElement's parentNode. This is evident on some obscure insertBefore URLs
         // See: https://movie.walkerplus.com/list/2.html
         // parent_ = insertionPoint && insertionPoint.parentNode ? insertionPoint.parentNode : undefined;
-        // lastElement && lastElement.parentNode ? lastElement.parentNode : undefined;
         observableElement = getObservableElement(pageElements);
-        if (!observableElement && insertionPoint && insertionPoint.parentNode) {
+        if (!observableElement && pageElements && pageElements[0]) {
           observableElement = document.createElement("span");
-          // insertionPoint.parentNode.prepend(observableElement);
-          // Put the page element right before the first element. The first element may not necessarily be the first child element of the parent, so we can't use insertionPoint.parentNode.prepend(observableElement)
-          const firstElement = pageElements[0];
-          firstElement.parentNode.insertBefore(observableElement, firstElement);
+          // Put the observable element right before the first page element. The first page element may not necessarily be the first child element of the parent, so we can't use insertionPoint.parentNode.prepend(observableElement)
+          pageElements[0]?.parentNode?.insertBefore(observableElement, pageElements[0]);
         }
         // resizeMedia("element", document.body);
         if (insertionPoint.parentElement && (instance.scrollDivider === "element" || instance.scrollDivider === "yes")) {
@@ -1538,11 +1541,33 @@ const Scroll = (() => {
           }
         }
         if (instance.append === "ajax") {
+          iframe_ = document.createElement("iframe");
+          iframe_.src = instance.url;
+          iframe_.style = processStyle(IFRAME_STYLE);
+          iframe_.scrolling = "no";
+          iframe_.frameBorder = "0";
+          document.body.appendChild(iframe_);
+          iframe_.onload = async function () {
+            console.log("ajax - iframe loaded!, iframe");
+            iframeDocument = iframe_.contentDocument;
+            iframe_.style.setProperty("height", "1px", "important");
+            // iframe_.style.setProperty("display", "none", "important");
+            // resizeIframe(iframe_);
+            let iframePageElements;
+            [iframePageElements] = await Promise.all([getPageElementsFromIframe(iframeDocument), getButtonFromIframe(iframeDocument)]);
+            pageElementsInnerHTML = iframePageElements[0]?.parentNode?.innerHTML;
+            console.log("ajax - elements in iframe and button in iframe! innerHTML=")
+            console.log(pageElementsInnerHTML);
+            Button.clickButton(instance.buttonType, instance.buttonPath, iframeDocument);
+            // [iframePageElements] = await Promise.all([getPageElementsFromIframe(iframeDocument), getButtonFromIframe(iframeDocument)]);
+          }
+        }
+        if (instance.append === "ajax-old") {
           const script = document.createElement("script");
-          // We can pass in the random string to the URL as a parameter
-          EVENT_AJAX = instance.randomString;
-          script.src = chrome.runtime.getURL("/js/ajax.js?") + new URLSearchParams({eventName: EVENT_AJAX});
-          // script.src = chrome.runtime.getURL("/js/ajax.js");
+          // TODO: We can make the event name random by passing in a parameter to this script, like this:
+          // EVENT_AJAX = instance.randomString;
+          // script.src = chrome.runtime.getURL("/js/ajax.js?") + new URLSearchParams({eventName: EVENT_AJAX});
+          script.src = chrome.runtime.getURL("/js/ajax.js");
           script.onload = function () {
             console.log("prepareFirstPage() - ajax.js script loaded");
             setTimeout(() => {
@@ -1559,11 +1584,12 @@ const Scroll = (() => {
           };
           (document.head || document.body || document.documentElement).appendChild(script);
         }
+        // TODO: Commenting this out for now since not sure if this is a good idea for page 1 links to open in a new tab
         // Note: We only set the links to open in a new tab on Page 1 for Append Element mode since they are not the entire page
         // Some websites dynamic content anchors haven't yet loaded; this is a bit hacky as we are using setTimeout()...
-        for (let timeoutCheck = 0; timeoutCheck <= 4000; timeoutCheck += 2000) {
-          setTimeout(() => { setLinksNewTab(pageElements); }, timeoutCheck);
-        }
+        // for (let timeoutCheck = 0; timeoutCheck <= 4000; timeoutCheck += 2000) {
+        //   setTimeout(() => { setLinksNewTab(pageElements); }, timeoutCheck);
+        // }
         appendFinally(mode, observableElement, "prepareFirstPage");
         break;
       case "media":
@@ -1689,20 +1715,24 @@ const Scroll = (() => {
         }
         divider.appendChild(container);
         // If the divider's parent element is a grid, we need to adjust it just once by subtracting one from it
-        if (!instance.scrollDividerGridParentModified && instance.scrollDividerGrid > 0 && insertionPoint && insertionPoint.parentElement) {
+        // if (!instance.scrollDividerGridParentModified && instance.scrollDividerGrid > 0 && insertionPoint && insertionPoint.parentElement) {
+        if (instance.scrollDividerGrid > 0 && insertionPoint && insertionPoint.parentElement) {
           const array = window.getComputedStyle(insertionPoint.parentElement).gridTemplateColumns.split(" ");
           array.pop();
           if (array.length > 1) {
             insertionPoint.parentElement.style.setProperty("grid-template-columns", array.join(" "), "important");
           }
-          instance.scrollDividerGridParentModified = true;
+          // For complex sites, sometimes the grid is being appended multiple times and we need to keep modifying it so we can't just do it once as this boolean will restrict it to:
+         // instance.scrollDividerGridParentModified = true;
         }
         // Divider needs to be appended differently depending on the append mode. If element/ajax, use insertionPoint otherwise just append to the end of the document (page and iframe)
-        if (instance.append === "element") {
+        if (instance.append === "element" || instance.append === "ajax") {
           insertionPoint.parentNode.insertBefore(divider, insertionPoint);
-        } else if (instance.append === "ajax") {
-          insertionPoint.parentNode.appendChild(divider);
-        } else {
+        }
+        // else if (instance.append === "ajax") {
+        //   insertionPoint.parentNode.appendChild(divider);
+        // }
+        else {
           document.body.appendChild(divider);
         }
         // This strategy doesn't work with Bing unfortunately, returning true so the divider is in the document for a while...
@@ -1802,6 +1832,50 @@ const Scroll = (() => {
   }
 
   /**
+   * TODO
+   *
+   * @param iframe
+   * @returns {Promise<void>}
+   */
+  async function scrollIframe(iframe) {
+    iframe.contentWindow.scrollTo({top: 0, behavior: "smooth"});
+    const height = (getTotalHeight(iframe.contentDocument) || 10000);
+    for (let i = 100; i < height; i += 100) {
+      iframe.contentWindow.scrollTo({top: i, behavior: "smooth"});
+      await Promisify.sleep(5);
+    }
+    // await Promisify.sleep(0);
+    // for (let i = 0; i < 5; i ++) {
+    //   iframe_.contentWindow.scrollTo({top: 0, behavior: "smooth"});
+    //   await Promisify.sleep(1000);
+    //   iframe_.contentWindow.scrollTo({top: 1000000, behavior: "smooth"});
+    //   await Promisify.sleep(1000);
+    // }
+    console.log("scrollIframe() - finished scrolling, height=" + height);
+    return 1;
+  }
+
+  /**
+   * Gets the button from an iframe. Technically, only Element Iframe (Trim) mode needs this as the Import mode will
+   * have the iframe remain on the page.
+   *
+   * @param iframeDoc the iframe document to obtain the page elements from
+   * @param attempt   the current attempt number
+   * @returns the page elements
+   */
+  async function getButtonFromIframe(iframeDoc, attempt = 0) {
+    const result = Button.findButton(instance.buttonType, instance.buttonPath, false, iframeDoc);
+    // Recursively call this function and try again if no next link was found.
+    // TODO: This will always take the full amount of attempts on the last page! Is there a way to detect this is the last page at this point and increase the max attempts?
+    if (attempt < 25 && !result?.button) {
+      await Promisify.sleep(200);
+      return getButtonFromIframe(iframeDoc, attempt + 1);
+    }
+    console.log("getButtonFromIframe() - took " + (attempt * 200) + "ms, result.button=" + result?.button);
+    return result;
+  }
+
+  /**
    * Gets the next link from an iframe. Technically, only Element Iframe (Trim) mode needs this as the Import mode will
    * have the iframe remain on the page.
    *
@@ -1844,8 +1918,12 @@ const Scroll = (() => {
         break;
       }
     }
+    let sameInnerHTML = false;
+    if (instance.append === "ajax") {
+      sameInnerHTML = pageElementsInnerHTML === pageElements[0]?.parentNode?.innerHTML;
+    }
     // Recursively call this function and try again if no page elements were found or if they appear to be ghost nodes
-    if ((attempt < 25 && pageElements.length <= 0) || (attempt < 15 && isLikelyGhostNodes)) {
+    if ((attempt < 25 && (pageElements.length <= 0) || sameInnerHTML) || (attempt < 15 && isLikelyGhostNodes)) {
       await Promisify.sleep(200);
       return getPageElementsFromIframe(iframeDoc, attempt + 1);
     }
@@ -1866,27 +1944,11 @@ const Scroll = (() => {
    */
   function getPageElements(doc, pageElementType = instance.pageElementType, pageElementPath = instance.pageElementPath, withDetails = false) {
     // Note: We do not want to set the global pageElements variable in this function in case we are just checking for it
-    let pageElements_ = [];
     // Stores the exception or error message in order to return it back to the user for feedback (e.g. invalid selector)
     const details = {};
-    try {
-      if (pageElementType === "selector") {
-        const result = doc.querySelectorAll(pageElementPath);
-        pageElements_ = Array.from(result);
-      } else {
-        // TODO: Investigate XPath resolver. Is null always OK?
-        const result = doc.evaluate(pageElementPath, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-        if (result && result.snapshotLength > 0) {
-          for (let i = 0; i < result.snapshotLength; i++) {
-            pageElements_.push(result.snapshotItem(i));
-          }
-        }
-      }
-    } catch (e) {
-      console.log("getPageElements() - Error:");
-      console.log(e);
-      details.error = e.message;
-    }
+    const result = getElements(pageElementPath, pageElementType, doc);
+    let pageElements_ = result.elements;
+    details.error = result.error;
     console.log("getPageElements() - pageElementType=" + pageElementType + ", pageElementPath=" + pageElementPath + ", elements=");
     console.log(pageElements_);
     return withDetails ? [pageElements_, details] : pageElements_;
@@ -1899,22 +1961,22 @@ const Scroll = (() => {
    * Note: The insertBefore path is completely optional and was only found to be used in ~1% of all Database records. It
    * should only be used on the first page (original document).
    *
-   * @param elements         the page elements to use to get the insert element from
-   * @param useInsertRule    (optional) if true, attempts to use the insert before path
+   * @param elements         the page elements to use to get the insertion point from
+   * @param useInsertBefore  (optional) if true, attempts to use the insertBeforePath
    * @param pageElementType  (optional) the type of path to query or evaluate for the insert before path (selector or xpath)
-   * @param insertBeforePath (optional) the insert before path to use to get the insert element
-   * @param withDetails      (optional) if true, returns extra details, such as the source of the insert element
+   * @param insertBeforePath (optional) the insert before path to use to get the insertion point
+   * @param withDetails      (optional) if true, returns extra details, such as the source of the insertion point
    *
-   * @returns {*} the insert element or the insert element with source
+   * @returns {*} the insertion point or the insertion point with source
    * @private
    */
-  function getInsertionPoint(elements, useInsertRule = false, pageElementType = instance.pageElementType, insertBeforePath = instance.insertBeforePath, withDetails = false) {
+  function getInsertionPoint(elements, useInsertBefore = false, pageElementType = instance.pageElementType, insertBeforePath = instance.insertBeforePath, withDetails = false) {
     // Note: We do not want to set the global insertionPoint variable in this function in case we are just checking for it
     let insertionPoint_;
     let details = "";
     // Check insertBefore only on first page on original document (wrap in try/catch in case there's a problem to fallback to normal insert point)
     try {
-      if (insertBeforePath && useInsertRule) {
+      if (insertBeforePath && useInsertBefore) {
         if (pageElementType === "selector") {
           insertionPoint_ = document.querySelector(insertBeforePath);
         } else {
@@ -1927,28 +1989,9 @@ const Scroll = (() => {
       console.log(e);
       details = e.message;
     }
-    // If no insert element found using the insert before path, set insertion point using the last element
+    // If no insertion point found using the insert before path, set insertion point using the last element
     if (!insertionPoint_ && elements && elements.length > 0) {
       try {
-        // TODO: Button AJAX uses first element, not last
-        // if (instance.append === "ajax") {
-        //   const firstElement = elements[0];
-        //   if (firstElement.previousSibling) {
-        //     insertionPoint_ = firstElement.previousSibling;
-        //     details = "the first element's previous sibling";
-        //   } else {
-        //     // Don't modify the DOM if only requesting details! (e.g. Popup checking...) Just return the lastElement so we get the parent from it
-        //     if (withDetails) {
-        //       insertionPoint_ = firstElement;
-        //     } else {
-        //       // TODO: Investigate if we can create an element span, as that lets us use getBoundingClientRect
-        //       insertionPoint_ = firstElement.parentNode.insertBefore(firstElement, document.createTextNode(" "));
-        //     }
-        //     details = "a new node created by the document";
-        //   }
-        // }
-        // Normal Non-Button insert element:
-        // else {
         const lastElement = elements[elements.length - 1];
         if (lastElement.nextSibling) {
           insertionPoint_ = lastElement.nextSibling;
@@ -1963,7 +2006,6 @@ const Scroll = (() => {
           }
           details = chrome.i18n.getMessage("insertion_point_new");
         }
-        //}
       } catch (e) {
         console.log("getInsertionPoint() - error checking lastElement. Error:");
         console.log(e);
@@ -2152,6 +2194,39 @@ const Scroll = (() => {
   }
 
   /**
+   * Gets elements based on a path.
+   * TODO: Should this be moved to DOMPath?
+   *
+   * @param path the selector or xpath
+   * @param type the type of path
+   * @param doc the document to evaluate against
+   * @returns {*} the elements returned from the path and error message if applicable
+   */
+  function getElements(path, type, doc = document) {
+    let elements = [];
+    let error;
+    try {
+      if (type === "selector") {
+        const result = doc.querySelectorAll(path);
+        elements = Array.from(result);
+      } else {
+        // TODO: Investigate XPath resolver. Is null always OK?
+        const result = doc.evaluate(path, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+        if (result && result.snapshotLength > 0) {
+          for (let i = 0; i < result.snapshotLength; i++) {
+            elements.push(result.snapshotItem(i));
+          }
+        }
+      }
+    } catch (e) {
+      console.log("getElements() - Error:");
+      console.log(e);
+      error = e.message;
+    }
+    return { elements, error };
+  }
+
+  /**
    * Triggers a {@link CustomEvent}. This allows userscripts and external extensions to act accordingly on the event.
    * This usually occurs when a new node is inserted into the document.
    *
@@ -2282,22 +2357,23 @@ const Scroll = (() => {
         path: "M54.63 246.6L192 109.3l137.4 137.4C335.6 252.9 343.8 256 352 256s16.38-3.125 22.62-9.375c12.5-12.5 12.5-32.75 0-45.25l-160-160c-12.5-12.5-32.75-12.5-45.25 0l-160 160c-12.5 12.5-12.5 32.75 0 45.25S42.13 259.1 54.63 246.6zM214.6 233.4c-12.5-12.5-32.75-12.5-45.25 0l-160 160c-12.5 12.5-12.5 32.75 0 45.25s32.75 12.5 45.25 0L192 301.3l137.4 137.4C335.6 444.9 343.8 448 352 448s16.38-3.125 22.62-9.375c12.5-12.5 12.5-32.75 0-45.25L214.6 233.4z",
         style: "cursor: pointer; margin-right: 16px;"
       },
-      "circle-chevron-down": {
-        viewBox: "0 0 512 512",
-        width: "20",
-        height: "20",
-        fill: COLOR,
-        path: "M256 0C114.6 0 0 114.6 0 256c0 141.4 114.6 256 256 256s256-114.6 256-256C512 114.6 397.4 0 256 0zM390.6 246.6l-112 112C272.4 364.9 264.2 368 256 368s-16.38-3.125-22.62-9.375l-112-112c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L256 290.8l89.38-89.38c12.5-12.5 32.75-12.5 45.25 0S403.1 234.1 390.6 246.6z",
-        style: "cursor: pointer; margin-left: 16px;"
-      },
-      "circle-chevron-up": {
-        viewBox: "0 0 512 512",
-        width: "20",
-        height: "20",
-        fill: COLOR,
-        path: "M256 0C114.6 0 0 114.6 0 256c0 141.4 114.6 256 256 256s256-114.6 256-256C512 114.6 397.4 0 256 0zM390.6 310.6c-12.5 12.5-32.75 12.5-45.25 0L256 221.3L166.6 310.6c-12.5 12.5-32.75 12.5-45.25 0s-12.5-32.75 0-45.25l112-112C239.6 147.1 247.8 144 256 144s16.38 3.125 22.62 9.375l112 112C403.1 277.9 403.1 298.1 390.6 310.6z",
-        style: "cursor: pointer; margin-right: 12px;"
-      },
+      // TODO: These two circle-chevron icons aren't currently being used but we might have a need for them in the future
+      // "circle-chevron-down": {
+      //   viewBox: "0 0 512 512",
+      //   width: "20",
+      //   height: "20",
+      //   fill: COLOR,
+      //   path: "M256 0C114.6 0 0 114.6 0 256c0 141.4 114.6 256 256 256s256-114.6 256-256C512 114.6 397.4 0 256 0zM390.6 246.6l-112 112C272.4 364.9 264.2 368 256 368s-16.38-3.125-22.62-9.375l-112-112c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L256 290.8l89.38-89.38c12.5-12.5 32.75-12.5 45.25 0S403.1 234.1 390.6 246.6z",
+      //   style: "cursor: pointer; margin-left: 16px;"
+      // },
+      // "circle-chevron-up": {
+      //   viewBox: "0 0 512 512",
+      //   width: "20",
+      //   height: "20",
+      //   fill: COLOR,
+      //   path: "M256 0C114.6 0 0 114.6 0 256c0 141.4 114.6 256 256 256s256-114.6 256-256C512 114.6 397.4 0 256 0zM390.6 310.6c-12.5 12.5-32.75 12.5-45.25 0L256 221.3L166.6 310.6c-12.5 12.5-32.75 12.5-45.25 0s-12.5-32.75 0-45.25l112-112C239.6 147.1 247.8 144 256 144s16.38 3.125 22.62 9.375l112 112C403.1 277.9 403.1 298.1 390.6 310.6z",
+      //   style: "cursor: pointer; margin-right: 12px;"
+      // },
       "circle-xmark": {
         viewBox: "0 0 512 512",
         width: "16",
@@ -2360,8 +2436,11 @@ const Scroll = (() => {
    * @private
    */
   function createOverlay() {
+    if (overlay && typeof overlay.remove === "function") {
+      overlay.remove();
+    }
     // TODO: Should we not show the overlay when scroll append is none (i.e. button click)?
-    if ((items.scrollOverlay || items.debugEnabled) && document && (document.body || document.documentElement)) {
+    if ((items.scrollOverlay || items.debugEnabled) && (document.body || document.documentElement)) {
       overlay = document.createElement("div");
       overlay.id = "infy-scroll-overlay";
       overlay.style = processStyle("all: initial; position: fixed; top: 0; right: 0; width: 135px; padding: 8px; z-index: 2147483647; background: white;");
@@ -2459,6 +2538,9 @@ const Scroll = (() => {
    */
   function createLoading() {
     console.log("createLoading() - scrollLoading=" + items.scrollLoading);
+    if (loading && typeof loading.remove === "function") {
+      loading.remove();
+    }
     if (items.scrollLoading) {
       loading = document.createElement("div");
       loading.id = "infy-scroll-loading";
@@ -2469,6 +2551,7 @@ const Scroll = (() => {
     }
   }
 
+  // TODO: This was meant to be a helper function for setting individual style properties but decided not to use it for now
   // /**
   //  *
   //  * @param element
@@ -2560,12 +2643,7 @@ const Scroll = (() => {
     console.log("init() - databaseAP=\n" + (items.databaseAP.map(x => x.url).join("\n")));
     // Delete the items cache in the instance
     delete instance.items;
-    // Note: We do not want to delete the database or saves to streamline checking them again later if this is an SPA
-    // To avoid querying for the items twice, we manually delete the database and saves after buildInstance is done. This is the only place/time where we need to do this
-    // delete items.databaseAP;
-    // delete items.databaseIS;
-    // // delete items.databaseCustom;
-    // delete items.saves;
+    // Note: We do not want to delete the database or saves from the items cache to streamline checking them again later if this is an SPA
     console.log("init() - instance=");
     console.log(instance);
     if (instance.enabled) {
@@ -2579,8 +2657,6 @@ const Scroll = (() => {
       console.log("init() - watching SPA");
       spaObserver = new MutationObserver(spaObserverCallback);
       spaObserver.observe(document.body, { childList: true, subtree: true });
-      // We can instead use a timer to check if the URL has changed, but some SPAs do not change the URL so this may not be as reliable long-term:
-      // setInterval(() => { if (href !== window.location.href) { href = window.location.href; spaObserverCallback([]); } }, 1000);
     }
   }
 
@@ -2599,19 +2675,15 @@ const Scroll = (() => {
     console.log("start()");
     // TODO: Is the enabled needed because we might start via shortcuts? The Popup normally sets this to true after clicking Accept
     instance.enabled = true;
-    instance.previouslyEnabled = true;
+    // instance.previouslyEnabled = true;
     if (!instance.started) {
       console.log("start() - was not started, so setting instance.started=true and doing initialization work...");
       instance.started = true;
       scrollListener = Util.throttle(scrollDetection, typeof items.scrollDetectionThrottle === "number" && items.scrollDetectionThrottle >= 200 && items.scrollDetectionThrottle <= 1000 ? items.scrollDetectionThrottle : 200);
       // resetStyling();
-      createOverlay();
-      createLoading();
       prepareFirstPage();
       // We need to now trigger the AP CustomEvent that we have loaded. This is for external scripts that may be listening for them
       triggerCustomEvent(EVENT_ON, document, {});
-      // // This is the only opportunity (besides the Popup) that we have of getting the tab ID to identify this instance
-      // instance.tabId = await Promisify.runtimeSendMessage({receiver: "background", greeting: "setBadge", badge: "on", temporary: false, needsTabId: true});
     } else {
       // Sometimes after the Popup is setting the instance again (e.g. to add Auto after being enabled), isLoading is in a strange state of true
       // While we could always set this to false every time start() is called, we probably want to at least do prepareFirstPage() first, which calls appendFinally() and then sets it after a timeout
@@ -2620,20 +2692,22 @@ const Scroll = (() => {
     if (!items.on) {
       console.log("start() - was not on, so setting items.on=true");
       items.on = true;
-      // // We don't need to wait for these two asynchronous actions to finish, so don't use await Promisify here
-      // chrome.runtime.sendMessage({receiver: "background", greeting: "setBadge", badge: "on", temporary: false}, function (response) { if (chrome.runtime.lastError) {} });
       chrome.storage.local.set({"on": true});
-      // // This is the only opportunity (besides the Popup) that we have of getting the tab ID to identify this instance
-      // instance.tabId = await Promisify.runtimeSendMessage({receiver: "background", greeting: "setBadge", badge: "on", temporary: false, needsTabId: true});
-    }
-    // Re-show the overlay if the instance is starting again after stopping (outside the if instance.started check)
-    if (overlay && overlay.style) {
-      overlay.style.setProperty("display", "block", "important");
     }
     // This is the only opportunity (besides the Popup) that we have of getting the tab ID to identify this instance
     instance.tabId = await Promisify.runtimeSendMessage({receiver: "background", greeting: "setBadge", badge: "on", temporary: false, needsTabId: true});
     // Add scroll detection if instance is starting again after stopping (outside the if instance.started check)
     addScrollDetection();
+    createOverlay();
+    createLoading();
+    // The AJAX Observer is only added if we are removing or hiding elements
+    if (instance.append === "ajax" && (instance.removeElementPath || instance.hideElementPath)) {
+      ajaxObserver = new MutationObserver(ajaxObserverCallback);
+      // TODO: Should we switch back to subtree: false? Need true for p int
+      // ajaxObserver.observe(insertionPoint && insertionPoint.parentNode ? insertionPoint.parentNode : document.body, { childList: true, subtree: true });
+      ajaxObserver.observe(document.body, { childList: true, subtree: true });
+
+    }
   }
 
   /**
@@ -2645,16 +2719,26 @@ const Scroll = (() => {
    *
    * Note: This function is public for Action.blacklist() and Action.whitelist().
    *
+   * @param caller {string} indicating who called this function
    * @public
    */
-  async function stop() {
-    console.log("stop()");
+  async function stop(caller) {
+    console.log("stop() - caller=" + caller);
     removeScrollDetection();
-    if (overlay && overlay.style) {
-      overlay.style.setProperty("display", "none", "important");
+    // Disconnect MutationObservers
+    if (ajaxObserver) {
+      ajaxObserver.disconnect();
+      ajaxObserver = undefined;
     }
-    if (loading && loading.style) {
-      loading.style.setProperty("display", "none", "important");
+    if (spaObserver && caller !== "spaObserverCallback") {
+      spaObserver.disconnect();
+      spaObserver = undefined;
+    }
+    if (overlay && typeof overlay.remove === "function") {
+      overlay.remove();
+    }
+    if (loading && typeof loading.remove === "function") {
+      loading.remove();
     }
     // We must get the updated on/off state on this page's storage items cache
     items.on = await Promisify.storageGet("on");
@@ -2699,14 +2783,12 @@ const Scroll = (() => {
         instance.nextLinkKeyword = nextResult.keywordObject;
       }
       await start();
-    } else if (
-      ((action === "down" || action === "up") && (instance.enabled)) ||
-      (action === "auto" && instance.autoEnabled) ||
-      (action === "blacklist" && instance.databaseFound && !instance.autoEnabled) ||
-      (action === "power")) {
+    } else if (((action === "down" || action === "up") && instance.enabled) ||
+                (action === "auto" && instance.autoEnabled) ||
+                (action === "blacklist" && instance.databaseFound && !instance.autoEnabled) ||
+                (action === "power")) {
       // Update Scroll's local items cache on state to false while this window is still open. The storage items will be updated in performAction so we don't have to do it here
       if (action === "power") {
-        // action = items.on ? "off" : "on";
         items.on = !items.on;
         // TODO: Should we set the instance.enabled to false here?
       }
@@ -2858,19 +2940,8 @@ const Scroll = (() => {
   // Initialize Scroll
   // Note: Previously we had timing issues with some websites, but due to the new multiple checks for activation, we no
   // longer need to force an initial timeout due to dynamic content. Also, we have a separate timeout for calculating
-  // the offset, so there is no real reason to delay here
+  // the offset, so there is no real reason to delay initialization
   setTimeout(() => { init(); }, 0);
-
-  // // AJAX/SPA Dynamic URL Workaround (WebNavigation state change)
-  // let href = window.location.href;
-  // setInterval(() => {
-  //   if (href !== window.location.href) {
-  //     href = window.location.href;
-  //     if (!instance.enabled && !instance.started) {
-  //       init();
-  //     }
-  //   }
-  // }, 1000);
 
   // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
   return {

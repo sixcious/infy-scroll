@@ -103,7 +103,7 @@ const Database = (() => {
       // Map each database record (r) to a flat object with the desired keys
       database = database.map(d => {
         const r = {};
-        for (const k of ["resource_url", "updated_at", "created_by"]) { if (d[k]) { r[k] = d[k]; } }
+        for (const k of ["name", "resource_url", "updated_at", "created_by"]) { if (d[k]) { r[k] = d[k]; } }
         for (const k of Object.keys(d.data)) { if (d.data[k]) { r[k] = d.data[k]; } }
         return r;
       });

@@ -153,6 +153,9 @@ const Saves = (() => {
       if (instance.disableRemoveElementPath) {
         save.disableRemoveElementPath = instance.disableRemoveElementPath;
       }
+      if (instance.hideElementPath) {
+        save.hideElementPath = instance.hideElementPath;
+      }
       if (instance.removeElementDelay) {
         save.removeElementDelay = instance.removeElementDelay;
       }

@@ -19,22 +19,23 @@ const Button = (() => {
    * @param type the path type to use ("selector" or "xpath")
    * @param path the css selector or xpath expression to use
    * @param highlight true if this element should be highlighted, false otherwise
+   * @param doc (optional) Infy Scroll only: the current document on the page to query (AJAX Iframe)
    * @returns {*} the button element (if found) and the details object
    * @public
    */
-  function findButton(type, path, highlight) {
+  function findButton(type, path, highlight, doc = document) {
     let button;
     // Stores the exception or error message in order to return it back to the user for feedback (e.g. invalid selector)
     const details = {};
     try {
       // TODO: We always get the "last" button on the page, not the "first"?
       if (type === "xpath") {
-        // button = document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-        const result = document.evaluate(path, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+        // button = doc.evaluate(path, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        const result = doc.evaluate(path, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
         button = result && result.snapshotLength > 0 ? result.snapshotItem(result.snapshotLength - 1) : undefined;
       } else {
-        // button = document.querySelector(path);
-        const result = document.querySelectorAll(path);
+        // button = doc.querySelector(path);
+        const result = doc.querySelectorAll(path);
         button = result && result.length > 0 ? result[result.length - 1] : undefined;
       }
       details.found = !!button;
@@ -56,13 +57,14 @@ const Button = (() => {
    *
    * @param type the path type to use ("selector" or "xpath")
    * @param path the css selector or xpath expression to use
+   * @param doc (optional) Infy Scroll only: the current document on the page to query (AJAX Iframe)
    * @returns {boolean} true if the button action was performed, false otherwise
    * @public
    */
-  function clickButton(type, path) {
+  function clickButton(type, path, doc = document) {
     console.log("clickButton() - type=" + type + ", path="  + path);
     let actionPerformed = false;
-    const button = findButton(type, path, false).button;
+    const button = findButton(type, path, false, doc).button;
     try {
       if (button && typeof button.click === "function") {
         button.click();
