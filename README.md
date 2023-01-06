@@ -58,10 +58,9 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
   "action": "button",
   "append": "ajax",
   "button": "//nav/button[@aria-current='true']/following-sibling::a[not(@hidden)]",
-  "pageElement": "html[@lang='ja']//ul[@class='sc-l7cibp-1 krFoBL']/*|html[not(@lang='ja')]//div[@class='sc-l7cibp-0 juyBTC']/*",
-  "removeElement": "//li[@class='sc-l7cibp-2 gpVAva'][not(.//div[@type='illust'])]|//div[@class='sc-1rgyha8-0 leTtkh']|(//*[@class='sc-l7cibp-3 gCRmsl'])[position()<last()]",
+  "pageElement": "//ul[@class='sc-l7cibp-1 krFoBL']/*",
   "spa": "https://www.pixiv.net",
-  "url": "^https://www\\.pixiv\\.net/.*/?tags/.*/(illustrations|manga)"
+  "url": "^https://www\\.pixiv\\.net/"
 }
 ````
 *You can copy and paste these settings using the Add Save feature in the Options. (Tested on December 22, 2022.)*
