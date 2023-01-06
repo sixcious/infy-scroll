@@ -611,7 +611,8 @@ const Storage = (() => {
       "databaseISEnabled": databaseEnabled || !!items.databaseISEnabled,
       "databaseLocation": "jsdelivr.net",
       "databaseMode": typeof items.databaseAutoActivate === "boolean" && !items.databaseAutoActivate ? "whitelist" : "blacklist",
-      "databaseUpdate": typeof items.databaseAutoUpdate === "number" ? items.databaseAutoUpdate : 1
+      "databaseUpdate": typeof items.databaseAutoUpdate === "number" ? items.databaseAutoUpdate : 1,
+      "debugEnabled": false
     });
     // Next/Prev Selector XPath Double Quote to Single Quote
     if (items?.nextSelector === "[rel=\"next\"]") {

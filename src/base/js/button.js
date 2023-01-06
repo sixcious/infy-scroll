@@ -19,11 +19,11 @@ const Button = (() => {
    * @param type the path type to use ("selector" or "xpath")
    * @param path the css selector or xpath expression to use
    * @param highlight true if this element should be highlighted, false otherwise
-   * @param doc (optional) Infy Scroll only: the current document on the page to query (AJAX Iframe)
+   * @param doc the current document on the page to query
    * @returns {*} the button element (if found) and the details object
    * @public
    */
-  function findButton(type, path, highlight, doc = document) {
+  function findButton(type, path, highlight, doc) {
     let button;
     // Stores the exception or error message in order to return it back to the user for feedback (e.g. invalid selector)
     const details = {};
@@ -57,11 +57,11 @@ const Button = (() => {
    *
    * @param type the path type to use ("selector" or "xpath")
    * @param path the css selector or xpath expression to use
-   * @param doc (optional) Infy Scroll only: the current document on the page to query (AJAX Iframe)
+   * @param doc the current document on the page to query
    * @returns {boolean} true if the button action was performed, false otherwise
    * @public
    */
-  function clickButton(type, path, doc = document) {
+  function clickButton(type, path, doc) {
     console.log("clickButton() - type=" + type + ", path="  + path);
     let actionPerformed = false;
     const button = findButton(type, path, false, doc).button;

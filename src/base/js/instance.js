@@ -254,7 +254,8 @@ const Instance = (() => {
     _.autoRepeatCount = 0;
     _.scrollAppendThresholdPages = items.scrollAppendThresholdPages;
     // We will make the threshold pixels be 100 for button for ajax mode in case some content hasn't loaded before the button has been clicked
-    _.scrollAppendThresholdPixels = source.action === "button" ? 100 : items.scrollAppendThresholdPixels;
+    _.scrollAppendThresholdPixels = source.append === "ajax" && items.scrollAppendThresholdPixels > 500 ? 500 : items.scrollAppendThresholdPixels;
+    // _.scrollAppendThresholdPixels = items.scrollAppendThresholdPixels;
     // We always set lazyLoad to what the items default option is except for saves
     _.lazyLoad = source.via === "save" ? source.lazyLoad : items.lazyLoad;
     _.lazyLoadSource = source.lazyLoadSource || "data-src";
@@ -269,7 +270,7 @@ const Instance = (() => {
     _.scrollUpdateAddress = items.scrollUpdateAddress;
     _.scrollUpdateTitle = items.scrollUpdateTitle;
     _.scrollBehavior = items.scrollBehavior;
-    _.scrollPrepareFirstPageAttempts = 0;
+    // _.scrollPrepareFirstPageAttempts = 0;
     // Determine if this URL is local by using the window protocol or tab url
     _.isLocal = typeof window === "object" && window.location && window.location.protocol ? window.location.protocol.startsWith("file:") : tab.url && tab.url.startsWith("file://");
     // We need the locationOrigin for the Popup's List mode to show the domain/origin and for the SPA setting. The origin has the protocol and hostname
@@ -570,7 +571,7 @@ const Instance = (() => {
       activate = selection && !!selection.selection;
     } else if (action === "button") {
       save.buttonType = save.buttonType || DOMPath.determinePathType(save.buttonPath, items.preferredPathType).type;
-      activate = Button.findButton(save.buttonType, save.buttonPath).details.found;
+      activate = Button.findButton(save.buttonType, save.buttonPath, false, document).details.found;
     } else if (action === "list") {
       activate = true;
     }

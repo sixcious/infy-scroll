@@ -358,12 +358,14 @@ const Action = (() => {
    *
    * @param caller   String indicating who called this function (e.g. command, popup, content script)
    * @param instance the instance for this tab
+   * @param iframeDocument the iframe document used in AJAX Iframe mode
    * @returns {boolean|*} true if the action was performed, false otherwise
    * @private
    */
   function button(caller, instance, iframeDocument) {
     console.log("button() - type=" + instance.buttonType + ", rule="  + instance.buttonPath);
-    let actionPerformed = instance.append === "ajax" ? Button.clickButton(instance.buttonType, instance.buttonPath, iframeDocument) : Button.clickButton(instance.buttonType, instance.buttonPath);
+    let actionPerformed = instance.append === "ajax" ? Button.clickButton(instance.buttonType, instance.buttonPath, iframeDocument) : Button.clickButton(instance.buttonType, instance.buttonPath, document);
+    // let actionPerformed = instance.append === "ajax" || Button.clickButton(instance.buttonType, instance.buttonPath, document);
     if (actionPerformed) {
       updateTab(caller, instance);
     } else {

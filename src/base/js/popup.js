@@ -416,7 +416,7 @@ const Popup = (() => {
    *
    * @private
    */
-  function changeAppend() {
+  async function changeAppend() {
     console.log("changeAppend() - list selectedIndex=" + MDC.lists.get("append-list").selectedIndex);
     // Get the selected list element and use its dataset attribute to determine the action
     const selectedA = MDC.lists.get("append-list").listElements.find(el => el.classList.contains("mdc-list-item--selected"));
@@ -438,7 +438,12 @@ const Popup = (() => {
     DOM["#insert-before-path-text-field"].style.display = append === "element" ? "" : "none"
     DOM["#page-element-iframe"].style.display = append === "element" ? "" : "none";
     if (!checks.checkPageElement && (_.append === "element" || _.append === "ajax")) {
-      checkPageElement(false, false, false, "changeAppend()");
+      const shouldAutoDetect = !DOM["#page-element-path-textarea"].value;
+      if (shouldAutoDetect) {
+        DOM["#page-element-path-textarea"].value = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "autoDetectPageElement", instance: _, algorithm: items.pathAlgorithm, quote: items.pathQuote, optimized: items.pathOptimized, highlight: false });
+        MDC.layout();
+      }
+      checkPageElement(false, false, shouldAutoDetect, "changeAppend()");
     }
     MDC.layout();
   }
@@ -481,9 +486,8 @@ const Popup = (() => {
     DOM["#database-icon"].style.display = !instance.saveFound && instance.databaseFound ? "" : "none";
     DOM["#database-icon-title"].textContent = instance.databaseFound ?
       chrome.i18n.getMessage("database_" + (instance.databaseISFound ? "is_" : "ap_") + "icon_title") +
-      " " +
-      (instance.databaseResourceURL ? chrome.i18n.getMessage("database_click_icon_title") + " " : "") + instance.databaseURL + " " +
-      (instance.databaseUpdatedAt ? chrome.i18n.getMessage("database_updated_icon_title").replace("?", instance.databaseUpdatedAt) : "") : "";
+      " " + instance.databaseURL +
+      " " + (instance.databaseUpdatedAt ? chrome.i18n.getMessage("database_updated_icon_title").replace("?", instance.databaseUpdatedAt) : "") : "";
     DOM["#auto-slideshow-icon"].style.display = instance.autoEnabled && instance.autoSlideshow ? "" : "none";
     DOM["#shuffle-icon"].style.display = instance.enabled && instance.shuffleEnabled ? "" : "none";
     DOM["#down-button"].style.display = "";
@@ -888,14 +892,13 @@ const Popup = (() => {
         DOM["#page-element-result-error"].style.display = success ? "none" : "inline-block";
         const details = chrome.i18n.getMessage("page_element_path_label");
         if (success) {
-          DOM["#page-element-result-message-success"].textContent = chrome.i18n.getMessage("page_element_result_message_success").replace("?", response.elementsLength);
+          DOM["#page-element-result-message-success"].textContent = chrome.i18n.getMessage("page_element_result_message_" + (autoDetected ? "autodetect" : "success")).replace("?", response.elementsLength);
           DOM["#page-element-result-details-success"].textContent = details;
           DOM["#page-element-result-details-success"].setAttribute("aria-label", "(" + (chrome.i18n.getMessage(pageElementType + "_label") + ") " + chrome.i18n.getMessage("page_element_result_tooltip_success").replace("?1", response.parentNode).replace("?2", response.insertDetails)));
         } else {
           DOM["#page-element-result-details-error"].textContent = details;
           DOM["#page-element-result-details-error"].setAttribute("aria-label", response && response.error ? response.error : chrome.i18n.getMessage("no_result_tooltip_error"));
         }
-        DOM["#page-element-result-autodetect"].className = autoDetected ? "display-inline fade-in" : "display-none";
         MDC.linearProgresses.get("page-element-linear-progress").foundation_.setDeterminate(true);
         MDC.layout();
       }, delay ? 500 : 0);
@@ -943,7 +946,7 @@ const Popup = (() => {
   async function clickAutoDetectPageElement(event) {
     await Promisify.tabsExecuteScript(tabs[0].id, {file: "/lib/hoverbox/hoverbox.js", runAt: "document_end"});
     // Note: The reason why we're passing the Popup's items path properties is because Scroll's items may be out of date
-    DOM["#page-element-path-textarea"].value = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "autoDetectPageElement", instance: _, algorithm: items.pathAlgorithm, quote: items.pathQuote, optimized: items.pathOptimized });
+    DOM["#page-element-path-textarea"].value = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "autoDetectPageElement", instance: _, algorithm: items.pathAlgorithm, quote: items.pathQuote, optimized: items.pathOptimized, highlight: true });
     MDC.layout();
     // We don't highlight because we already highlight in autoDetect (scroll). pageElement uses currentDocument for highlighting, so we can't use it for highlighting autoDetect unfortunately
     checkPageElement(true, false, true, "clickAutoDetectPageElement()");
@@ -1157,7 +1160,6 @@ const Popup = (() => {
       _.mediaType = MDC.selects.get("media-type-select").value;
       // AJAX
       _.removeElementPath = DOM["#remove-element-path-textarea"].value;
-      // _.removeElementType = pageElementType = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "determinePathType", path: pageElementPath, type: _.pageElementType });
       _.removeElementDelay = +DOM["#remove-element-delay-input"].value;
       _.disableScrollElementPath = DOM["#disable-scroll-element-input"].value;
       _.disableRemoveElementPath = DOM["#disable-remove-element-input"].value;

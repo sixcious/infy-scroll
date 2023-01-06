@@ -744,7 +744,7 @@ footer #extras svg {
   display: inline-block;
 }
 
-#ajax-unused {
+#ajax, #ajax-unused {
   display: none;
 }
 
