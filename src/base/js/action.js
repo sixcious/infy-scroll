@@ -364,9 +364,16 @@ const Action = (() => {
    */
   function button(caller, instance, iframeDocument) {
     console.log("button() - type=" + instance.buttonType + ", rule="  + instance.buttonPath);
-    let actionPerformed = instance.append === "ajax" ? Button.clickButton(instance.buttonType, instance.buttonPath, iframeDocument) : Button.clickButton(instance.buttonType, instance.buttonPath, document);
-    // let actionPerformed = instance.append === "ajax" || Button.clickButton(instance.buttonType, instance.buttonPath, document);
-    if (actionPerformed) {
+    // AJAX already clicks the button in appendFinally so just return
+    if (instance.append === "ajax") {
+      updateTab(caller, instance);
+      return true;
+    }
+    let actionPerformed = false;
+    // const result = Button.clickButton(instance.buttonType, instance.buttonPath, instance.append === "ajax" ? iframeDocument : document);
+    const result = Button.clickButton(instance.buttonType, instance.buttonPath, document);
+    if (result.clicked) {
+      instance.url = result.url || instance.tabURL;
       updateTab(caller, instance);
     } else {
       // TODO: Should Auto stop at this point?

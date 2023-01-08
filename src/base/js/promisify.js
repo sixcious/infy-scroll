@@ -140,7 +140,7 @@ const Promisify = (() => {
    *
    * @param tabId   the content script's tab ID to send the message to
    * @param details the details object e.g. {file: "my-content-script.js"}
-   * @returns {Promise<{}>} the results array of the last statement executed in the contet script
+   * @returns {Promise<{}>} the results array of the last statement executed in the content script
    * @public
    */
   function tabsExecuteScript(tabId, details) {
@@ -258,6 +258,23 @@ const Promisify = (() => {
 
   // Infy Scroll:
   /**
+   * Loads an iframe.
+   *
+   * @param iframe the iframe
+   * @returns {Promise<{}>}
+   * @public
+   */
+  function iframeLoad(iframe) {
+    return new Promise((resolve, reject) => {
+      iframe.onload = resolve;
+      iframe.onerror = function () {
+        console.log("iframeLoad() onerror()");
+        reject("iframeLoad() onerror() - promise rejected");
+      };
+    });
+  }
+
+  /**
    * Makes an XMLHttpRequest to a URL and returns its document via a promise-based wrapper for async/await callers.
    *
    * @param url          the url to make the request to
@@ -312,6 +329,7 @@ const Promisify = (() => {
     // downloadsCancel,
     // permissionsRequest,
     // permissionsRemove,
+    iframeLoad,
     xhr,
     sleep
   };

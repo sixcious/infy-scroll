@@ -254,7 +254,7 @@ const Instance = (() => {
     _.autoRepeatCount = 0;
     _.scrollAppendThresholdPages = items.scrollAppendThresholdPages;
     // We will make the threshold pixels be 100 for button for ajax mode in case some content hasn't loaded before the button has been clicked
-    _.scrollAppendThresholdPixels = source.append === "ajax" && items.scrollAppendThresholdPixels > 500 ? 500 : items.scrollAppendThresholdPixels;
+    _.scrollAppendThresholdPixels = source.append === "ajax2" && items.scrollAppendThresholdPixels > 100 ? 100 : items.scrollAppendThresholdPixels;
     // _.scrollAppendThresholdPixels = items.scrollAppendThresholdPixels;
     // We always set lazyLoad to what the items default option is except for saves
     _.lazyLoad = source.via === "save" ? source.lazyLoad : items.lazyLoad;
@@ -264,7 +264,7 @@ const Instance = (() => {
     _.scrollbarExists = false;
     _.scrollbarAppends = 0;
     // TODO: Should we remove these from the instance? I think the idea was that we would eventually allow for the instance to store these for instance-specific options
-    _.scrollDivider = items.scrollDivider;
+    _.scrollDivider = source.scrollDivider || items.scrollDivider;
     _.scrollDividerGrid = 0;
     _.scrollDividerGridParentModified = false;
     _.scrollUpdateAddress = items.scrollUpdateAddress;

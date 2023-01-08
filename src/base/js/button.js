@@ -58,23 +58,26 @@ const Button = (() => {
    * @param type the path type to use ("selector" or "xpath")
    * @param path the css selector or xpath expression to use
    * @param doc the current document on the page to query
-   * @returns {boolean} true if the button action was performed, false otherwise
+   * @returns {boolean}
+   * @returns {*} true if the button action was performed, false otherwise and the url of the button if it exists
    * @public
    */
   function clickButton(type, path, doc) {
-    console.log("clickButton() - type=" + type + ", path="  + path);
-    let actionPerformed = false;
+    let clicked = false;
+    let url = "";
     const button = findButton(type, path, false, doc).button;
     try {
       if (button && typeof button.click === "function") {
+        url = button.href || button.action || button.formAction || "";
         button.click();
-        actionPerformed = true;
+        clicked = true;
       }
     } catch (e) {
       console.log("clickButton() - Error:");
       console.log(e);
     }
-    return actionPerformed;
+    console.log("clickButton() - clicked=" + clicked + ", url=" + url);
+    return { clicked: clicked, url: url };
   }
 
   /**

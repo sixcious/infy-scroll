@@ -35,11 +35,10 @@
  * @see https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleDeclaration/setProperty
  *
  * TODO: Consider moving all the Append code into its own file (e.g. append.js)
- * TODO: Rename _ variables like iframe_ and button_ to better names
  * TODO: Move scrollbarExists and scrollbarAppends outside of instance and into variable here (we only use them here)
  * TODO: Make PAGE_STYLE, IFRAME_STYLE, etc. non constants so we can call processStyle on them in init once?
  * TODO: Should we replace: 1) document.body calls with (document.body || document.documentElement) 2) removeChild with remove 3) :scope with body in selectors?
- * TODO: Change insertionPoint.ownerDocument !== document to !document.contains(insertionPoint)
+ * TODO: Change insertionPoint.ownerDocument !== document to !document.contains(insertionPoint)?
  */
 const Scroll = (() => {
 
@@ -53,8 +52,10 @@ const Scroll = (() => {
    * @param PAGE_STYLE           the css that is used for Append Page
    * @param IFRAME_STYLE         the css that is used for Append Iframe
    * @param MEDIA_STYLE          the css that is used for Append Media
+   * @param IFRAME_FIXED_STYLE   the css that is used for iframes that need to remain fixed on the screen (Element Iframe Import and AJAX)
    * @param COLOR                the css color that is used for various styles, like the infinity icon and page divider
-   * @param BUTTON_APPEND_DELAY  the extra append delay for Click Button action (in ms) to prevent the button from being clicked again
+   * @param BUTTON_APPEND_DELAY  the extra append delay for the Click Button action (in ms) to prevent the button from being clicked again
+   * @param AJAX_APPEND_DELAY    the extra append delay for the AJAX append mode (in ms)
    * @param instance             the instance object that contains all the properties for this page (such as the URL, action, and append mode)
    * @param items                the storage items cache containing the user's settings
    * @param pages                the pages array that contains a reference to each appended page in the DOM
@@ -62,8 +63,8 @@ const Scroll = (() => {
    * @param iframeDocument       the live iframe document for the current (latest) page that is being observed
    * @param insertionPoint       the insertion point is only used in append element mode and is the point at the bottom of the content to start inserting more elements
    * @param pageElements         the current page's array of page elements (in append element mode)
-   * @param button_              the current button used for the Click Button action
-   * @param iframe_              the iframe that was appended for the current page
+   * @param button               the current button used for the Click Button action
+   * @param iframe               the current iframe that was appended for the current page
    * @param lazys                the lazy image/media elements that we obtain in fixLazyLoadingPre() and that we then need to later handle in fixLazyLoadingPost() after they are appended
    * @param offset               the offset is the pixels from the bottom of the content (e.g. elements or buttonPosition) to the very bottom of the HTML document
    * @param loading              the loading element that is appended while a new page is being loaded
@@ -85,8 +86,10 @@ const Scroll = (() => {
   const PAGE_STYLE =   "background: initial; border: 0; border-radius: 0; box-shadow: none; clear: both; display: block; float: none; height: auto; margin: 0 0 2rem 0; max-height: none; max-width: none; min-height: auto; min-width: auto; opacity: 1; outline: 0;                   padding: 0; position: static; visibility: visible; width: auto; z-index: auto;";
   const IFRAME_STYLE = "background: initial; border: 0; border-radius: 0; box-shadow: none; clear: both; display: block; float: none; height: 0;    margin: 0 0 2rem 0; max-height: none; max-width: none; min-height: auto; min-width: auto; opacity: 1; outline: 0; overflow: hidden; padding: 0; position: static; visibility: visible; width: 100%; z-index: auto;";
   const MEDIA_STYLE =  "background: initial; border: 0; border-radius: 0; box-shadow: none; clear: both; display: flex;  float: none; height: auto; margin: 2rem auto;  max-height: none; max-width: none; min-height: auto; min-width: auto; opacity: 1; outline: 0;                   padding: 0; position: static; visibility: visible; width: auto; z-index: auto;";
+  const IFRAME_FIXED_STYLE = " position: fixed; bottom: 0; left: 0; visibility: hidden; height: 100px;"
   const COLOR = "#55555F";
-  const BUTTON_APPEND_DELAY = 1000;
+  const BUTTON_APPEND_DELAY = 3000;
+  const AJAX_APPEND_DELAY = 5000;
   // We should initialize the instance to an empty object to avoid potential NPEs because we sometimes use it as a default value for some method arguments e.g. (x = instance.x, ...)
   let instance = {};
   let items;
@@ -95,8 +98,8 @@ const Scroll = (() => {
   let iframeDocument;
   let insertionPoint;
   let pageElements;
-  let button_;
-  let iframe_;
+  let button;
+  let iframe;
   let lazys;
   let offset = 0;
   let loading;
@@ -119,9 +122,9 @@ const Scroll = (() => {
    */
   function get() {
     return {
-      instance, items, pages, currentDocument, iframeDocument, insertionPoint, pageElements, button_, iframe_, lazys, offset,
-      loading, divider, overlay, timeouts, scrollListener, intersectionObserver, spaObserver
-      // ajaxObserver
+      instance, items, pages, currentDocument, iframeDocument, insertionPoint, pageElements, button_: button, iframe, lazys, offset,
+      loading, divider, overlay
+      // timeouts, scrollListener, intersectionObserver, spaObserver, ajaxObserver
     };
   }
 
@@ -177,7 +180,7 @@ const Scroll = (() => {
     console.log("addScrollDetection() - adding " + items.scrollDetection);
     // Can't use Intersection Observer when scroll action is button because we are not observing the button element
     // TODO: Add IO support for button by observing the button element?
-    if (items.scrollDetection === "io" && instance.action !== "button") {
+    if (items.scrollDetection === "io" && instance.append !== "none") {
       // Observer rootMargin '0px 0px -99%' will only trigger when the top of the next page has been intersected. Use 0% or 1% to intersect the earliest (when any part of the next page is on the screen)
       intersectionObserver = new IntersectionObserver(intersectionObserverCallback, { root: null, rootMargin: '0px 0px 1%', threshold: 0});
       // Need this for loop to 1) observe the first page due to prepareFirstPage() being called before the intersectionObserver is made, and 2) when re-enabling an instance after a stop
@@ -270,7 +273,7 @@ const Scroll = (() => {
     clearTimeout(timeouts.spaCheck);
     timeouts.spaCheck = setTimeout(async () => {
       let check = true;
-      if (instance.enabled) {
+      if (instance.enabled || instance.pickerEnabled) {
         check = false;
         for (const page of pages) {
           if (!document.contains(page.element)) {
@@ -439,7 +442,7 @@ const Scroll = (() => {
   function detectCurrentPage(element) {
     for (const page of pages) {
       // Two Cases: If using Intersection Observer, check if element === page.element, else if Scroll Listener check isScrolledIntoView()
-      if (page && page.element && (element ? element === page.element : isScrolledIntoView(page.element))) {
+      if (element ? element === page.element || page.pageElements?.includes(element) : isScrolledIntoView(page.element)) {
         instance.currentPage = page.number;
         console.log("detectCurrentPage() - page.number=" + page.number + ", page.url=" + page.url);
         // If this is not a local file URL, can update history or title
@@ -505,14 +508,14 @@ const Scroll = (() => {
       case "element": appendDivider(); appendElement(caller); appendLoading(); break;
       case "media":   appendDivider(); appendMedia(caller);   appendLoading(); break;
       case "none":                     appendNone(caller);                     break;
-      case "ajax":    appendDivider(); appendElement(caller); appendLoading(); break;
+      case "ajax":                     appendElement(caller);                  break;
       default:                                                                 break;
     }
   }
 
   /**
    * Appends the next page's HTML as is to the original document's body.
-   * Images and HTML may break in this mode, but it is the fastest append mode.
+   * Images and HTML may break in this mode, but it is the simplest append mode.
    *
    * @param caller who called this function
    * @private
@@ -556,57 +559,55 @@ const Scroll = (() => {
    * @param caller who called this function
    * @private
    */
-  function appendIframe(caller) {
+  async function appendIframe(caller) {
     console.log("appendIframe() - caller=" + caller);
-    iframe_ = document.createElement("iframe");
-    iframe_.src = instance.url;
-    iframe_.style = processStyle(IFRAME_STYLE);
-    iframe_.scrolling = "no";
-    iframe_.frameBorder = "0";
-    // TODO: Make a final decision on sandboxing
-    // sandbox iframe to avoid "For security reasons, framing is not allowed; click OK to remove the frames."
-    // @see https://meta.stackexchange.com/questions/155720/i-busted-the-stack-overflow-frame-buster-buster-buster
-    // @see https://stackoverflow.com/a/9163087
-    // iframe.sandbox = "allow-same-origin allow-scripts allow-forms";
-    const iframeMode = instance.append === "element" && instance.pageElementIframe ? instance.pageElementIframe === "trim" ? "trim" : "import" : "";
-    if (iframeMode !== "trim") {
-      document.body.appendChild(iframe_);
-    } else {
-      // The insertion point may have been "moved" by the website and no longer have a parentNode, so we re-calculate it to be the last element
-      // if (!insertionPoint || !insertionPoint.parentNode || insertionPoint.ownerDocument !== document) {
-      if (!document.contains(insertionPoint)) {
-        console.log("appendIframe() - the insertion point's hierarchy in the DOM was altered. " + (insertionPoint ? ("parentNode=" + insertionPoint.parentNode + ", ownerDocument === document=" + (insertionPoint.ownerDocument === document)) : "insertionPoint is undefined!"));
-        insertionPoint = getInsertionPoint(getPageElements(document), false);
-      }
-      // TODO: This null check is bothersome. Should the application simply fail at this point and display an error message?
-      // if (insertionPoint && insertionPoint.parentNode) {
-      //   insertionPoint.parentNode.insertBefore(iframe, insertionPoint);
-      // }
-      insertionPoint?.parentNode?.insertBefore(iframe_, insertionPoint);
+    const iframeMode = instance.append === "element" && instance.pageElementIframe ? instance.pageElementIframe === "trim" ? "trim" : "import" : "full";
+    await createIframe(instance.url, IFRAME_STYLE + (iframeMode === "import" ? IFRAME_FIXED_STYLE : ""), iframeMode, caller);
+    if (!iframeDocument) {
+      return;
     }
-    iframe_.onload = async function () {
-      // If the iframe's contentDocument (the document) doesn't exist, we can't continue
-      if (!iframe_.contentDocument) {
-        console.log("appendIframe() - iframe.onload() - no iframe.contentDocument!");
-        // TODO: We need to reset the instance's URL back to the previous URL so Next.findLink() doesn't return a duplicate URL when we try again. We should refactor the code so that the instance URL is only set after the page has been successfully appended...
-        if (pages && pages.length > 0 && pages[pages.length - 1]) {
-          instance.url = pages[pages.length - 1].url;
-        }
-        const anchor = document.createElement("a");
-        anchor.href = "https://github.com/sixcious/xframey";
-        anchor.target = "_blank";
-        anchor.innerText = "Xframey";
-        appendMessage(chrome.i18n.getMessage("oops_error") + " " + chrome.i18n.getMessage("iframes_not_supported_error"), anchor);
-        // Return undefined so the divider gets removed (the iframe technically exists)
-        appendFinally("iframe", undefined, caller);
-        // TODO: Should we reset isLoading and keep trying? Valid use case is list and some URLs being from another origin
-        // instance.isLoading = false;
-        return;
-      }
-      console.log("appendIframe() - the iframe loaded, iframe.contentDocument.readyState=" + iframe_.contentDocument.readyState);
+    // iframe = document.createElement("iframe");
+    // iframe.src = instance.url;
+    // iframe.style = processStyle(IFRAME_STYLE + (iframeMode === "import" ? IFRAME_FIXED_STYLE : ""));
+    // iframe.scrolling = "no";
+    // iframe.frameBorder = "0";
+    // if (iframeMode !== "trim") {
+    //   document.body.appendChild(iframe);
+    // } else {
+    //   // The insertion point may have been "moved" by the website and no longer have a parentNode, so we re-calculate it to be the last element
+    //   if (!insertionPoint || !insertionPoint.parentNode || insertionPoint.ownerDocument !== document) {
+    //     console.log("appendIframe() - the insertion point's hierarchy in the DOM was altered. " + (insertionPoint ? ("parentNode=" + insertionPoint.parentNode + ", ownerDocument === document=" + (insertionPoint.ownerDocument === document)) : "insertionPoint is undefined!"));
+    //     insertionPoint = getInsertionPoint(getPageElements(document), false);
+    //   }
+    //   // TODO: This null check is bothersome. Should the application simply fail at this point and display an error message?
+    //   // if (insertionPoint && insertionPoint.parentNode) {
+    //   //   insertionPoint.parentNode.insertBefore(iframe, insertionPoint);
+    //   // }
+    //   insertionPoint?.parentNode?.insertBefore(iframe, insertionPoint);
+    // }
+    // iframe.onload = async function () {
+      // // If the iframe's contentDocument (the document) doesn't exist, we can't continue
+      // if (!iframe.contentDocument) {
+      //   console.log("appendIframe() - iframe.onload() - no iframe.contentDocument!");
+      //   // TODO: We need to reset the instance's URL back to the previous URL so Next.findLink() doesn't return a duplicate URL when we try again. We should refactor the code so that the instance URL is only set after the page has been successfully appended...
+      //   if (pages && pages.length > 0 && pages[pages.length - 1]) {
+      //     instance.url = pages[pages.length - 1].url;
+      //   }
+      //   const anchor = document.createElement("a");
+      //   anchor.href = "https://github.com/sixcious/xframey";
+      //   anchor.target = "_blank";
+      //   anchor.innerText = "Xframey";
+      //   appendMessage(chrome.i18n.getMessage("oops_error") + " " + chrome.i18n.getMessage("iframes_not_supported_error"), anchor);
+      //   // Return undefined so the divider gets removed (the iframe technically exists)
+      //   appendFinally("iframe", undefined, caller);
+      //   // TODO: Should we reset isLoading and keep trying? Valid use case is list and some URLs being from another origin
+      //   // instance.isLoading = false;
+      //   return;
+      // }
+      // console.log("appendIframe() - the iframe loaded, iframe.contentDocument.readyState=" + iframe.contentDocument.readyState);
       // Note that in the Element Iframe modes, we will later clone the iframe.contentDocument and set it to currentDocument after we're sure the page elements/next link have been loaded
-      currentDocument = iframe_.contentDocument;
-      iframeDocument = iframe_.contentDocument;
+      // currentDocument = iframe.contentDocument;
+      // iframeDocument = iframe.contentDocument;
       // Element Iframe (Trim) requires filtering elements
       if (iframeMode === "trim") {
         // TODO: pageElementIframeWait is a hidden variable not exposed to the user, but can bet set in a save or database URL. Remove this in the future when we're sure we don't need it
@@ -629,9 +630,9 @@ const Scroll = (() => {
       }
       // Element Iframe (Import) is super simple and just reuses the same appendElement code we've been using
       else if (iframeMode === "import") {
-        // TODO: Note that we already set the height to 0px in the initial IFRAME_STYLE. Is this display: none style necessary?
-        // iframe_.style.setProperty("display", "none", "important");
-        iframe_.style.setProperty("height", "1px", "important");
+        // if (items.debugEnabled) {
+        //   iframe.style.setProperty("height", "100px", "important");
+        // }
         // TODO: pageElementIframeWait is a hidden variable not exposed to the user, but can bet set in a save or database URL. Remove this in the future when we're sure we don't need it
         await Promisify.sleep(instance.pageElementIframeWait);
         // iframeMutationObserver Method (Bailing on this approach as it isn't reliable):
@@ -640,7 +641,7 @@ const Scroll = (() => {
         appendElement(caller);
         return;
       }
-      // Regular Iframe append mode: add a small delay before processing it in case of dynamic content
+      // Regular Full Iframe append mode: add a small delay before processing it in case of dynamic content
       else {
         await Promisify.sleep(500);
       }
@@ -658,25 +659,16 @@ const Scroll = (() => {
       // }
       setLinksNewTab([iframeDocument]);
       // Calculate the height only after resizing the media elements
-      iframe_.style.setProperty("height", getTotalHeight(iframeDocument) + "px", "important");
+      iframe.style.setProperty("height", getTotalHeight(iframeDocument) + "px", "important");
       iframeDocument.documentElement.style.setProperty("overflow", "hidden", "important");
       iframeDocument.body.style.setProperty("overflow", "hidden", "important");
       // If prepareFirstPage (iframePageOne=true), we need to remove all the elements from the document body except for this iframe and the overlay and loading divs
       if (caller === "prepareFirstPage") {
-        document.body.querySelectorAll(":scope > *").forEach(element => { if (element !== iframe_ && element !== overlay && element !== loading) { document.body.removeChild(element); } });
+        document.body.querySelectorAll(":scope > *").forEach(element => { if (element !== iframe && element !== overlay && element !== loading) { document.body.removeChild(element); } });
       }
-      triggerCustomEvent(EVENT_NODE_APPENDED, iframe_, { url: instance.url });
-      appendFinally("iframe", iframe_, caller);
-    };
-    // TODO: Show an error message on the page that infy can't use this mode. Also, error appendFinally needs different handling, don't do the first part
-    // iframe_.onerror = function () {
-    //   console.log("iframe.onerror() - Iframe Error!");
-    //   // instance.isLoading = false;
-    //   appendMessage(chrome.i18n.getMessage("oops_error") + " " + chrome.i18n.getMessage("iframes_not_supported_error"));
-    //   // Return undefined so the divider gets removed (the iframe technically exists)
-    //   appendFinally("iframe", iframe_, caller);
+      triggerCustomEvent(EVENT_NODE_APPENDED, iframe, { url: instance.url });
+      appendFinally("iframe", iframe, caller);
     // };
-
   }
 
   /**
@@ -690,12 +682,14 @@ const Scroll = (() => {
     console.log("appendElement() - caller=" + caller);
     // If we are in Element Iframe (Import) mode, we need to use the iframe obtained in appendIframe()
     if (instance.pageElementIframe || instance.append === "ajax") {
-      if (instance.append === "ajax") {
-        await scrollIframe(iframe_);
-      }
+      // if (instance.append === "ajax") {
+      //   await scrollIframe(iframe);
+      // }
       // To be safe, we'll await both promises and wait for the next link as well as the page elements even though it's not necessary
-      // pageElements = await getPageElementsFromIframe(nextDocument);
-      [pageElements] = await Promise.all([getPageElementsFromIframe(iframeDocument), instance.action === "next" || instance.action === "prev" ? getNextLinkFromIframe(iframeDocument) : instance.append === "ajax" ? getButtonFromIframe(iframeDocument) : 1]);
+      // [pageElements] = await Promise.all([getPageElementsFromIframe(iframeDocument), instance.action === "next" || instance.action === "prev" ? getNextLinkFromIframe(iframeDocument) : 1, instance.append === "ajax" ? getButtonFromIframe(iframeDocument) : 1]);
+      pageElements = await getPageElementsFromIframe(iframeDocument);
+      // [pageElements] = await Promise.all([getPageElementsFromIframe(iframeDocument), instance.append === "ajax" ? scrollIframe(iframe) : 1]);
+
       // TODO: See if we can refactor this so we can place this consistently in all append modes. This is normally done in getNextDocument(), but in Element Iframe mode we aren't sure if the elements have loaded till now
       setLinksNewTab(pageElements);
       // We store a clone of the iframeDocument after we have successfully retrieved the page elements and next link
@@ -723,8 +717,7 @@ const Scroll = (() => {
     pageElements.forEach(element => fragment.appendChild(element));
     // pageElements.forEach(el =>  console.log("adoptNode() - after, ownerDocument === document=" + (el.ownerDocument === document)));
     // The insertion point may have been "moved" by the website and no longer have a parentNode, so we re-calculate it to be the last element
-    // if (!insertionPoint || !insertionPoint.parentNode || insertionPoint.ownerDocument !== document) {
-    if (!document.contains(insertionPoint)) {
+    if (!insertionPoint || !insertionPoint.parentNode || insertionPoint.ownerDocument !== document) {
       console.log("appendElement() - the insertion point's hierarchy in the DOM was altered. " + (insertionPoint ? ("parentNode=" + insertionPoint.parentNode + ", ownerDocument === document=" + (insertionPoint.ownerDocument === document)) : "insertionPoint is undefined!"));
       insertionPoint = getInsertionPoint(getPageElements(document), false);
     }
@@ -802,47 +795,46 @@ const Scroll = (() => {
    */
   function appendNone(caller) {
     console.log("appendNone()");
-    button_ = Button.findButton(instance.buttonType, instance.buttonPath, false, document).button;
-    appendFinally("none", button_, caller);
+    button = Button.findButton(instance.buttonType, instance.buttonPath, false, document).button;
+    appendFinally("none", button, caller);
   }
 
-  /**
-   * The AJAX append mode is an advanced version of the Element append mode and uses an injection script to message
-   * pass with the page script.
-   *
-   * @param caller who called this function
-   * @private
-   */
-  async function appendAjax(caller) {
-    console.log("appendAjax()");
-    pageElements = getPageElements(document);
-    // The insertion point may have been "moved" by the website and no longer have a parentNode, so we re-calculate it to be the last element
-    // if (!insertionPoint || !insertionPoint.parentNode || insertionPoint.ownerDocument !== document) {
-    if (!document.contains(insertionPoint)) {
-      console.log("appendAjax() - the insertion point's hierarchy in the DOM was altered. " + (insertionPoint ? ("parentNode=" + insertionPoint.parentNode + ", ownerDocument === document=" + (insertionPoint.ownerDocument === document)) : "insertionPoint is undefined!"));
-      insertionPoint = getInsertionPoint(getPageElements(document), false);
-    }
-    let observableElement = getObservableElement(pageElements);
-    if (!observableElement) {
-      console.log("appendAjax() - no observable element found, manually creating a span");
-      observableElement = document.createElement("span");
-      insertionPoint.parentNode.insertBefore(observableElement, insertionPoint);
-      pageElements.unshift(observableElement);
-    }
-    // We must calculate the insertion point now before this function is called again and we get the next document
-    insertionPoint = getInsertionPoint(pageElements, false);
-    triggerCustomEvent(EVENT_AJAX, document, {
-      "disableRemoveElementPath": instance.disableRemoveElementPath || DOMPath.generatePath(insertionPoint.parentNode, instance.pageElementType).path,
-      "disableRemoveFunctions": instance.disableRemoveFunctions || "remove,removeChild",
-      "pathType": instance.pageElementType
-    }, true);
-    for (let timeoutCheck = 0; timeoutCheck <= 4000; timeoutCheck += 2000) {
-      // TODO: Unfortunately, this doesn't work because we actually don't have the elements yet
-      // setTimeout(() => { setLinksNewTab(elements); }, timeoutCheck);
-      setTimeout(() => { setLinksNewTab([insertionPoint.parentNode]); }, timeoutCheck);
-    }
-    appendFinally("ajax", observableElement, caller);
-  }
+  // /**
+  //  * The AJAX append mode is an advanced version of the Element append mode and uses an injection script to message
+  //  * pass with the page script.
+  //  *
+  //  * @param caller who called this function
+  //  * @private
+  //  */
+  // async function appendAjax(caller) {
+  //   console.log("appendAjax()");
+  //   pageElements = getPageElements(document);
+  //   // The insertion point may have been "moved" by the website and no longer have a parentNode, so we re-calculate it to be the last element
+  //   if (!insertionPoint || !insertionPoint.parentNode || insertionPoint.ownerDocument !== document) {
+  //     console.log("appendAjax() - the insertion point's hierarchy in the DOM was altered. " + (insertionPoint ? ("parentNode=" + insertionPoint.parentNode + ", ownerDocument === document=" + (insertionPoint.ownerDocument === document)) : "insertionPoint is undefined!"));
+  //     insertionPoint = getInsertionPoint(getPageElements(document), false);
+  //   }
+  //   let observableElement = getObservableElement(pageElements);
+  //   if (!observableElement) {
+  //     console.log("appendAjax() - no observable element found, manually creating a span");
+  //     observableElement = document.createElement("span");
+  //     insertionPoint.parentNode.insertBefore(observableElement, insertionPoint);
+  //     pageElements.unshift(observableElement);
+  //   }
+  //   // We must calculate the insertion point now before this function is called again and we get the next document
+  //   insertionPoint = getInsertionPoint(pageElements, false);
+  //   triggerCustomEvent(EVENT_AJAX, document, {
+  //     "disableRemoveElementPath": instance.disableRemoveElementPath || DOMPath.generatePath(insertionPoint.parentNode, instance.pageElementType).path,
+  //     "disableRemoveFunctions": instance.disableRemoveFunctions || "remove,removeChild",
+  //     "pathType": instance.pageElementType
+  //   }, true);
+  //   for (let timeoutCheck = 0; timeoutCheck <= 4000; timeoutCheck += 2000) {
+  //     // TODO: Unfortunately, this doesn't work because we actually don't have the elements yet
+  //     // setTimeout(() => { setLinksNewTab(elements); }, timeoutCheck);
+  //     setTimeout(() => { setLinksNewTab([insertionPoint.parentNode]); }, timeoutCheck);
+  //   }
+  //   appendFinally("ajax", observableElement, caller);
+  // }
 
   /**
    * Performs all the finalization work for all append modes after the next page has been appended.
@@ -876,11 +868,6 @@ const Scroll = (() => {
       // Action.performAction("stop", "appendFinally", instance, items, currentDocument, iframeDocument);
       return;
     }
-    // if (instance.append === "ajax") {
-    //   Button.clickButton(instance.buttonType, instance.buttonPath, iframeDocument);
-    //   await Promise.all([getPageElementsFromIframe(iframeDocument), getButtonFromIframe(iframeDocument)]);
-    //   await scrollIframe(iframe_);
-    // }
     // Fix Lazy Loading Post
     fixLazyLoadingPost();
     // Execute Custom Scripts at this point on the root document if we need to (always *after* we append the page's scripts)
@@ -903,9 +890,9 @@ const Scroll = (() => {
     // We'll still also store the element in another property called "el" just in case we need it and we are using the divider as the page.element
     const page = {"number": pages.length + 1, "divider": divider, "url": instance.url, "title": currentDocument?.title, "element": divider && divider.scrollIntoView && document && document.contains(divider) ? divider : observableElement && observableElement.scrollIntoView ? observableElement : undefined, "el": observableElement, "append": instance.append, "mode": instance.pageElementIframe};
     // Store a reference to the current iframe and pageElements for this page in case we need to remove them
-    if (iframe_) {
-      page.iframe = iframe_;
-      // iframe_ = undefined;
+    if (iframe) {
+      page.iframe = iframe;
+      // iframe = undefined;
     }
     if (pageElements) {
       page.pageElements = pageElements;
@@ -917,6 +904,11 @@ const Scroll = (() => {
     pages.push(page);
     instance.totalPages = pages.length;
     if (intersectionObserver) {
+      if (page.pageElements) {
+        for (const pageElement of page.pageElements) {
+          intersectionObserver.observe(pageElement);
+        }
+      }
       intersectionObserver.observe(page.element);
     }
     // Scroll into view only if shortcut commands, popup, script, or auto slideshow
@@ -943,11 +935,30 @@ const Scroll = (() => {
         calculateOffset();
       }, 1000);
     }
+    if (instance.append === "ajax") {
+      const result = Button.clickButton(instance.buttonType, instance.buttonPath, iframeDocument);
+      if (result.clicked) {
+        instance.url = result.url || instance.tabURL;
+      }
+      // instance.scrollIframe = true;
+      scrollIframeIndefinitely();
+      // Button.clickButton(instance.buttonType, instance.buttonPath, iframeDocument);
+      // await Promisify.sleep(1000);
+      appendDivider();
+      appendLoading();
+    }
     // Small timeout to set isLoading flag to false and perform finalization work
     // Delay the append by a small time frame to avoid making too many requests (if caller is not auto)
     setTimeout(()=> {
       console.log("appendFinally() - timeout ended, ready to append the next page");
+      // We don't want to set isLoading to false in AJAX mode until the iframe has loaded
+      // if (caller === "prepareFirstPage" && instance.append === "ajax") {
+      //   instance.isLoading = true;
+      // } else {
+      //   instance.isLoading = false;
+      // }
       instance.isLoading = false;
+      // instance.scrollIframe = false;
       // Don't call the autoListener in prepareFirstPage because Popup will have already called startAutoTimer()
       if (instance.autoEnabled && caller !== "prepareFirstPage") {
         Auto.autoListener(instance);
@@ -968,7 +979,7 @@ const Scroll = (() => {
           Action.performAction(instance.action, "append", instance, items, currentDocument, iframeDocument);
         }
       }
-    }, (caller === "auto" ? 100 : items.scrollAppendDelay) + (instance.append === "none" ? BUTTON_APPEND_DELAY : 0));
+    }, (caller === "auto" ? 100 : instance.append === "ajax" ? AJAX_APPEND_DELAY : instance.action === "button" ? BUTTON_APPEND_DELAY : items.scrollAppendDelay || 2000));
   }
 
   /**
@@ -1327,15 +1338,15 @@ const Scroll = (() => {
    * https://github.com/davidjbradshaw/iframe-resizer/issues/1062
    * https://github.com/sixcious/infy-scroll/issues/46
    *
-   * @param iframeToResize the iframe
+   * @param iframe_ the iframe
    * @private
    */
-  async function resizeIframe(iframeToResize) {
+  async function resizeIframe(iframe_) {
     console.log("resizeIframe()");
     try {
-      if ((instance.append === "iframe" || (instance.append === "element" && instance.pageElementIframe === "trim")) && iframeToResize && iframeToResize.contentDocument) {
+      if ((instance.append === "iframe" || (instance.append === "element" && instance.pageElementIframe === "trim")) && iframe_ && iframe_.contentDocument) {
         // Inject the iFrameResize.contentWindow script into the iframe to allow message passing between the two objects
-        const iframeDoc = iframeToResize.contentDocument;
+        const iframeDoc = iframe_.contentDocument;
         const script = iframeDoc.createElement("script");
         // We have two ways to do this: 1) Make the script's textContent = to the text of our script or 2) set the src to the chrome location
         // const response = await fetch(chrome.runtime.getURL("/lib/iframe-resizer/iframeResizer.contentWindow.js"));
@@ -1343,8 +1354,8 @@ const Scroll = (() => {
         script.src = chrome.runtime.getURL("/lib/iframe-resizer/iframeResizer.contentWindow.js");
         (iframeDoc.head || iframeDoc.body || iframeDoc.documentElement).appendChild(script);
         // TODO: Should we bother keeping a reference to the iframe in an array? We already store the iframe in the pages array
-        // resizes.push(iFrameResize(undefined, iframe));
-        iFrameResize(undefined, iframeToResize)
+        // resizes.push(iFrameResize(undefined, iframe_));
+        iFrameResize(undefined, iframe_)
         // TODO: Some websites are still not being resized properly by iFrameResize, should we reintroduce a manual height option? Example: https://engine.presearch.org
         // setTimeout(() => {
         //   iframe.style.setProperty("height", getTotalHeight(iframeDoc) + "px", "important");
@@ -1444,7 +1455,7 @@ const Scroll = (() => {
    *
    * @private
    */
-  function prepareFirstPage() {
+  async function prepareFirstPage() {
     console.log("prepareFirstPage()");
     // If iframe, set to iframe or page depending on what iframePageOne is. Otherwise, do whatever the append mode is
     const mode = instance.append === "iframe" ? instance.iframePageOne ? "iframe" : "page" : instance.append;
@@ -1489,27 +1500,26 @@ const Scroll = (() => {
           }
         }
         if (instance.append === "ajax") {
-          iframe_ = document.createElement("iframe");
-          iframe_.src = instance.url;
-          iframe_.style = processStyle(IFRAME_STYLE);
-          iframe_.scrolling = "no";
-          iframe_.frameBorder = "0";
-          document.body.appendChild(iframe_);
-          iframe_.onload = async function () {
-            console.log("prepareFirstPage() - AJAX Iframe loaded");
-            iframeDocument = iframe_.contentDocument;
-            currentDocument = iframe_.contentDocument;
-            if (items.debugEnabled) {
-              iframe_.style.setProperty("height", "100px", "important");
-            }
-            // iframe_.style.setProperty("display", "none", "important");
-            // resizeIframe(iframe_);
-            await Promise.all([getPageElementsFromIframe(iframeDocument), getButtonFromIframe(iframeDocument)]);
-            // Button.clickButton(instance.buttonType, instance.buttonPath, iframeDocument);
-            // await Promise.all([getPageElementsFromIframe(iframeDocument), getButtonFromIframe(iframeDocument)]);
+          // iframe = document.createElement("iframe");
+          // iframe.src = instance.url;
+          // iframe.style = processStyle(IFRAME_STYLE + IFRAME_FIXED_STYLE);
+          // iframe.scrolling = "no";
+          // iframe.frameBorder = "0";
+          // document.body.appendChild(iframe);
+          // await Promisify.iframeLoad(iframe);
+          // console.log("prepareFirstPage() - AJAX Iframe loaded");
+          // iframeDocument = iframe.contentDocument;
+          // currentDocument = iframe.contentDocument;
+          // if (items.debugEnabled) {
+          //   iframe.style.setProperty("visibility", "visible", "important");
+          // }
+          await createIframe(instance.url, IFRAME_STYLE + IFRAME_FIXED_STYLE, "import", "prepareFirstPage");
+          if (!iframeDocument) {
+            return;
           }
+          await Promise.all([getPageElementsFromIframe(iframeDocument), getButtonFromIframe(iframeDocument)]);
         }
-        // if (instance.append === "ajax") {
+        // if (instance.append === "ajax2") {
         //   const script = document.createElement("script");
         //   // TODO: We can make the event name random by passing in a parameter to this script, like this:
         //   // EVENT_AJAX = instance.randomString;
@@ -1549,8 +1559,8 @@ const Scroll = (() => {
         appendFinally("media", media, "prepareFirstPage");
         break;
       case "none":
-        button_ = Button.findButton(instance.buttonType, instance.buttonPath, false, document).button;
-        appendFinally("none", button_, "prepareFirstPage");
+        button = Button.findButton(instance.buttonType, instance.buttonPath, false, document).button;
+        appendFinally("none", button, "prepareFirstPage");
         break;
     }
   }
@@ -1782,27 +1792,56 @@ const Scroll = (() => {
   /**
    * TODO
    *
-   * @param iframe
    * @returns {Promise<void>}
+   * @private
    */
-  async function scrollIframe(iframe) {
-    iframe.contentWindow.scrollTo({top: 0, behavior: "auto"});
-    const height = (getTotalHeight(iframe.contentDocument) || 5000);
-    for (let i = 50; i < height; i += 50) {
-      iframe.contentWindow.scrollTo({top: i, behavior: "auto"});
-      await Promisify.sleep(50);
+  async function scrollIframeIndefinitely() {
+    console.log("scrollIframeIndefinitely()");
+    // Make this run for 10 seconds
+    instance.scrollIframe = true;
+    clearTimeout(timeouts.scrollIframe);
+    timeouts.scrollIframe = setTimeout(() => {
+      instance.scrollIframe = false;
+    }, 10000);
+    while (instance.enabled && instance.scrollIframe) {
+      await scrollIframe(iframe);
     }
-    iframe_.contentWindow.scrollTo({top: 0, behavior: "smooth"});
-
-    // await Promisify.sleep(0);
-    // for (let i = 0; i < 5; i ++) {
-    //   iframe_.contentWindow.scrollTo({top: 0, behavior: "smooth"});
-    //   await Promisify.sleep(1000);
-    //   iframe_.contentWindow.scrollTo({top: 1000000, behavior: "smooth"});
-    //   await Promisify.sleep(1000);
+    // while (instance.enabled && instance.isLoading) {
+    //   console.log("scrollIframeIndefinitely() - scrolling...");
+    //   await scrollIframe(iframe);
     // }
-    console.log("scrollIframe() - finished scrolling, height=" + height);
-    return 1;
+  }
+
+  /**
+   * TODO
+   *
+   * @param iframe_
+   * @returns {Promise<void>}
+   * @private
+   */
+  async function scrollIframe(iframe_) {
+    // if (!iframe || !iframe.contentDocument) {
+    //   return;
+    // }
+    // Note: If the pageElements is just one element (e.g. a container element), look at its children (risky)
+    // const iframePageElements = await getPageElementsFromIframe(iframe.contentDocument);
+    const iframePageElements = getPageElements(iframe_.contentDocument);
+    for (const pageElement of (iframePageElements.length === 1 && iframePageElements[0] && iframePageElements[0].children ? iframePageElements[0].children : iframePageElements)) {
+      if (pageElement.ownerDocument === iframe_.contentDocument) {
+        // "start" seems to perform the best; options are start, end, center, nearest
+        pageElement.scrollIntoView({behavior: "auto", block: "start", inline: "start"});
+      }
+      // We must sleep for at least 0ms or else this strategy won't work (using 1ms to be safe)
+      await Promisify.sleep(1);
+    }
+    await Promisify.sleep(1);
+    // Old method to scroll the entire iframe from top to bottom:
+    // const height = (getTotalHeight(iframe.contentDocument) || 5000);
+    // for (let i = 0; i < height; i += 50) {
+    //   iframe.contentWindow.scrollTo({top: i, behavior: "auto"});
+    //   await Promisify.sleep(100);
+    // }
+    // console.log("scrollIframe() - finished scrolling, height=" + height);
   }
 
   /**
@@ -1812,6 +1851,7 @@ const Scroll = (() => {
    * @param iframeDoc the iframe document to obtain the page elements from
    * @param attempt   the current attempt number
    * @returns the page elements
+   * @private
    */
   async function getButtonFromIframe(iframeDoc, attempt = 0) {
     const result = Button.findButton(instance.buttonType, instance.buttonPath, false, iframeDoc);
@@ -1832,6 +1872,7 @@ const Scroll = (() => {
    * @param iframeDoc the iframe document to obtain the page elements from
    * @param attempt   the current attempt number
    * @returns the page elements
+   * @private
    */
   async function getNextLinkFromIframe(iframeDoc, attempt = 0) {
     const result = Next.findLinkWithInstance(instance, instance.action, [iframeDoc]);
@@ -1851,13 +1892,14 @@ const Scroll = (() => {
    * @param iframeDoc the iframe document to obtain the page elements from
    * @param attempt   the current attempt number
    * @returns the page elements
+   * @private
    */
   async function getPageElementsFromIframe(iframeDoc, attempt = 0) {
-    pageElements = getPageElements(iframeDoc);
+    const pageElements_ = getPageElements(iframeDoc);
     // Determine if the page elements are placeholder ghost nodes by comparing the innerHTML of each of the page elements to see if they are the same
-    // If we're using the parent element container for the pageElements (e.g. "trim" mode), look at the children (risky!)
     const innerHTMLs = [];
-    for (const pageElement of (pageElements?.length === 1 && pageElements[0] && pageElements[0].children ? pageElements[0].children : pageElements)) {
+    // If the pageElements is just one element (e.g. a container element), look at its children (risky)
+    for (const pageElement of (pageElements_?.length === 1 && pageElements_[0] && pageElements_[0].children ? pageElements_[0].children : pageElements_)) {
       innerHTMLs.push(pageElement.innerHTML);
     }
     let isLikelyGhostNodes = false;
@@ -1869,17 +1911,17 @@ const Scroll = (() => {
       }
     }
     let sameInnerHTML = false;
-    if (instance.append === "ajax" && pages?.length > 1) {
-      sameInnerHTML = pages[pages.length - 1].pageElementsInnerHTML === pageElements[0]?.parentNode?.innerHTML;
-      console.log("getPageElementsFromIframe() - sameInnerHTML = " + sameInnerHTML);
-    }
+    // if (instance.append === "ajax" && pages?.length > 1) {
+    //   sameInnerHTML = pages[pages.length - 1].pageElementsInnerHTML === pageElements_[0]?.parentNode?.innerHTML;
+    //   console.log("getPageElementsFromIframe() - sameInnerHTML = " + sameInnerHTML);
+    // }
     // Recursively call this function and try again if no page elements were found or if they appear to be ghost nodes
-    if ((attempt < 25 && (pageElements.length <= 0) || sameInnerHTML) || (attempt < 15 && isLikelyGhostNodes)) {
+    if ((attempt < 25 && ((pageElements_.length <= 0) || sameInnerHTML)) || (attempt < 15 && isLikelyGhostNodes)) {
       await Promisify.sleep(200);
       return getPageElementsFromIframe(iframeDoc, attempt + 1);
     }
-    console.log("getPageElementsFromIframe() - took " + (attempt * 200) + "ms, pageElements.length=" + pageElements?.length + ", isLikelyGhostNodes=" + isLikelyGhostNodes);
-    return pageElements;
+    console.log("getPageElementsFromIframe() - took " + (attempt * 200) + "ms, pageElements.length=" + pageElements_?.length + ", isLikelyGhostNodes=" + isLikelyGhostNodes);
+    return pageElements_;
   }
 
   /**
@@ -1896,12 +1938,11 @@ const Scroll = (() => {
   function getPageElements(doc, pageElementType = instance.pageElementType, pageElementPath = instance.pageElementPath, withDetails = false) {
     // Note: We do not want to set the global pageElements variable in this function in case we are just checking for it
     // Stores the exception or error message in order to return it back to the user for feedback (e.g. invalid selector)
-    const details = {};
     const result = getElements(pageElementPath, pageElementType, doc);
-    let pageElements_ = result.elements;
-    details.error = result.error;
-    console.log("getPageElements() - pageElementType=" + pageElementType + ", pageElementPath=" + pageElementPath + ", elements=");
-    console.log(pageElements_);
+    const pageElements_ = result.elements;
+    const details = { error: result.error };
+    // console.log("getPageElements() - pageElementType=" + pageElementType + ", pageElementPath=" + pageElementPath + ", elements=");
+    // console.log(pageElements_);
     return withDetails ? [pageElements_, details] : pageElements_;
   }
 
@@ -2043,7 +2084,9 @@ const Scroll = (() => {
     // importNode doesn't work with some websites (p), so we should only use either the standard appendChild or adoptNode
     try {
       // Firefox DeadObject error: If in AJAX mode, we can't transfer the node directly and have to use importNode or Node.cloneNode() to import a copy
-      if (instance.append === "ajax" && items.browserName === "firefox") {
+      // Note that if we don't import/clone, other browsers will throw an error if the web page tries to remove or do something with the elements. However, we want to use adoptNode to keep the original elements
+      // if (instance.append === "ajax" && items.browserName === "firefox") {
+      if (instance.append === "ajax") {
         return document.importNode(node, true);
       }
       return document.adoptNode(node);
@@ -2083,7 +2126,7 @@ const Scroll = (() => {
     const bottom = getTotalHeight(document);
     // Check where the element point is on the document and find its position. Its position (top) can then be used to calculate the offset
     // let elementPosition = button ? getElementPosition(button) : getElementPosition(insertionPoint);
-    let elementPosition = instance.append === "none" ? getElementPosition(button_) : getElementPosition(insertionPoint);
+    let elementPosition = instance.append === "none" ? getElementPosition(button) : getElementPosition(insertionPoint);
     // TODO: Experiment with NOT doing this anymore on the elementPosition and just relying on option 2 if insert isn't an element
     // If the insert isn't an element, we must wrap it inside an element to calculate its position
     // if (insertionPoint && insertionPoint.nodeType === Node.TEXT_NODE) {
@@ -2102,12 +2145,13 @@ const Scroll = (() => {
     // 2nd Option: If in element mode, fall back to calculating the elements' bottom position and use the biggest value
     // if (pageElements && (!difference || difference <= 0)) {
     if ((instance.append === "element" || instance.append === "ajax") && (!difference || difference <= 0)) {
-      console.log("calculateOffset() - no value found from the insert position's top, calculating each element's bottom position ...");
+      console.log("calculateOffset() - no value found from the insertion point's top, calculating each element's bottom position ...");
       // If setting the instance (changing the append mode) and we haven't yet set the page elements for the first time
       if (!pageElements) {
         pageElements = getPageElements(document);
       }
-      difference = Math.max(...(pageElements.filter(e => e.nodeType === Node.ELEMENT_NODE).map(e => getElementPosition(e).bottom)));
+      // difference = Math.max(...(pageElements.filter(e => e.nodeType === Node.ELEMENT_NODE).map(e => getElementPosition(e).bottom)));
+      difference = Math.max(...(getPageElements(document).filter(e => e.nodeType === Node.ELEMENT_NODE).map(e => getElementPosition(e).bottom)));
     }
     // 3rd Option: Fall back to using the total document height * 0.75
     if (!difference || difference <= 0) {
@@ -2505,6 +2549,72 @@ const Scroll = (() => {
     }
   }
 
+  /**
+   * Creates and appends an iframe. Waits for the iframe to load and appends a message if an error is encountered.
+   *
+   * @param src the iframe's url
+   * @param style the iframe's style
+   * @param mode the iframe mode ("full", "import", "trim")
+   * @param caller who called this function
+   * @private
+   */
+  async function createIframe(src, style, mode, caller) {
+    console.log("createIframe() - mode=" + mode + ", caller=" + caller);
+    // Step 1 Create
+    iframe = document.createElement("iframe");
+    iframe.src = src;
+    iframe.style = processStyle(style);
+    iframe.scrolling = "no";
+    iframe.frameBorder = "0";
+    // iframe.sandbox = "allow-same-origin allow-scripts allow-forms";
+    // Step 2 Append
+    if (mode !== "trim") {
+      document.body.appendChild(iframe);
+    } else {
+      // The insertion point may have been "moved" by the website and no longer have a parentNode, so we re-calculate it to be the last element
+      if (!insertionPoint || !insertionPoint.parentNode || insertionPoint.ownerDocument !== document) {
+        console.log("appendIframe() - the insertion point's hierarchy in the DOM was altered. " + (insertionPoint ? ("parentNode=" + insertionPoint.parentNode + ", ownerDocument === document=" + (insertionPoint.ownerDocument === document)) : "insertionPoint is undefined!"));
+        insertionPoint = getInsertionPoint(getPageElements(document), false);
+      }
+      insertionPoint?.parentNode?.insertBefore(iframe, insertionPoint);
+    }
+    try {
+      await Promisify.iframeLoad(iframe);
+    } catch (e) {
+      // If error (promise rejected), there won't be an iframe.contentDocument, so we don't need to handle it here
+      console.log("createIframe() - error loading iframe, Error:");
+      console.log(e);
+    }
+    console.log("createIframe() - iframe loaded");
+    // Step 3 contentDocument
+    // If the iframe's document doesn't exist, we can't continue
+    if (!iframe.contentDocument) {
+      console.log("createIframe() - error, no iframe.contentDocument!");
+      // TODO: We need to reset the instance's URL back to the previous URL so Next.findLink() doesn't return a duplicate URL when we try again. We should refactor the code so that the instance URL is only set after the page has been successfully appended...
+      if (pages && pages.length > 0 && pages[pages.length - 1]) {
+        instance.url = pages[pages.length - 1].url;
+      }
+      const anchor = document.createElement("a");
+      anchor.href = "https://github.com/sixcious/xframey";
+      anchor.target = "_blank";
+      anchor.innerText = "Xframey";
+      appendMessage(chrome.i18n.getMessage("oops_error") + " " + chrome.i18n.getMessage("iframes_not_supported_error"), anchor);
+      // Return undefined so the divider gets removed (the iframe technically exists)
+      appendFinally("iframe", undefined, caller);
+      // TODO: Should we reset isLoading and keep trying? Valid use case is list and some URLs being from another origin
+      // instance.isLoading = false;
+      return;
+    }
+    console.log("createIframe() - iframe.contentDocument.readyState=" + iframe.contentDocument.readyState);
+    // Note that in the Element Iframe modes, we will later clone the iframe.contentDocument and set it to currentDocument after we're sure the page elements/next link have been loaded
+    iframeDocument = iframe.contentDocument;
+    currentDocument = iframe.contentDocument;
+    // Step 4 Debug
+    if (items.debugEnabled) {
+      iframe.style.setProperty("visibility", "visible", "important");
+    }
+  }
+
   // TODO: This was meant to be a helper function for setting individual style properties but decided not to use it for now
   // /**
   //  *
@@ -2583,7 +2693,7 @@ const Scroll = (() => {
       // Here is where we may be waiting quite some time, (1,3,5,7,10 seconds)
       const temp = await Instance.buildInstance(tab, items, 1);
       // The instance may have been set by the user in the time it took to await the previous statement; only set it if it isn't enabled
-      if (!instance.enabled) {
+      if (!instance.enabled && !instance.pickerEnabled) {
         console.log("init() - setting instance to temp, temp=");
         console.log(temp);
         instance = temp;
@@ -2641,7 +2751,9 @@ const Scroll = (() => {
     } else {
       // Sometimes after the Popup is setting the instance again (e.g. to add Auto after being enabled), isLoading is in a strange state of true
       // While we could always set this to false every time start() is called, we probably want to at least do prepareFirstPage() first, which calls appendFinally() and then sets it after a timeout
-      instance.isLoading = false;
+      // If the append mode is AJAX, we need to wait for the iframe to load before we can load the next page. We'll set isLoading to false after it's loaded
+      // instance.isLoading = instance.append === "ajax" ? true : false;
+
     }
     if (!items.on) {
       console.log("start() - was not on, so setting items.on=true");
@@ -2661,6 +2773,9 @@ const Scroll = (() => {
     //   // ajaxObserver.observe(insertionPoint && insertionPoint.parentNode ? insertionPoint.parentNode : document.body, { childList: true, subtree: true });
     //   ajaxObserver.observe(document.body, { childList: true, subtree: true });
     // }
+    if (instance.append === "ajax") {
+      scrollIframeIndefinitely();
+    }
   }
 
   /**
