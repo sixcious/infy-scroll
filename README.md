@@ -79,7 +79,7 @@ Installing from GitHub is super simple. First, [download the zip](https://github
 
 #### Firefox
 1. Copy the `src/firefox/manifest.json` file and paste/overwrite the `src/base/manifest.json` file
-2. [Follow these instructions](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Your_first_WebExtension#installing) to load a Temporary Add-on
+2. [Follow these instructions](https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/Your_first_WebExtension#installing) to load a Temporary Add-on
 
 **Finally**: When prompted for the location, select the `src/base` folder (Firefox: select `manifest.json`) and it will install.
 
@@ -97,7 +97,7 @@ I'm super sorry, but starting in Version 0.8, these two collections have been me
 I really wish I could. I've spent the last couple years helping people both privately and on GitHub, but there's just too many websites out there for one person to help *everyone* with. I totally understand that "Actions," "Append Modes," "Selectors," "XPath," and all the settings may be difficult to learn, so I've poured lots of time into writing descriptive tooltips and a [help guide](https://github.com/sixcious/infy-scroll/wiki). You may also want to check to make sure that the [website isn't incompatible](https://github.com/sixcious/infy-scroll/wiki/Incompatible-Websites) with Infy. If you're still stumped, by all means, please [open an issue](https://github.com/sixcious/infy-scroll/issues). I'll try my best to reply as soon as I can.
 
 #### Why can't Infy Scroll execute custom scripts?
-Unfortunately, because browsers strongly discourage this from a security standpoint (especially now that Manifest V3 is out!). However, there's a workaround: you can write your own custom scripts inside a Userscript Manager (like [Violentmonkey](https://github.com/violentmonkey/violentmonkey)) by listening for Custom Events that Infy triggers whenever a new node or page has been appended or by implementing a [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver). Feel free to read the [Scripts and Styles](https://github.com/sixcious/infy-scroll/wiki/Scripts-and-Styles) section for examples and more information.
+Unfortunately, because browsers strongly discourage this from a security standpoint (especially now that Manifest V3 is out!). However, there's a workaround: you can write your own custom scripts inside a Userscript Manager (like [Violentmonkey](https://github.com/violentmonkey/violentmonkey)) by listening for Custom Events that Infy triggers whenever a new node or page has been appended or by implementing a [MutationObserver](https://developer.mozilla.org/docs/Web/API/MutationObserver). Feel free to read the [Scripts and Styles](https://github.com/sixcious/infy-scroll/wiki/Scripts-and-Styles) section for examples and more information.
 
 #### What is the minimum browser version (and why is it to so high)?
 Infy currently requires Chrome/Edge/Firefox `102` and higher to run. I tend to update the minimum browser version about once a year so I can use the latest and greatest ECMAScript features without worry. It also significantly saves in my testing time in having to maintain older Chromium builds. In the past, I used to offer "modified" builds with a lower minimum version, but I can no longer do this. If your browser doesn't support Infy, I'm afraid you'll have to use another app/extension (sorry!).
