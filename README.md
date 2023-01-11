@@ -33,19 +33,6 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 - Firefox: Support for Firefox for Android (Fenix Nightly with Collections Workaround, Some features may not work perfectly)
 - No Ads, No Tracking, No Bloat
 
-## Support for Anti-Infinite Scrolling Sites Like Pixiv*
-<img src="https://i.imgur.com/Ja7ieng.png" height="361" alt="Pixiv Infinite Scrolling (Infy Scroll)" title="Pixiv Infinite Scrolling (Infy Scroll)">
-
-#### Infy Settings Used:
-- Example URL: [https://www.pixiv.net/tags/Re:ゼロから始める異世界生活/illustrations](https://www.pixiv.net/tags/Re%3A%E3%82%BC%E3%83%AD%E3%81%8B%E3%82%89%E5%A7%8B%E3%82%81%E3%82%8B%E7%95%B0%E4%B8%96%E7%95%8C%E7%94%9F%E6%B4%BB/illustrations)
-- Action: `Next Link`
-- Next Rule (Selector): `nav > button[aria-current="true"] + a`
-- Append: `Element` and check `Element Iframe Mode`
-- Page Element Rule (Selector): `div.sc-l7cibp-0.juyBTC,div.sc-1eop7y7-0.cJYTWr`
-- Saved URL (Regular Expression): `^https://www\.pixiv\.net/.*/?tags/.*/(illustrations|manga|novels)`
-
-`*`*Tested on March 30, 2021. Requires page refresh due to SPA (Single Page Application) nature. Links must be opened in a new tab due to the nature of Iframes. Websites can change their code at any time and break these settings. `AUTO` mode may not work due to the complexity involved. Firefox users will need to use the regular `Iframe` append mode. This is just a simple example to show Infy's potential.*
-
 ## Introducing AJAX
 Since releasing Infy Scroll in August 2020, if you were to ask me what is the one feature I was working my hardest to implement — it's always been an append mode for [AJAX websites](https://developer.mozilla.org/docs/Glossary/AJAX). After two years of on and off development, I'm really proud to offer this completely new and innovative append mode in Version 0.8, The Eightfinity Edition. AJAX is mostly in the proof of concept stage right now, but does work on a small number of sites, including Pixiv.
 
@@ -68,9 +55,6 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
 ## SPA Support
 [SPAs (Single-page Applications)](https://developer.mozilla.org/docs/Glossary/SPA) are tricky to deal with because they update their page content dynamically, and sometimes don't even update the address bar. However, Infy can now watch for changes on the page and auto-activate and auto-deactivate itself if the website changes its content dynamically. It even works here on GitHub and on Pixiv. Just check the setting in the Scripts dialog in the UI Window (Version 0.8) and save it. No more refreshing the page!
 
-## Help Guide
-[View the Help Guide!](https://github.com/sixcious/infy-scroll/wiki)
-
 ## Installation
 Installing from GitHub is super simple. First, [download the zip](https://github.com/sixcious/infy-scroll/archive/refs/heads/main.zip) and unzip it. Then:
 
@@ -84,6 +68,9 @@ Installing from GitHub is super simple. First, [download the zip](https://github
 **Finally**: When prompted for the location, select the `src/base` folder (Firefox: select `manifest.json`) and it will install.
 
 **Important**: There is no version update path for the GitHub build, so use the [web store version](https://github.com/sixcious/infy-scroll#available-for) as your main version.
+
+## Help Guide
+[View the Help Guide!](https://github.com/sixcious/infy-scroll/wiki)
 
 ## FAQ
 
