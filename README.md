@@ -34,7 +34,7 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 - No Ads, No Tracking, No Bloat
 
 ## Introducing AJAX
-Since releasing Infy Scroll in August 2020, if you were to ask me what is the one feature I was working my hardest to implement — it's always been an append mode for [AJAX websites](https://developer.mozilla.org/docs/Glossary/AJAX). After two years of on and off development, I'm really proud to offer this completely new and innovative append mode in Version 0.8, The Eightfinity Edition. AJAX is mostly in the proof of concept stage right now, but does work on a small number of sites, including Pixiv.
+Since releasing Infy Scroll in August 2020, if you were to ask me what is the one feature I was working my hardest to implement — it's always been an append mode for [AJAX websites](https://developer.mozilla.org/docs/Glossary/AJAX). After two years of on and off development, I'm really proud to offer this completely new and innovative append mode in Version 0.8, The Eightfinity Edition. AJAX is mostly in the proof of concept stage right now, but does work on many sites, including Pixiv.
 
 #### AJAX Demo (Pixiv)
 <img src="https://raw.githubusercontent.com/sixcious/infy-scroll/main/assets/ajax.gif">
@@ -45,8 +45,9 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
   "action": "button",
   "append": "ajax",
   "button": "//nav/button[@aria-current='true']/following-sibling::a[not(@hidden)]",
+  "loadElement": "//ul[@class='sc-l7cibp-1 krFoBL']/figure",
   "pageElement": "//ul[@class='sc-l7cibp-1 krFoBL']/*",
-  "spa": "https://www.pixiv.net",
+  "spa": "^https://www\\.pixiv\\.net",
   "url": "^https://www\\.pixiv\\.net/"
 }
 ````
