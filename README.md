@@ -45,7 +45,7 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
   "action": "button",
   "append": "ajax",
   "button": "//nav/button[@aria-current='true']/following-sibling::a[not(@hidden)]",
-  "loadElement": "//ul[@class='sc-l7cibp-1 krFoBL']/figure",
+  "loadElement": "//ul[@class='sc-l7cibp-1 krFoBL']//figure",
   "pageElement": "//ul[@class='sc-l7cibp-1 krFoBL']/*",
   "spa": "^https://www\\.pixiv\\.net",
   "url": "^https://www\\.pixiv\\.net/"
