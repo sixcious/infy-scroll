@@ -1,8 +1,5 @@
 name: Bug Report
 description: File a bug report
-labels: ["bug"]
-assignees:
-  - sixcious
 body:
 - type: markdown
   attributes:
@@ -26,12 +23,12 @@ body:
   id: version
   attributes:
     label: Version
-    description: What version of the extension are you using?
+    description: What version are you using?
     placeholder: "Example: 0.7"
 - type: input
   id: browser
   attributes:
-    label: Browser Version
+    label: Browser
     description: What browser and browser version are you using?
     placeholder: "Example: Chrome 100"
 - type: input
