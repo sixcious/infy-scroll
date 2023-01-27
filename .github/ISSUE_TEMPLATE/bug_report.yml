@@ -38,10 +38,10 @@ body:
     description: What operating system are you using?
     placeholder: "Example: Windows"
 - type: dropdown
-  id: platform
+  id: device
   attributes:
-    label: Platform
-    description: What platform are you on?
+    label: Device
+    description: What type of device are you using?
     options:
       - PC
       - Phone
