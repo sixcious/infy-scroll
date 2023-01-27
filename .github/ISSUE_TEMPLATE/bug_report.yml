@@ -24,8 +24,6 @@ body:
     label: URL
     description: If possible, please provide an example URL of where the problem is happening.
     placeholder: "https://www.example.com/this-specific-url"
-  validations:
-    required: false
 - type: textarea
   id: debug
   attributes:
@@ -60,7 +58,6 @@ body:
   id: platform
   attributes:
     label: What type of platform are you on?
-    multiple: true
     options:
       - PC
       - Mobile
