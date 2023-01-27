@@ -49,13 +49,13 @@ body:
     validations:
       required: true
 - type: input
-    id: os
-    attributes:
-      label: OS
-      description: What operating system are you using?
-      placeholder: "Windows"
-      validations:
-        required: true
+  id: os
+  attributes:
+    label: OS
+    description: What operating system are you using?
+    placeholder: "Windows"
+    validations:
+      required: true
 - type: dropdown
   id: platform
   attributes:
