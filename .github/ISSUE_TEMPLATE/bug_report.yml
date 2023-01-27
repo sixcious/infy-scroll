@@ -9,15 +9,15 @@ body:
   id: what-happened
   attributes:
     label: What happened?
-    description: Also tell us, what did you expect to happen?
-    placeholder: Tell us what you see!
+    description: Also, what did you expect to happen? You can upload any screenshots here to help explain the problem (but please do not upload images of the mascot).
+    placeholder: Say what happened!
   validations:
     required: true
 - type: input
   id: url
   attributes:
     label: URL
-    description: If possible, please provide an example URL of where the problem is happening.
+    description: If possible, could you provide an example URL of where the problem is happening? (However, please do not post NSFW URLs.)
     placeholder: "Example: https://www.example.com/right-here"
 - type: input
   id: version
@@ -30,7 +30,7 @@ body:
   attributes:
     label: Browser Version
     description: What browser and browser version are you using?
-    placeholder: "Example: Chrome 110"
+    placeholder: "Example: Chrome 100"
 - type: input
   id: os
   attributes:
@@ -40,7 +40,8 @@ body:
 - type: dropdown
   id: platform
   attributes:
-    label: What platform are you on?
+    label: Platform
+    description: What platform are you on? (Desktop means PC or Laptop while Mobile means Phone or Tablet.)
     options:
       - Desktop
       - Mobile
