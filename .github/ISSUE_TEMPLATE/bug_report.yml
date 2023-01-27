@@ -1,6 +1,5 @@
 name: Bug Report
 description: File a bug report
-title: ""
 labels: ["bug"]
 assignees:
   - sixcious
@@ -36,24 +35,18 @@ body:
     label: Version
     description: What version of the extension are you using?
     placeholder: "0.7"
-    validations:
-      required: true
 - type: input
   id: browser
   attributes:
     label: Browser Version
     description: What browser and browser version are you using?
     placeholder: "Chrome 110"
-    validations:
-      required: true
 - type: input
   id: os
   attributes:
     label: OS
     description: What operating system are you using?
     placeholder: "Windows"
-    validations:
-      required: true
 - type: dropdown
   id: platform
   attributes:
@@ -61,8 +54,6 @@ body:
     options:
       - PC
       - Mobile
-    validations:
-      required: true
 - type: checkboxes
   id: terms
   attributes:
