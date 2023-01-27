@@ -41,7 +41,8 @@ body:
   id: platform
   attributes:
     label: Platform
-    description: What platform are you on? (Desktop means PC or Laptop while Mobile means Phone or Tablet.)
+    description: What platform are you on?
     options:
-      - Desktop
-      - Mobile
+      - PC
+      - Phone
+      - Other
