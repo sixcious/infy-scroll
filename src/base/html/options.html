@@ -15,6 +15,8 @@
     <link rel="stylesheet" href="../css/theme.css">
     <link rel="stylesheet" href="../css/options.css">
     <script defer src="../lib/material/material-components-web.min.js"></script>
+    <script defer src="../lib/confetti/confetti.browser.js"></script>
+    <script defer src="../lib/chart/chart.umd.js"></script>
     <script defer src="../js/mdc.js"></script>
     <script defer src="../js/ui.js"></script>
     <script defer src="../js/promisify.js"></script>
@@ -28,8 +30,11 @@
       <span class="superscript"></span>
       <span id="options-header-label" data-i18n="textContent"></span>
       <div id="options-header-buttons" class="float-right">
-        <div id="theme-icon-div" class="tooltip-without-underline display-inline-block" aria-describedby="tooltip" aria-label="theme-icon-tooltip" data-balloon-pos="down" data-balloon-length="left">
-          <svg id="theme-icon" class="hvr-grow"><use href="../lib/feather/feather.svg#sun"></use></svg>
+        <div id="stats-button" class="tooltip-without-underline display-inline-block" aria-describedby="tooltip" aria-label="stats-button-tooltip" data-balloon-pos="down" data-balloon-length="left">
+          <svg class="options-header-svg hvr-grow"><use href="../lib/fontawesome/solid.svg#ranking-star"></use></svg>
+        </div>
+        <div id="theme-button" class="tooltip-without-underline display-inline-block" aria-describedby="tooltip" aria-label="theme-button-tooltip" data-balloon-pos="down" data-balloon-length="left">
+          <svg id="theme-icon" class="options-header-svg hvr-grow"><use href="../lib/feather/feather.svg#sun"></use></svg>
         </div>
         <a href="https://github.com/sixcious/infy-scroll/wiki" target="_blank" class="mdc-button mdc-button--raised mdc-ripple-upgraded">
           <span class="mdc-button__ripple"></span>
@@ -150,7 +155,7 @@
         </div>
       </div>
     </nav>
-    <section id="user-interface" class="mdc-tab-content mdc-tab-content--active">
+    <section id="user-interface" class="mdc-tab-content mdc-tab-content--active" data-tab-bar="options-tab-bar">
       <header>
         <svg><use href="../lib/fontawesome/regular.svg#window-restore"></use></svg>
         <span id="ui-settings-header" data-i18n="textContent"></span>
@@ -330,7 +335,7 @@
         </div>
       </div>
     </section>
-    <section id="saves" class="mdc-tab-content">
+    <section id="saves" class="mdc-tab-content" data-tab-bar="options-tab-bar">
       <header>
         <svg><use href="../lib/fontawesome/solid.svg#heart"></use></svg>
         <span id="saves-settings-header" data-i18n="textContent"></span>
@@ -402,7 +407,7 @@
             <span class="mdc-button__ripple"></span>
             <span id="saves-add-label" class="mdc-button__label" data-i18n="textContent"></span>
           </button>
-          <button id="saves-delete-button" class="mdc-button mdc-button--outlined">
+          <button id="saves-delete-button" class="mdc-button mdc-button--raised mdc-button--red">
             <span class="mdc-button__ripple"></span>
             <span id="saves-delete-label" class="mdc-button__label" data-i18n="textContent"></span>
           </button>
@@ -415,14 +420,20 @@
         <p id="saves-manage" data-i18n="textContent"></p>
       </div>
     </section>
-    <section id="database" class="mdc-tab-content">
+    <section id="database" class="mdc-tab-content" data-tab-bar="options-tab-bar">
       <header>
         <svg><use href="../lib/fontawesome/solid.svg#database"></use></svg>
         <span id="database-settings-header" data-i18n="textContent"></span>
       </header>
       <p id="database-settings-description" data-i18n="textContent"></p>
-      <p id="database-contribute" data-i18n="textContent"></p>
-      <p id="database-disclaimer" data-i18n="textContent"></p>
+      <p>
+        <span id="database-contribute" data-i18n="textContent"></span>
+        <a id="database-contribute-link" data-i18n="textContent" href="https://github.com/sixcious/infy-scroll/wiki/Databases#contribute" target="_blank"></a>
+      </p>
+      <p>
+        <svg class="smaller-icon error-icon"><use href="../lib/fontawesome/alt.svg#solid-circle-exclamation"></use></svg>
+        <span id="database-disclaimer" data-i18n="textContent"></span>
+      </p>
       <div id="database-data-table" class="mdc-data-table">
         <table class="mdc-data-table__table" aria-label="Database">
           <thead>
@@ -440,6 +451,7 @@
             </th>
             <th class="mdc-data-table__header-cell" role="columnheader" scope="col" data-id="table-heading-database" data-i18n="textContent"></th>
             <th class="mdc-data-table__header-cell" role="columnheader" scope="col" data-id="table-heading-database-items" data-i18n="textContent"></th>
+            <th class="mdc-data-table__header-cell" role="columnheader" scope="col" data-id="table-heading-database-stats" data-i18n="textContent"></th>
             <th class="mdc-data-table__header-cell" role="columnheader" scope="col" data-id="table-heading-database-location" data-i18n="textContent"></th>
             <th class="mdc-data-table__header-cell" role="columnheader" scope="col" data-id="table-heading-database-updated" data-i18n="textContent"></th>
           </tr>
@@ -461,7 +473,8 @@
               </div>
             </td>
             <td class="mdc-data-table__cell"><a href="http://wedata.net/databases/database.name/items" target="_blank">database.name</a></td>
-            <td class="mdc-data-table__cell"><span data-id class="database-dialog-opener"></span></td>
+            <td class="mdc-data-table__cell"><span data-key class="database-dialog-opener" data-dialog="items"></span></td>
+            <td class="mdc-data-table__cell"><span data-key class="database-dialog-opener" data-dialog="stats"><svg data-key class="database-dialog-opener hvr-grow" data-dialog="stats"><use data-key class="database-dialog-opener" data-dialog="stats" href="../lib/fontawesome/solid.svg#chart-simple"></use></svg></span></td>
             <td class="mdc-data-table__cell"></td>
             <td class="mdc-data-table__cell"></td>
           </tr>
@@ -472,7 +485,7 @@
           <span class="mdc-button__ripple"></span>
           <span id="database-download-label" class="mdc-button__label" data-i18n="textContent"></span>
         </button>
-        <button id="database-delete-button" class="mdc-button mdc-button--outlined">
+        <button id="database-delete-button" class="mdc-button mdc-button--raised mdc-button--red">
           <span class="mdc-button__ripple"></span>
           <span id="database-delete-label" class="mdc-button__label" data-i18n="textContent"></span>
         </button>
@@ -602,7 +615,7 @@
         </div>
       </div>
     </section>
-    <section id="scroll" class="mdc-tab-content">
+    <section id="scroll" class="mdc-tab-content" data-tab-bar="options-tab-bar">
       <header>
         <svg><use href="../lib/fontawesome/solid.svg#circle-chevron-down"></use></svg>
         <span id="scroll-settings-header" data-i18n="textContent"></span>
@@ -617,17 +630,6 @@
             <div id="scroll-detection-radios">
               <div class="mdc-form-field">
                 <div class="mdc-radio">
-                  <input class="mdc-radio__native-control" type="radio" id="scroll-detection-sl-input" name="scroll-detection" value="sl">
-                  <div class="mdc-radio__background">
-                    <div class="mdc-radio__outer-circle"></div>
-                    <div class="mdc-radio__inner-circle"></div>
-                  </div>
-                  <div class="mdc-radio__ripple"></div>
-                </div>
-                <label id="scroll-detection-sl-label" for="scroll-detection-sl-input" data-i18n="textContent"></label>
-              </div>
-              <div class="mdc-form-field">
-                <div class="mdc-radio">
                   <input class="mdc-radio__native-control" type="radio" id="scroll-detection-io-input" name="scroll-detection" value="io">
                   <div class="mdc-radio__background">
                     <div class="mdc-radio__outer-circle"></div>
@@ -636,6 +638,17 @@
                   <div class="mdc-radio__ripple"></div>
                 </div>
                 <label id="scroll-detection-io-label" for="scroll-detection-io-input" data-i18n="textContent"></label>
+              </div>
+              <div class="mdc-form-field">
+                <div class="mdc-radio">
+                  <input class="mdc-radio__native-control" type="radio" id="scroll-detection-sl-input" name="scroll-detection" value="sl">
+                  <div class="mdc-radio__background">
+                    <div class="mdc-radio__outer-circle"></div>
+                    <div class="mdc-radio__inner-circle"></div>
+                  </div>
+                  <div class="mdc-radio__ripple"></div>
+                </div>
+                <label id="scroll-detection-sl-label" for="scroll-detection-sl-input" data-i18n="textContent"></label>
               </div>
             </div>
           </div>
@@ -716,8 +729,9 @@
               </div>
               <span id="scroll-append-threshold-pixels-bottom-label" data-i18n="textContent"></span>
             </div>
+<!--
             <div id="scroll-append-threshold-pages">
-              <div id="scroll-append-threshold-pages-text-field" class="mdc-text-field mdc-text-field--outlined">
+              <div id="scroll-append-threshold-pages-text-field" class="mdc-text-field mdc-text-field&#45;&#45;outlined">
                 <input class="mdc-text-field__input" type="number" id="scroll-append-threshold-pages-input" min="0" max="3">
                 <div class="mdc-notched-outline">
                   <div class="mdc-notched-outline__leading"></div>
@@ -727,6 +741,7 @@
               </div>
               <span id="scroll-append-threshold-pages-bottom-label" data-i18n="textContent"></span>
             </div>
+-->
           </div>
         </div>
         <div class="row">
@@ -742,7 +757,7 @@
                 <div class="mdc-notched-outline__trailing"></div>
               </div>
             </div>
-            ms
+            <span data-id="ms-label" data-i18n="textContent"></span>
           </div>
         </div>
         <div class="row">
@@ -887,9 +902,39 @@
             </div>
           </div>
         </div>
+        <div class="row">
+          <div class="column">
+            <label id="scroll-maximum-pages-label" data-i18n="textContent" aria-describedby="tooltip" aria-label="scroll-maximum-pages-tooltip" data-balloon-pos="up" data-balloon-length="xlarge"></label>
+          </div>
+          <div class="column">
+            <div class="mdc-form-field">
+              <div class="mdc-checkbox">
+                <input id="scroll-maximum-pages-checkbox-input" type="checkbox" class="mdc-checkbox__native-control"/>
+                <div class="mdc-checkbox__background">
+                  <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                    <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                  </svg>
+                </div>
+                <div class="mdc-checkbox__ripple"></div>
+              </div>
+              <label id="scroll-maximum-pages-checkbox-label" for="scroll-maximum-pages-checkbox-input" data-i18n="textContent"></label>
+            </div>
+            <div id="scroll-maximum-pages">
+              <div id="scroll-maximum-pages-text-field" class="mdc-text-field mdc-text-field--outlined">
+                <input id="scroll-maximum-pages-input" class="mdc-text-field__input" type="number" min="0" max="100">
+                <div class="mdc-notched-outline">
+                  <div class="mdc-notched-outline__leading"></div>
+                  <div class="mdc-notched-outline__notch"></div>
+                  <div class="mdc-notched-outline__trailing"></div>
+                </div>
+              </div>
+              <span data-id="pages-label" data-i18n="textContent"></span>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
-    <section id="next" class="mdc-tab-content">
+    <section id="next" class="mdc-tab-content" data-tab-bar="options-tab-bar">
       <header>
         <svg><use href="../lib/fontawesome/solid.svg#circle-chevron-right"></use></svg>
         <span id="next-settings-header" data-i18n="textContent"></span>
@@ -962,7 +1007,7 @@
         </div>
       </div>
     </section>
-    <section id="increment" class="mdc-tab-content">
+    <section id="increment" class="mdc-tab-content" data-tab-bar="options-tab-bar">
       <header>
         <svg><use href="../lib/fontawesome/alt.svg#solid-circle-plus"></use></svg>
         <span id="increment-settings-header" data-i18n="textContent"></span>
@@ -1239,7 +1284,7 @@
         </div>
       </div>
     </section>
-    <section id="shortcuts" class="mdc-tab-content">
+    <section id="shortcuts" class="mdc-tab-content" data-tab-bar="options-tab-bar">
       <header>
         <svg><use href="../lib/fontawesome/regular.svg#keyboard"></use></svg>
         <span id="shortcuts-settings-header" data-i18n="textContent"></span>
@@ -1252,7 +1297,7 @@
         </button>
       </div>
     </section>
-    <section id="extra" class="mdc-tab-content">
+    <section id="extra" class="mdc-tab-content" data-tab-bar="options-tab-bar">
       <header>
         <svg><use href="../lib/fontawesome/solid.svg#asterisk"></use></svg>
         <span id="extra-settings-header" data-i18n="textContent"></span>
@@ -1343,12 +1388,16 @@
         </div>
       </div>
     </section>
-    <section id="backup" class="mdc-tab-content">
+    <section id="backup" class="mdc-tab-content" data-tab-bar="options-tab-bar">
       <header>
         <svg><use href="../lib/fontawesome/solid.svg#file-import"></use></svg>
         <span id="backup-settings-header" data-i18n="textContent"></span>
       </header>
       <p id="backup-settings-description" data-i18n="textContent"></p>
+      <p>
+        <svg class="smaller-icon error-icon"><use href="../lib/fontawesome/alt.svg#solid-circle-exclamation"></use></svg>
+        <span id="backup-settings-disclaimer" data-i18n="textContent"></span>
+      </p>
       <div class="button-group row">
         <button id="backup-button" class="mdc-button mdc-button--raised mdc-ripple-upgraded">
           <span class="mdc-button__ripple"></span>
@@ -1358,21 +1407,32 @@
           <span class="mdc-button__ripple"></span>
           <span class="mdc-button__label" id="restore-button-label" data-i18n="textContent"></span>
         </button>
+        <button id="manual-backup-button" class="mdc-button mdc-button--outlined mdc-ripple-upgraded float-right">
+          <span class="mdc-button__ripple"></span>
+          <span class="mdc-button__label" id="manual-backup-button-label" data-i18n="textContent"></span>
+        </button>
+        <div class="clear-both"></div>
       </div>
     </section>
-    <section id="about" class="mdc-tab-content">
+    <section id="about" class="mdc-tab-content" data-tab-bar="options-tab-bar">
       <div id="version-theme" style="position: relative;">
         <div id="version-theme-buildup">
-          <svg style="position: absolute; width: 50px; height: 50px; top: 50px; left: 210px; transform: rotate(-13deg);" class="version-theme-small"><use href="../lib/fontawesome/solid.svg#circle-chevron-right"></use></svg>
-          <svg style="fill: var(--mdc-theme-primary); position: absolute; width: 40px; height: 40px; top: 70px; left: 290px; transform: rotate(-10deg);" class="version-theme-medium"><use href="../lib/fontawesome/alt.svg#solid-circle-plus"></use></svg>
-          <svg style="position: absolute; width: 40px; height: 40px; top: 70px; left: 360px; transform: rotate(10deg);" class="version-theme-medium"><use href="../lib/fontawesome/solid.svg#circle-dot"></use></svg>
-          <svg style="fill: var(--mdc-theme-primary); position: absolute; width: 50px; height: 50px; top: 40px; left: 420px; transform: rotate(10deg);" class="version-theme-large"><use href="../lib/fontawesome/regular.svg#heart"></use></svg>
-          <svg style="fill: var(--mdc-theme-primary); position: absolute; width: 60px; height: 60px; top: 90px; left: 445px; transform: rotate(10deg);" class="version-theme-large"><use href="../lib/fontawesome/regular.svg#star"></use></svg>
-          <svg style="position: absolute; width: 70px; height: 70px; top: 40px; left: 500px; transform: rotate(-10deg);" class="version-theme-large"><use href="../lib/fontawesome/solid.svg#ghost"></use></svg>
+          <span style="position: absolute;top: 35px;left: 270px;transform: rotate(-5deg);font-size: 1.5rem;font-weight: 900;" class="version-theme-small">AJAX</span>
+          <span style="position: absolute;top: 35px;left: 351px;transform: rotate(-5deg);font-size: 1rem;font-weight: 900;" class="version-theme-medium">is</span>
+          <span style="position: absolute;top: 48px;left: 344px;transform: rotate(-5deg);font-size: 1.25rem;font-weight: 900;color: var(--mdc-theme-primary);" class="version-theme-medium">here!</span>
+          <span style="display: none; position: absolute;top: 114px;left: 320px;transform: rotate(-5deg);font-size: 1rem;font-weight: 900;" class="version-theme-medium">So</span>
+          <span style="position: absolute; top: 114px;left: 346px; transform: rotate(-10deg); font-size: 2rem;font-weight: 900;color: var(--mdc-theme-primary);" class="version-theme-medium">Click!</span>
+          <span style=" display: none; position: absolute;top: 124px;left: 560px;transform: rotate(-3deg);font-size: 0.7rem;font-weight: 900;font-family: 'RobotoMono', monospace;" class="version-theme-medium">  async function <span style="color: var(--mdc-theme-primary);">ajaxNative</span>() {<span style="opacity: 70%"> // AJAX - but without iframes!</span><br>&nbsp;&nbsp;await Promise.all([disableScroll(), disableRemove()]);<br>&nbsp;&nbsp;await Action.click(button);<br>}</span>
+          <div style="position: absolute; top: 50px; left: 210px; transform: rotate(-10deg);"><svg style="width: 50px; height: 50px; cursor: pointer;" class="version-theme-small hvr-grow"><use href="../lib/fontawesome/solid.svg#circle-chevron-right"></use></svg></div>
+          <div style="position: absolute; top: 70px; left: 290px; transform: rotate(-10deg);"><svg style="width: 40px; height: 40px; cursor: pointer; fill: var(--mdc-theme-primary); " class="version-theme-small hvr-grow"><use href="../lib/fontawesome/alt.svg#solid-circle-plus"></use></svg></div>
+          <div style="position: absolute; top: 70px; left: 360px; transform: rotate(-10deg);"><svg style="width: 40px; height: 40px; cursor: pointer;" class="version-theme-medium hvr-grow"><use href="../lib/fontawesome/solid.svg#circle-dot"></use></svg></div>
+          <div style="position: absolute; top: 40px; left: 420px; transform: rotate(10deg);"><svg style="width: 50px; height: 50px; cursor: pointer; fill: var(--mdc-theme-primary);" class="version-theme-large hvr-grow"><use href="../lib/fontawesome/regular.svg#heart"></use></svg></div>
+          <div style="position: absolute; top: 90px; left: 445px; transform: rotate(10deg);"><svg style="width: 60px; height: 60px; cursor: pointer; fill: var(--mdc-theme-primary);" class="version-theme-large hvr-grow"><use href="../lib/fontawesome/regular.svg#star"></use></svg></div>
+          <div style="position: absolute; top: 42px; left: 500px; transform: rotate(-10deg);"><svg style="width: 70px; height: 70px; cursor: pointer;" class="version-theme-large hvr-grow-2x"><use href="../lib/fontawesome/solid.svg#ghost"></use></svg></div>
         </div>
         <div id="version-theme-tagline" style="position: absolute; top: 30px; left: 580px;  font-weight: 900; font-size: 1.5rem; transform: rotate(0deg);">
           <span style="font-size: 2.9rem; bottom: 40px;" data-id="version_number" data-i18n="textContent"></span>
-          <svg style="width: 46px; height: 42px;"><use href="../lib/fontawesome/alt.svg#solid-infinity"></use></svg>
+          <svg style=" fill: var(--mdc-theme-primary); width: 46px; height: 42px; cursor: pointer;" class="hvr-grow"><use href="../lib/fontawesome/alt.svg#solid-infinity"></use></svg>
           <div id="version-tagline" data-i18n="textContent" style="position: absolute; top: 10px; left: 90px; width: 115px; font-size: 1rem;"></div>
           <div style="margin-top: -8px;">
             <div id="version-name-edition"><span data-id="version-name" data-i18n="textContent" style="color: var(--mdc-theme-primary);"></span> <span id="version-edition" data-i18n="textContent"></span></div>
@@ -1393,15 +1453,15 @@
               <span id="superscript-beta" class="superscript" data-id="beta-label" data-i18n="textContent"></span>
             </div>
             <div id="version">
-              <a id="version-link" href="https://github.com/sixcious/infy-scroll/wiki/Version-History" target="_blank">
+              <div id="version-number">
                 <span id="version-span" data-i18n="textContent"></span>&nbsp;<span id="manifest-version"></span>
                 <span id="version-beta">β</span>
-              </a>
-              <div id="version-special">
+              </div>
+              <a id="version-special" href="https://github.com/sixcious/infy-scroll/wiki/Version-History" target="_blank" style="color: inherit; font-weight: inherit; text-decoration: none;">
                 <span id="version-the" data-i18n="textContent"></span>
                 <span id="version-name" data-i18n="textContent" style="color: var(--mdc-theme-primary);"></span>
                 <span data-id="version-edition" data-i18n="textContent"></span>
-              </div>
+              </a>
             </div>
           </div>
           <div id="website">
@@ -1421,7 +1481,7 @@
         <div id="about-mascot">
           <img src="../img/infy.png" alt="infy" id="about-infy" class="mascot">
         </div>
-        <div id="thank-you">
+        <div id="thank-you" class="version-theme-medium">
           <div id="thank-you-rainbow-underline">
             <span id="thank-you-rainbow" data-i18n="textContent"></span>
             <svg id="thank-you-icon"><use href="../lib/fontawesome/solid.svg#heart"></use></svg>
@@ -1442,14 +1502,16 @@
                   <li>Animations: <a href="https://ianlunn.github.io/Hover" target="_blank">Hover.css</a></li>
                   <li>Tooltips: <a href="https://kazzkiq.github.io/balloon.css" target="_blank">Balloon.css</a></li>
                   <li>Loading: <a href="https://loading.io" target="_blank">Loading.io</a></li>
+                  <li>Charts: <a href="https://github.com/chartjs/Chart.js" target="_blank">Chart.js</a></li>
+                  <li>Confetti: <a href="https://github.com/catdad/canvas-confetti" target="_blank">Canvas Confetti</a></li>
                   <li>Resizing: <a href="https://github.com/davidjbradshaw/iframe-resizer" target="_blank">Iframe Resizer</a></li>
                   <li>Hover Box: <a href="https://github.com/AlienKevin" target="_blank">AlienKevin</a></li>
                   <li>DOM Paths: <a href="https://github.com/chromium/chromium" target="_blank">Chromium</a></li>
                   <li>CDNs: <a href="https://www.jsdelivr.com" target="_blank">Jsdelivr</a>, <a href="http://statically.io" target="_blank">Statically</a></li>
                   <li>Database: <a href="http://wedata.net/users" target="_blank">Wedata Contributors</a></li>
-                  <li>Shoutout To: <a href="#AutoPagerByWindLi">AutoPager</a>, <a href="https://github.com/swdyh/autopagerize" target="_blank">AutoPagerize</a>,</li>
+                  <li>Shoutout To: <a href="#AutoPagerByWindLi">AutoPager</a>, <a href="https://github.com/swdyh/autopagerize" target="_blank">AutoPagerize</a>, <a href="https://github.com/Griever/userChromeJS/tree/master/uAutoPagerize">uAutoPagerize</a></li>
                   <li>and <a href="https://github.com/jkoomjian/PageZipper" target="_blank">PageZipper</a>, <a href="https://github.com/hoothin/UserScripts/tree/master/Pagetual" target="_blank">Pagetual</a>, <a href="https://github.com/machsix/Super-preloader" target="_blank">Super-preloader</a></li>
-                  <li>With Special Thanks: <a href="#lostpacket">LostPacket</a>, <a href="#daydreaming5">DayDreaming</a>, and <a href="https://github.com/alexolog" target="_blank">Alex</a></li>
+                  <li>With Special Thanks: <a href="#lostpacket">LostPacket</a>, <a href="#daydreaming5">DayDreaming</a>, <a href="https://github.com/Tanookirby" target="_blank">Tanookirby</a>, and <a href="https://github.com/alexolog" target="_blank">Alex</a></li>
                 </ul>
               </div>
               <div id="credits-you" data-i18n="textContent"></div>
@@ -1487,9 +1549,7 @@
                   <li id="install-dialog-list-1" data-i18n="textContent"></li>
                   <li id="install-dialog-list-2" data-i18n="textContent"></li>
                 </ol>
-                <p id="install-dialog-toolbar">
-                  <span id="install-dialog-toolbar-message" data-i18n="textContent"></span><span id="install-dialog-toolbar-browser"></span>
-                </p>
+                <p id="install-dialog-toolbar" data-i18n="textContent"></p>
                 <div>
                   <span id="install-dialog-help" data-i18n="textContent"></span>
                 </div>
@@ -1583,83 +1643,33 @@
               <div id="backup-dialog-text">
                 <p id="backup-dialog-description" data-i18n="textContent"></p>
               </div>
-              <div id="backup-text-field-container" class="text-field-container">
-                <div id="backup-text-field" class="mdc-text-field mdc-text-field--fullwidth mdc-text-field--textarea">
-                  <textarea id="backup-textarea" class="mdc-text-field__input" spellcheck="false" readonly></textarea>
-                  <div class="mdc-notched-outline mdc-notched-outline--upgraded mdc-notched-outline--notched">
-                    <div class="mdc-notched-outline__leading"></div>
-                    <div class="mdc-notched-outline__notch">
-                      <label id="backup-textarea-label" for="backup-textarea" class="mdc-floating-label mdc-floating-label--float-above" data-i18n="textContent"></label>
+              <div class="row">
+                <div id="backup-text-field-container" class="text-field-container">
+                  <div id="backup-text-field" class="mdc-text-field mdc-text-field--fullwidth mdc-text-field--textarea">
+                    <textarea id="backup-textarea" class="mdc-text-field__input" spellcheck="false"></textarea>
+                    <div class="mdc-notched-outline mdc-notched-outline--upgraded mdc-notched-outline--notched">
+                      <div class="mdc-notched-outline__leading"></div>
+                      <div class="mdc-notched-outline__notch">
+                        <label id="backup-textarea-label" for="backup-textarea" class="mdc-floating-label mdc-floating-label--float-above" data-i18n="textContent"></label>
+                      </div>
+                      <div class="mdc-notched-outline__trailing"></div>
                     </div>
-                    <div class="mdc-notched-outline__trailing"></div>
                   </div>
-                </div>
-                <div class="mdc-text-field-helper-line">
-                  <div class="mdc-text-field-helper-text mdc-text-field-helper-text--persistent"><span id="backup-text-field-helper-text" data-i18n="textContent"></span>
-                  </div>
-                </div>
-              </div>
-              <div class="sub-row">
-                <button id="backup-download-button" class="mdc-button mdc-button--raised">
-                  <span class="mdc-button__ripple"></span>
-                  <span id="backup-download-button-label" class="mdc-button__label" data-i18n="textContent"></span>
-                </button>
-              </div>
-            </div>
-            <div class="dialog-footer">
-              <div class="mdc-text-field-helper-text mdc-text-field-helper-text--persistent dialog-notice-warning-container">
-                <span id="backup-dialog-disclaimer" data-i18n="textContent" class="notice"></span>
-              </div>
-            </div>
-          </div>
-          <footer class="mdc-dialog__actions">
-            <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="ok" data-mdc-dialog-initial-focus>
-              <span class="mdc-button__label" data-id="mdc-button-ok" data-i18n="textContent"></span>
-            </button>
-          </footer>
-        </div>
-      </div>
-      <div class="mdc-dialog__scrim"></div>
-    </div>
-    <div id="restore-dialog" class="mdc-dialog" role="alertdialog" aria-modal="true" aria-labelledby="restore-dialog" aria-describedby="restore-dialog-content">
-      <div class="mdc-dialog__container">
-        <div class="mdc-dialog__surface">
-          <h2 class="mdc-dialog__title"><span id="restore-dialog-title" data-i18n="textContent"></span></h2>
-          <div class="mdc-dialog__content">
-            <div id="restore-dialog-content">
-              <div id="restore-dialog-text">
-                <p id="restore-dialog-description" data-i18n="textContent"></p>
-              </div>
-              <div id="restore-text-field-container" class="text-field-container">
-                <div id="restore-text-field" class="mdc-text-field mdc-text-field--fullwidth mdc-text-field--textarea">
-                  <textarea id="restore-textarea" class="mdc-text-field__input" spellcheck="false"></textarea>
-                  <div class="mdc-notched-outline mdc-notched-outline--upgraded mdc-notched-outline--notched">
-                    <div class="mdc-notched-outline__leading"></div>
-                    <div class="mdc-notched-outline__notch">
-                      <label id="restore-textarea-label" for="restore-textarea" class="mdc-floating-label mdc-floating-label--float-above" data-i18n="textContent"></label>
+                  <div class="mdc-text-field-helper-line">
+                    <div class="mdc-text-field-helper-text mdc-text-field-helper-text--persistent"><span id="backup-dialog-disclaimer" data-i18n="textContent"></span>
                     </div>
-                    <div class="mdc-notched-outline__trailing"></div>
-                  </div>
-                </div>
-                <div class="mdc-text-field-helper-line">
-                  <div class="mdc-text-field-helper-text mdc-text-field-helper-text--persistent"><span id="restore-text-field-helper-text" data-i18n="textContent"></span>
                   </div>
                 </div>
               </div>
-              <div class="sub-row button-group">
-                <button id="restore-file-button" class="mdc-button mdc-button--raised">
+              <div class="button-group">
+                <button id="backup-text-button" class="mdc-button mdc-button--raised">
                   <span class="mdc-button__ripple"></span>
-                  <span id="restore-file-button-label" class="mdc-button__label" data-i18n="textContent"></span>
+                  <span id="backup-text-button-label" class="mdc-button__label" data-i18n="textContent"></span>
                 </button>
                 <button id="restore-text-button" class="mdc-button mdc-button--outlined">
                   <span class="mdc-button__ripple"></span>
                   <span id="restore-text-button-label" class="mdc-button__label" data-i18n="textContent"></span>
                 </button>
-              </div>
-            </div>
-            <div class="dialog-footer">
-              <div class="mdc-text-field-helper-text mdc-text-field-helper-text--persistent dialog-notice-warning-container">
-                <span id="restore-dialog-disclaimer" data-i18n="textContent" class="notice"></span>
               </div>
             </div>
           </div>
@@ -1693,10 +1703,63 @@
       </div>
       <div class="mdc-dialog__scrim"></div>
     </div>
+    <div id="stats-dialog" class="mdc-dialog" role="alertdialog" aria-modal="true" aria-labelledby="stats-dialog" aria-describedby="stats-dialog-content">
+      <div class="mdc-dialog__container">
+        <div class="mdc-dialog__surface">
+          <h2 class="mdc-dialog__title"><span id="stats-dialog-title" data-i18n="textContent"></span></h2>
+          <div class="mdc-dialog__content">
+            <div id="stats-dialog-content">
+              <div id="stats-dialog-text">
+                <p id="stats-dialog-description" data-i18n="textContent"></p>
+              </div>
+              <div id="stats-dialog-data">
+                <div class="mdc-switch__container">
+                  <label class="mdc-switch__label" for="stats-switch-input" id="stats-switch-label" data-i18n="textContent"></label>
+                  <div class="mdc-switch" id="stats-switch">
+                    <div class="mdc-switch__track"></div>
+                    <div class="mdc-switch__thumb-underlay">
+                      <div class="mdc-switch__thumb">
+                        <input type="checkbox" id="stats-switch-input" class="mdc-switch__native-control" role="switch">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="stats-row flex-row">
+                  <div>
+                    <div id="stats-pages" class="stats-number"></div>
+                    <div id="stats-pages-label" data-i18n="textContent" class="stats-text"></div>
+                  </div>
+                  <div>
+                    <div id="stats-elements" class="stats-number"></div>
+                    <div id="stats-elements-label" data-i18n="textContent" class="stats-text"></div>
+                  </div>
+                </div>
+                <div class="chart-row flex-row">
+                  <div class="chart-container">
+                    <canvas id="actions-chart"></canvas>
+                    <div id="actions-label" data-i18n="textContent" class="chart-label"></div>
+                  </div>
+                  <div class="chart-container">
+                    <canvas id="appends-chart"></canvas>
+                    <div id="appends-label" data-i18n="textContent" class="chart-label"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <footer class="mdc-dialog__actions">
+            <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="ok" data-mdc-dialog-initial-focus>
+              <span class="mdc-button__label" data-id="mdc-button-ok" data-i18n="textContent"></span>
+            </button>
+          </footer>
+        </div>
+      </div>
+      <div class="mdc-dialog__scrim"></div>
+    </div>
     <div id="save-dialog" class="mdc-dialog" role="alertdialog" aria-modal="true" aria-labelledby="save-dialog" aria-describedby="save-dialog-content">
       <div class="mdc-dialog__container">
         <div class="mdc-dialog__surface">
-          <h2 class="mdc-dialog__title"><span id="save-dialog-title" data-i18n="textContent"></span></h2>
+          <h2 class="mdc-dialog__title"><span id="save-dialog-title"></span></h2>
           <div class="mdc-dialog__content">
             <div id="save-dialog-content">
               <input id="save-dialog-id" type="hidden" value=""/>
@@ -1723,25 +1786,95 @@
       </div>
       <div class="mdc-dialog__scrim"></div>
     </div>
-    <div id="database-dialog" class="mdc-dialog" role="alertdialog" aria-modal="true" aria-labelledby="database-dialog" aria-describedby="database-dialog-content">
+    <div id="database-dialog" class="mdc-dialog" role="alertdialog" aria-modal="true" aria-labelledby="database-dialog" aria-describedby="database-dialog-content" data-dialog>
       <div class="mdc-dialog__container">
         <div class="mdc-dialog__surface">
-          <h2 class="mdc-dialog__title"><span id="database-dialog-title" data-i18n="textContent"></span></h2>
+          <h2 class="mdc-dialog__title"><span id="database-dialog-title"></span></h2>
           <div class="mdc-dialog__content">
             <div id="database-dialog-content">
-              <input id="database-dialog-id" type="hidden" value=""/>
-              <input id="database-dialog-type" type="hidden" value=""/>
-              <pre id="database-dialog-json" class="dialog-json" spellcheck="false"></pre>
-              <pre id="database-dialog-stats" class="dialog-json" spellcheck="false"></pre>
+              <div id="database-dialog-items">
+                <pre id="database-items-json" class="dialog-json" spellcheck="false"></pre>
+              </div>
+              <div id="database-dialog-stats">
+                <nav id="database-stats-tab-bar" class="mdc-tab-bar" role="tablist">
+                  <div class="mdc-tab-scroller">
+                    <div class="mdc-tab-scroller__scroll-area mdc-tab-scroller__scroll-area--scroll">
+                      <div class="mdc-tab-scroller__scroll-content">
+                        <button class="mdc-tab mdc-tab--stacked mdc-tab--active" role="tab" aria-selected="true" tabindex="0">
+                          <span class="mdc-tab__content">
+                            <svg class="mdc-tab__icon" aria-hidden="true"><use href="../lib/fontawesome/solid.svg#user"></use></svg>
+                            <span class="mdc-tab__text-label">
+                              <span data-id="database-stats-tab-creators" data-i18n="textContent"></span>
+                              <span id="database-stats-tab-creators-value"></span>
+                            </span>
+                            <span class="mdc-tab-indicator mdc-tab-indicator--active">
+                              <span class="mdc-tab-indicator__content mdc-tab-indicator__content--underline"></span>
+                            </span>
+                          </span>
+                          <span class="mdc-tab__ripple mdc-ripple-upgraded"></span>
+                        </button>
+                        <button class="mdc-tab mdc-tab--stacked" role="tab" tabindex="-1">
+                          <span class="mdc-tab__content">
+                            <svg class="mdc-tab__icon" aria-hidden="true"><use href="../lib/fontawesome/solid.svg#key"></use></svg>
+                            <span class="mdc-tab__text-label">
+                              <span data-id="database-stats-tab-keys" data-i18n="textContent"></span>
+                              <span id="database-stats-tab-keys-value"></span>
+                            </span>
+                            <span class="mdc-tab-indicator">
+                              <span class="mdc-tab-indicator__content mdc-tab-indicator__content--underline"></span>
+                            </span>
+                          </span>
+                          <span class="mdc-tab__ripple mdc-ripple-upgraded"></span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </nav>
+                <section id="database-stats-creators" class="mdc-tab-content mdc-tab-content--active" data-tab-bar="database-stats-tab-bar">
+                  <div id="database-stats-creators-data-table" class="mdc-data-table">
+                    <table class="mdc-data-table__table" aria-label="Database Stats">
+                      <thead>
+                      <tr class="mdc-data-table__header-row">
+                        <th class="mdc-data-table__header-cell" role="columnheader" scope="col" data-id="table-heading-database-creator" data-i18n="textContent"></th>
+                        <th class="mdc-data-table__header-cell" role="columnheader" scope="col" data-id="table-heading-database-items" data-i18n="textContent"></th>
+                      </tr>
+                      </thead>
+                      <tbody id="database-stats-creators-tbody" class="mdc-data-table__content"></tbody>
+                    </table>
+                    <template id="database-stats-creators-tr-template">
+                      <tr class="mdc-data-table__row">
+                        <td class="mdc-data-table__cell primary-cell"></td>
+                        <td class="mdc-data-table__cell"></td>
+                      </tr>
+                    </template>
+                  </div>
+                </section>
+                <section id="database-stats-keys" class="mdc-tab-content" data-tab-bar="database-stats-tab-bar">
+                  <div id="database-stats-keys-data-table" class="mdc-data-table">
+                    <table class="mdc-data-table__table" aria-label="Database Stats">
+                      <thead>
+                      <tr class="mdc-data-table__header-row">
+                        <th class="mdc-data-table__header-cell" role="columnheader" scope="col" data-id="table-heading-database-key" data-i18n="textContent"></th>
+                        <th class="mdc-data-table__header-cell" role="columnheader" scope="col" data-id="table-heading-database-items" data-i18n="textContent"></th>
+                      </tr>
+                      </thead>
+                      <tbody id="database-stats-keys-tbody" class="mdc-data-table__content"></tbody>
+                    </table>
+                    <template id="database-stats-keys-tr-template">
+                      <tr class="mdc-data-table__row">
+                        <td class="mdc-data-table__cell primary-cell"></td>
+                        <td class="mdc-data-table__cell"></td>
+                      </tr>
+                    </template>
+                  </div>
+                </section>
+              </div>
             </div>
           </div>
           <footer class="mdc-dialog__actions">
             <div class="dialog-helper-action">
-              <span id="database-dialog-helper-text" data-i18n="textContent"></span>
+              <span id="database-dialog-helper-text"></span>
             </div>
-            <button id="database-dialog-stats-button" type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-initial-focus>
-              <span class="mdc-button__label" data-id="mdc-button-stats" data-i18n="textContent"></span>
-            </button>
             <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="close" data-mdc-dialog-initial-focus>
               <span class="mdc-button__label" data-id="mdc-button-close" data-i18n="textContent"></span>
             </button>
@@ -1757,6 +1890,21 @@
           <button type="button" class="mdc-button mdc-snackbar__action">
             <div class="mdc-button__ripple"></div>
             <span class="mdc-button__label" data-id="mdc-button-ok" data-i18n="textContent"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="mdc-snackbar-undo" class="mdc-snackbar">
+      <div class="mdc-snackbar__surface">
+        <div data-id="mdc-snackbar-label" class="mdc-snackbar__label" role="status" aria-live="polite">&nbsp;</div>
+        <div class="mdc-snackbar__actions">
+          <button type="button" class="mdc-button mdc-snackbar__action">
+            <div class="mdc-button__ripple"></div>
+            <span class="mdc-button__label" data-id="mdc-button-ok" data-i18n="textContent"></span>
+          </button>
+          <button id="undo-button" type="button" class="mdc-button mdc-snackbar__action">
+            <div class="mdc-button__ripple"></div>
+            <span class="mdc-button__label" data-id="mdc-button-undo" data-i18n="textContent"></span>
           </button>
         </div>
       </div>

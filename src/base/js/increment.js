@@ -21,10 +21,10 @@ const Increment = (() => {
    * Finds a selection in the url to increment or decrement depending on the preference:
    * "smart" (e.g. page=1), "lastnumber", "firstnumber", or "custom".
    *
-   * @param url               the url to find the selection in
-   * @param strategy          the preferred strategy to use to find the selection
-   * @param selectionCustom   the object with custom regular expression parameters
-   * @param previousException (optional) true if this function encountered a previous exception, false otherwise
+   * @param {string} url - the url to find the selection in
+   * @param {string} strategy - the preferred strategy to use to find the selection
+   * @param {Object} selectionCustom - the object with custom regular expression parameters
+   * @param {boolean} previousException - (optional) true if this function encountered a previous exception, false otherwise
    * @returns {*} - {selection, selectionStart} or an empty selection if no selection found
    * @public
    */
@@ -68,13 +68,13 @@ const Increment = (() => {
   /**
    * Validates the selection against the base and other parameters. Called by Popup and Saves.
    *
-   * @param selection      the selection
-   * @param base           the base
-   * @param baseCase       the base case if the base is alphanumeric (11-36)
-   * @param baseDateFormat the date format if the base is a date
-   * @param baseRoman      the roman type if the base is roman
-   * @param baseCustom     the custom alphabet if the base is custom
-   * @param leadingZeros   if true, pad with leading zeros, false don't pad
+   * @param {string} selection - the selected part to increment or decrement
+   * @param {string} base - the base type of the selection
+   * @param {string} baseCase - the base case (e.g. "lowercase") if the base is alphanumeric (11-36)
+   * @param {string} baseDateFormat - the date format if the base is a date
+   * @param {string} baseRoman - the roman type (e.g. "latin") if the base is roman
+   * @param {string} baseCustom - the custom alphabet if the base is custom
+   * @param {boolean} leadingZeros - if true, pad with leading zeros, false don't pad
    * @returns {string} an empty string if validation passed, or an error message if validation failed
    * @public
    */
@@ -140,8 +140,8 @@ const Increment = (() => {
    * The actual operation is dependant on the instance and can be a step thru URLs array or
    * incrementing / decrementing a URL depending on the the state of multi.
    *
-   * @param action   the action to perform (increment or decrement)
-   * @param instance the instance containing the URL and parameters used to increment or decrement
+   * @param {string} action - the action to perform ("increment" or "decrement")
+   * @param {Object} instance - the instance containing the URL and parameters used to increment or decrement
    * @public
    */
   function increment(action, instance) {
@@ -164,8 +164,8 @@ const Increment = (() => {
   /**
    * Increments or decrements a URL using an instance object that contains the URL.
    *
-   * @param action   the action to perform (increment or decrement)
-   * @param instance the instance containing the URL and parameters used to increment or decrement
+   * @param {string} action - the action to perform ("increment" or "decrement")
+   * @param {Object} instance - the instance containing the URL and parameters used to increment or decrement
    * @private
    */
   function incrementURL(action, instance) {
@@ -200,12 +200,12 @@ const Increment = (() => {
   /**
    * Performs a regular (alphanumeric) increment or decrement operation on the selection.
    *
-   * @param action       the action (increment or decrement)
-   * @param selection    the selected part to increment or decrement
-   * @param interval     the amount to increment or decrement by
-   * @param base         the base to use (the supported base range is 2-36, 10 is default/decimal)
-   * @param baseCase     the base case to use for letters (lowercase or uppercase)
-   * @param leadingZeros if true, pad with leading zeros, false don't pad
+   * @param {string} action - the action to perform ("increment" or "decrement")
+   * @param {string} selection - the selected part to increment or decrement
+   * @param {number} interval - the amount to increment or decrement by
+   * @param {string} base - the base type of the selection
+   * @param {string} baseCase - the base case (e.g. "lowercase") if the base is alphanumeric (11-36)
+   * @param {boolean} leadingZeros - if true, pad with leading zeros, false don't pad
    * @returns {string} the modified selection after incrementing or decrementing it
    * @private
    */
@@ -231,10 +231,10 @@ const Increment = (() => {
   /**
    * Performs a decimal number (floating point) increment or decrement operation on the selection.
    *
-   * @param action       the action (increment or decrement)
-   * @param selection    the selected part to increment or decrement
-   * @param interval     the amount to increment or decrement by
-   * @param leadingZeros if true, pad with leading zeros, false don't pad
+   * @param {string} action - the action to perform ("increment" or "decrement")
+   * @param {string} selection - the selected part to increment or decrement
+   * @param {number} interval - the amount to increment or decrement by
+   * @param {boolean} leadingZeros - if true, pad with leading zeros, false don't pad
    * @returns {string} the modified selection after incrementing or decrementing it
    * @private
    */
@@ -259,11 +259,11 @@ const Increment = (() => {
    *
    * Note: This function is derived from code written by harpermaddox @ medium.com.
    *
-   * @param action       the action (increment or decrement)
-   * @param selection    the selected part to increment or decrement
-   * @param interval     the amount to increment or decrement by
-   * @param alphabet     the custom base's alphabet to use
-   * @param leadingZeros if true, pad with leading zeros, false don't pad
+   * @param {string} action - the action to perform ("increment" or "decrement")
+   * @param {string} selection - the selected part to increment or decrement
+   * @param {number} interval - the amount to increment or decrement by
+   * @param {string} alphabet - the custom base's alphabet to use
+   * @param {boolean} leadingZeros - if true, pad with leading zeros, false don't pad
    * @returns {string} the modified selection after incrementing or decrementing it
    * @see https://medium.com/@harpermaddox/how-to-build-a-custom-url-shortener-5e8b454c58ae
    * @private
@@ -325,8 +325,10 @@ const IncrementMulti = (() => {
   /**
    * Pre-handles a multi-incrementing instance before incrementURL().
    *
-   * @param action   the action (increment or decrement, for multi, this may have a 2 or 3 at the end e.g. increment3)
-   * @param instance the instance to handle
+   * Note: For multi, the action may have a 2 or 3 at the end (e.g. "increment3").
+   *
+   * @param {string} action - the action to perform ("increment" or "decrement")
+   * @param {Object} instance - the instance containing the URL and parameters used to increment or decrement
    * @public
    */
   function multiPre(action, instance) {
@@ -351,9 +353,9 @@ const IncrementMulti = (() => {
   /**
    * Post-handles a multi-incrementing instance after incrementURL().
    *
-   * @param selectionmod the modified selection
-   * @param urlmod       the modified URL
-   * @param instance     the instance to handle
+   * @param {string} selectionmod - the modified selection
+   * @param {string} urlmod - the modified URL
+   * @param {Object} instance - the instance containing the URL and parameters used to increment or decrement
    * @public
    */
   function multiPost(selectionmod, urlmod, instance) {
@@ -410,10 +412,10 @@ const IncrementDate = (() => {
    * Patterns: yyyy | yy, mmmm | mmm | mm | m, dd | d, hh | h, ii | i, ss | s, ll | l
    * Examples: mm/dd/yyyy, dd-m-yyyy, mm/yy, hh:mm:ss
    *
-   * @param action     the action (increment or decrement)
-   * @param selection  the selected part to increment or decrement
-   * @param interval   the amount to increment or decrement by
-   * @param dateFormat the date format of the selection
+   * @param {string} action - the action to perform ("increment" or "decrement")
+   * @param {string} selection - the selected part to increment or decrement
+   * @param {number} interval - the amount to increment or decrement by
+   * @param {string} dateFormat - the date format of the selection
    * @returns {string | *} the modified selection after incrementing or decrementing it
    * @public
    */
@@ -436,8 +438,8 @@ const IncrementDate = (() => {
   /**
    * Splits both the date selection's parts and date format's parts into arrays to work with.
    *
-   * @param str        the date selection string
-   * @param dateFormat the date format of the selection
+   * @param {string} str - the date selection string
+   * @param {string} dateFormat - the date format of the selection
    * @returns {{strParts: Array, dateFormatParts: (*|Array)}} the date string and format parts as arrays
    * @private
    */
@@ -469,8 +471,8 @@ const IncrementDate = (() => {
   /**
    * Converts a String to a Date.
    *
-   * @param strParts        the date selection string split up into an array
-   * @param dateFormatParts the date format split up into an array
+   * @param {string[]} strParts - the date selection string split up into an array
+   * @param {string[]} dateFormatParts - the date format split up into an array
    * @returns {Date} the date representation of the string
    * @private
    */
@@ -504,10 +506,10 @@ const IncrementDate = (() => {
   /**
    * Increments or decrements a date by the "lowest" part in the date format (e.g. yyyy/mm/dd would be dd, day).
    *
-   * @param action     the action (increment or decrement)
-   * @param date       the date representation of the date selection string
-   * @param dateFormat the date format of the selection
-   * @param interval  the amount to increment or decrement by
+   * @param {string} action - the action to perform ("increment" or "decrement")
+   * @param {Date} date - the date representation of the date selection string
+   * @param {string} dateFormat - the date format of the selection
+   * @param {number} interval - the amount to increment or decrement by
    * @returns {Date} the date after incrementing or decrementing
    * @private
    */
@@ -531,9 +533,9 @@ const IncrementDate = (() => {
   /**
    * Converts a Date into a String.
    *
-   * @param date            the date
-   * @param dateFormat      the date format of the selection
-   * @param dateFormatParts the date format split up into an array
+   * @param {Date} date - the date representation of the date selection string
+   * @param {string} dateFormat - the date format of the selection
+   * @param {string[]} dateFormatParts - the date format split up into an array
    * @returns {String} the string representation of the date
    * @private
    */
@@ -598,10 +600,10 @@ const IncrementRoman = (() => {
    * Note: The official supported range is between 1-3999; after 4000, we use additional "M"s (e.g. 4000: MMMMM). The
    * Romans did not have an official method for counting large numbers. A popular option was to use bars over numerals.
    *
-   * @param action   the action (increment or decrement)
-   * @param roman    the roman numeral string
-   * @param interval the amount to increment or decrement by
-   * @param type     the alphabet type ("latin", "u216x", or "u217x")
+   * @param {string} action - the action to perform ("increment" or "decrement")
+   * @param {string} roman - the roman numeral string
+   * @param {number} interval - the amount to increment or decrement by
+   * @param {string} type - the alphabet type ("latin", "u216x", or "u217x")
    * @returns {string} the roman numeral after incrementing or decrementing
    * @public
    */
@@ -623,8 +625,8 @@ const IncrementRoman = (() => {
   /**
    * Converts a roman numeral to an arabic number. Derived from Ivan -DrSlump- Montes's function in the below blog.
    *
-   * @param roman    the roman numeral
-   * @param alphabet the roman alphabet to use
+   * @param {string} roman - the roman numeral string
+   * @param {Map<string, number>} alphabet - the roman alphabet to use
    * @returns {number} the arabic number
    * @see http://blog.stevenlevithan.com/archives/javascript-roman-numeral-converter#comment-16129
    * @private
@@ -644,8 +646,8 @@ const IncrementRoman = (() => {
   /**
    * Converts an arabic number to a roman numeral. Derived from Ivan -DrSlump- Montes's function in the below blog.
    *
-   * @param arabic   the arabic number
-   * @param alphabet the roman alphabet to use
+   * @param {number} arabic - the arabic number
+   * @param {Map<string, number>} alphabet - the roman alphabet to use
    * @returns {string} the roman numeral
    * @see http://blog.stevenlevithan.com/archives/javascript-roman-numeral-converter#comment-16107
    * @private
@@ -681,8 +683,8 @@ const IncrementArray = (() => {
    * Note: This function is derived from code written by Laurens Holst @ stackoverflow.com.
    * Note 2: This function is public for other extensions; URLI does not need this to be public.
    *
-   * @param array the array to shuffle
-   * @returns {Array} the shuffled urls array
+   * @param {string[]} array - the array to shuffle
+   * @returns {string[]} the shuffled urls array
    * @see https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm
    * @see https://stackoverflow.com/a/12646864
    * @public
@@ -699,8 +701,10 @@ const IncrementArray = (() => {
    * Steps to the next or previous position in the URLs array.
    * This is used instead of incrementURL, for example when there is a URLs array (e.g. when Shuffle Mode is enabled).
    *
-   * @param action   the action (increment moves forward, decrement moves backward in the array)
-   * @param instance the instance containing the URLs array
+   * Note: the action "increment" moves forward in the array, whereas "decrement" moves backward in the array.
+   *
+   * @param {string} action - the action to perform ("increment" or "decrement")
+   * @param {Object} instance - the instance containing the URL and parameters used to increment or decrement
    * @public
    */
   function stepThruURLs(action, instance) {
@@ -730,7 +734,7 @@ const IncrementArray = (() => {
    * Pre-calculates an array of URLs. Arrays are only calculated in the following situations:
    * List Enabled, Multi-Range Enabled, Toolkit Enabled, or ShuffleURLs Enabled.
    *
-   * @param instance the instance with properties used to pre-calculate the URLs array
+   * @param {Object} instance - the instance containing the URL and parameters used to increment or decrement
    * @returns {{urls: Array, currentIndex: number}} the URLs array and the current index to start from
    * @public
    */
@@ -775,10 +779,10 @@ const IncrementArray = (() => {
    * Builds out the URLs array if the instance is Multi-Range Enabled, Toolkit Enabled, or ShuffleURLs Enabled.
    * Delegates to another function if Multi-Range Enabled.
    *
-   * @param instance the instance
-   * @param action   the action (increment or decrement)
-   * @param quantity the number of URLs to build in the array
-   * @returns {Array} the urls array
+   * @param {Object} instance - the instance containing the URL and parameters used to increment or decrement
+   * @param {string} action - the action to perform ("increment" or "decrement")
+   * @param {number} quantity - the number of URLs to build in the array
+   * @returns {string[]} the urls array
    * @private
    */
   function buildURLs(instance, action, quantity) {
@@ -823,9 +827,9 @@ const IncrementArray = (() => {
   /**
    * Builds out the URLs array for Multi-Range enabled instances.
    *
-   * @param instance the multi-range enabled instance
-   * @param action   the action (increment or decrement)
-   * @param urls     the urls array to build from
+   * @param {Object} instance - the instance containing the URL and parameters used to increment or decrement
+   * @param {string} action - the action to perform ("increment" or "decrement")
+   * @param {string[]} urls - the urls array to build from
    * @private
    */
   function buildMultiRangeURLs(instance, action, urls) {

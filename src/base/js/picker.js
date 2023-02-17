@@ -5,44 +5,34 @@
  */
 
 /**
- * Picker is a content script that interacts with the PickerUI Iframe. It gets executed by the Popup whenever the user
- * wants to open the Element Picker. Picker messages with PickerUI (and vice versa), with the Background/Content Script
- * being the intermediary.
+ * Picker is a content script that interacts with both HoverBox and the PickerUI Iframe. It gets executed by the Popup
+ * whenever the user wants to open the Element Picker. Picker messages with PickerUI, with the Background/Content Script
+ * being the intermediary. It opens and closes the HoverBox when needed.
  *
- * Note: The Element Picker may not work on Complex Websites, Iframes, and Shadow Roots.
+ * The Element Picker can be thought of as four components: Picker, PickerUI, HoverBox, and DOMPath.
+ * Picker is the "manager" that ties all the components together.
  *
- * Sites where the Element Picker doesn't work:
- * https://groups.google.com/a/chromium.org/g/chromium-extensions
+ * Note: var is used for declaration because this script can get executed multiple times on the page.
  */
 var Picker = Picker || (() => {
 
   /**
    * Variables
    *
-   * @param CONTAINER the document container node we use to apply the picker to (either document's html or body nodes)
-   * @param UI_STYLE  the ui iframe's CSS style
-   * @param id        the ui iframe's ID
-   * @param clazz     the class to apply to the container while in Element Picker mode (used by our style)
-   * @param hoverBox  the {@link HoverBox} object
-   * @param style     the style to add for the document body while in Element Picker mode
-   * @param ui        the ui iframe
-   * @param element   the current element to generate a DOM Path or DOM Property value from
-   * @param picker    the picker type ("next", "prev", "button", "element", "remove", or "")
-   * @param data      the CSS selector, XPath expression, or DOM Property value for the current element
-   * @param meta      the metadata from DOMPath, e.g. "error" or "fallback"
-   * @param type      the path type ("selector" or "xpath")
-   * @param algorithm the DOM Path algorithm ("internal" or "chromium")
-   * @param quote     the DOM Path quote ("double" or "single")
-   * @param optimized the DOM Path optimized state for generating optimized or unoptimized paths (true or false)
-   * @param js        the DOM Path js state for generating JS Paths (true or false)
-   * @param property  the DOM Property value to get from the element (e.g. "outerHTML or "dataset.src")
+   * @param {HoverBox} hoverBox - the HoverBox object
+   * @param {HTMLElement} ui - the Picker UI iframe
+   * @param {Element} element - the current element to generate a DOM Path or derive a DOM Property value from
+   * @param {string} picker - the picker type ("next", "prev", "click", "element", "load", "remove", or "")
+   * @param {string} data - the CSS selector, XPath expression, or DOM Property value for the current element
+   * @param {string} meta - the metadata from DOMPath, e.g. "error" or "fallback"
+   * @param {string} type - the path type ("selector" or "xpath")
+   * @param {string} algorithm - the path algorithm ("internal" or "chromium")
+   * @param {string} quote - the path quote ("double" or "single")
+   * @param {boolean} optimized - the path optimized state for generating optimized or unoptimized paths (true or false)
+   * @param {boolean} js - the path js state for generating JS Paths (true or false)
+   * @param {string} property - the property value to get from the element (e.g. "outerHTML or "dataset.src")
    */
-  const CONTAINER = document.documentElement || document.body;
-  const UI_STYLE = "background: initial; border: 1px solid black; border-radius: 0; box-shadow: none; clear: both; display: block; float: none; height: 200px; max-width: none; max-height: none; min-height: 0; min-width: 0; margin: 0; opacity: 1; outline: 0; overflow: hidden; padding: 0; pointer-events: auto; position: fixed; visibility: visible;  width: 500px; z-index: 2147483647;";
-  let id = "x-ep-ui-id";
-  let clazz = "x-ep-ui-class";
   let hoverBox;
-  let style;
   let ui;
   let element;
   let picker;
@@ -56,6 +46,18 @@ var Picker = Picker || (() => {
   let property;
 
   /**
+   * Gets the declared variables. This can be used by other parts of the app or for debugging purposes.
+   *
+   * @returns {*} the variables
+   * @public
+   */
+  function get() {
+    return {
+      hoverBox, ui, element, picker, data, meta, type, algorithm, quote, optimized, js, property
+    };
+  }
+
+  /**
    * Opens the Picker.
    *
    * @public
@@ -63,21 +65,11 @@ var Picker = Picker || (() => {
   async function openPicker() {
     await closePicker();
     console.log("openPicker() - opening the Picker");
-    // Set pickerEnabled to true
     const instance = await getInstance();
     instance.pickerEnabled = true;
     await setInstance(instance);
-    // Set id and class to the randomly generated strings
-    // id = instance.randomString || id;
-    // clazz = instance.randomString || clazz;
-    // Instantiate and open the HoverBox so we get the hover effects on elements on mousemove
-    // Note: We don't need the HoverBox's action since we're implementing this using our own clickListener for the event, in which our event.target is more accurate
     hoverBox = new HoverBox();
     hoverBox.open();
-    // Add all picker-related listeners and objects
-    addClickListener();
-    addClass();
-    addStyle();
     addUI();
   }
 
@@ -88,81 +80,74 @@ var Picker = Picker || (() => {
    */
   async function closePicker() {
     console.log("closePicker() - closing the Picker");
-    // Set pickerEnabled to false
     const instance = await getInstance();
     instance.pickerEnabled = false;
     await setInstance(instance);
-    // Close the HoverBox
     if (hoverBox) {
       hoverBox.close();
       hoverBox = undefined;
     }
-    // Remove all picker-related listeners and objects
-    removeClickListener();
-    removeClass();
-    removeStyle();
     removeUI();
   }
 
   /**
    * Initializes the Picker with the picker type (next, prev, button, element), path type (selector or xpath), and
-   * minimize and corner properties.
+   * size and corner properties.
    *
-   * @param algorithm_ the algorithm to initiate with (e.g. "internal")
-   * @param quote_     the quote to initiate with (e.g. "double")
-   * @param optimized_ the optimized state to initiate with (e.g. true or false)
-   * @param js_        the js path state to initiate with (e.g. true or false)
-   * @param property_  the property to initiate with (e.g. "innerHTML" or "dataset.src")
-   * @param minimize   the minimize to initiate with ("minimize" or "maximize")
-   * @param corner     the corner to initiate with (e.g. "bottom-right")
+   * @param {string} algorithm_ - the path algorithm ("internal" or "chromium")
+   * @param {string} quote_ - the path quote ("double" or "single")
+   * @param {boolean} optimized_ - the path optimized state for generating optimized or unoptimized paths (true or false)
+   * @param {boolean} js_ - the path js state for generating JS Paths (true or false)
+   * @param {string} property_ - the property value to get from the element (e.g. "outerHTML or "dataset.src")
+   * @param {string} size - the size to initiate with ("minimize" or "maximize")
+   * @param {string} corner - the corner to initiate with (e.g. "bottom-right")
    * @public
    */
-  async function initPicker(algorithm_, quote_, optimized_, js_, property_, minimize, corner) {
+  async function initPicker(algorithm_, quote_, optimized_, js_, property_, size, corner) {
     // Send out only the type to the UI so it knows this is just for the opening and to know what to start with (Selector or XPath)
     const instance = await getInstance();
-    // Element Picky's picker is always just "picky"
+    // ElementPicky's picker is always just "picky"
     picker = instance.picker;
     // Note that element and remove both use pageElementType. Element Picky just uses type, as it could be selector, xpath, or property
-    type = picker === "next" ? instance.nextLinkType : picker === "prev" ? instance.prevLinkType : picker === "button" ? instance.buttonType : picker === "element" || picker === "remove" ? instance.pageElementType : picker === "picky" ? instance.pickerType : "";
+    type = picker === "next" ? instance.nextLinkType : picker === "prev" ? instance.prevLinkType : picker === "button" ? instance.buttonType : picker === "element" || picker === "load" || picker === "remove" ? instance.pageElementType : picker === "picky" ? instance.pickerType : "";
     algorithm = algorithm_;
     quote = quote_;
     optimized = optimized_;
     js = js_;
     property = property_ && typeof property_ === "string" ? property_.split(".").filter(Boolean) : [];
     Promisify.runtimeSendMessage({receiver: "background", greeting: "updatePickerUI", type: type, picker: picker});
-    minimizePicker(minimize);
+    resizePicker(size);
     movePicker(corner);
   }
 
   /**
-   * Changes the Picker's properties:
-   * - element (e.g. going up one level in the DOM and changing to the parent element).
-   * - type
-   * - algorithm
-   * - quote
-   * - optimized
-   * - js
-   * - property
+   * Changes any of the Picker's properties (element, type, algorithm, quote, optimized, js, and property).
    *
-   * @param change {string} the change to make, e.g. the element relationship to change to (e.g. "parent")
-   * @param value  {*}      the value to change to (if applicable)
+   * For example, this function is called if the user uses the DOM Traversal Buttons to go up, down, left, or right,
+   * changing the current element to one of its siblings, parents, or children. It's also called if the user changes
+   * the path type, for example going from Selector to XPath.
+   *
+   * @param {string} change - the type of change to make, e.g. the element relationship to change to (e.g. "parent")
+   * @param {*} value - the value to change to (if applicable)
    * @public
    */
   function changePicker(change, value) {
     console.log("changePicker() - change=" + change + ", value=" + value);
-    // TODO: Is instanceof Element safe here? If the Element isn't part of the current document, this may return false
+    // In case we're dealing with elements inside iframes, we can't just use instanceof Element; must use the element's defaultView
+    const DFElement = element.ownerDocument?.defaultView?.Element || Element;
+    let newElement = element;
     switch(change) {
       case "parent":
-        element = element.parentElement && element.parentElement instanceof Element ? element.parentElement : element;
+        newElement = DOMNode.getParentElement(element) || element;
         break;
       case "child":
-        element = element.children[0] && element.children[0] instanceof Element ? element.children[0] : element;
+        newElement = DOMNode.getChildElement(element) || element;
         break;
       case "next":
-        element = element.nextElementSibling && element.nextElementSibling instanceof Element ? element.nextElementSibling : element;
+        newElement = element.nextElementSibling instanceof DFElement ? element.nextElementSibling : element;
         break;
       case "previous":
-        element = element.previousElementSibling && element.previousElementSibling instanceof Element ? element.previousElementSibling : element;
+        newElement = element.previousElementSibling instanceof DFElement ? element.previousElementSibling : element;
         break;
       case "type":
         type = value;
@@ -185,8 +170,62 @@ var Picker = Picker || (() => {
       default:
         break;
     }
-    updateUI();
-    hoverBox.highlightElement(element);
+    // if (newElement !== hoverBox?.hoverBox) {
+    //   updatePicker(newElement);
+    //   hoverBox.highlightElement(newElement);
+    // }
+    updatePicker(newElement);
+    hoverBox.highlightElement(newElement);
+  }
+
+  /**
+   * Updates the Picker UI. This is called by two functions: Picker.changePicker and HoverBox.clickListener.
+   *
+   * @param {Element} newElement - the new element to update the picker with
+   * @public
+   */
+  function updatePicker(newElement) {
+    console.log("updatePicker()");
+    if (newElement) {
+      element = newElement;
+    }
+    if (!element) {
+      return;
+    }
+    if (type === "property") {
+      // Property
+      data = getElementPropertyValue(element);
+    } else {
+      // Selector XPath or JS Path
+      const target = picker === "next" || picker === "prev" ? "link" : picker === "button" ? "button" : "generic";
+      // Note: This is the only time we ever call DOMPath.generateContextPath; in all other parts of the app, we have
+      // the current context (e.g. iframe document), but here we're unsure what element the user is trying to pick
+      const domPath = DOMPath.generateContextPath(element, type, algorithm, quote, optimized, target, js);
+      data = domPath.path;
+      meta = domPath.meta;
+    }
+    // Build out the element object we will send to the UI to update
+    const elementObject = {};
+    elementObject.context = DOMNode.getParentShadowRoot(element) ? "shadow" : DOMNode.getParentIframe(element) ? "iframe" : "";
+    elementObject.current = getElementDetails(element);
+    elementObject.parent = getElementDetails(DOMNode.getParentElement(element));
+    elementObject.child = getElementDetails(DOMNode.getChildElement(element));
+    elementObject.next = getElementDetails(element.nextElementSibling);
+    elementObject.previous = getElementDetails(element.previousElementSibling);
+    // Note do not send out the type as that is how we differentiate between first-time updates (type only) and successive updates
+    Promisify.runtimeSendMessage({receiver: "background", greeting: "updatePickerUI", data: data, meta: meta, element: elementObject});
+    // console.log("parents:");
+    // let parent = element.parentNode;
+    // while (parent) {
+    //   console.log(parent.tagName);
+    //   parent = parent.parentNode;
+    // }
+    // console.log("children:");
+    // let child = element.firstElementChild;
+    // while (child) {
+    //   console.log(child.tagName);
+    //   child = child.firstElementChild;
+    // }
   }
 
   /**
@@ -220,6 +259,10 @@ var Picker = Picker || (() => {
         instance.pageElementPath = data || instance.pageElementPath;
         break;
         // Note: For AJAX types, they share the same type with the pageElementType, so we have to override it if they change the type
+      case "load":
+        instance.pageElementType = type || instance.pageElementType;
+        instance.loadElementPath = data || instance.loadElementPath;
+        break;
       case "remove":
         instance.pageElementType = type || instance.pageElementType;
         instance.removeElementPath = data || instance.removeElementPath;
@@ -229,13 +272,16 @@ var Picker = Picker || (() => {
     }
     // We need to set pickerEnabled to false here, even though we also do it in closePicker() in case the user tries opening the Popup before the timeout closes it in 2000 ms
     instance.pickerEnabled = false;
+    // We need pickerSet for the rare race condition in which init() has finished all its checks after the user has quickly finished using the EP
+    instance.pickerSet = true;
+    // TODO: Sometimes the instance.isLoading is true, which is why sometimes we have to click ACCEPT again; should we reset it to false always?
+    // instance.isLoading = false;
     await setInstance(instance);
     setTimeout(() => { closePicker(); }, 2000);
   }
 
   /**
    * Copies the Picker's data to the user's clipboard.
-   * (Only used in Element Picky.)
    *
    * @public
    */
@@ -243,7 +289,7 @@ var Picker = Picker || (() => {
     console.log("copyPicker() - copying data to clipboard... data=" + data);
     try {
       await navigator.clipboard.writeText(data);
-    } catch(e) {
+    } catch (e) {
       console.log("copyPicker() - Error");
       console.log(e);
     }
@@ -252,14 +298,14 @@ var Picker = Picker || (() => {
   }
 
   /**
-   * Minimizes (or maximizes) the Picker after receiving a message from the UI to do so.
+   * Resizes the Picker to the specified size after receiving a message from the UI to do so.
    *
-   * @param toggle {string} a toggle that can either "minimize" or "maximize"
+   * @param {string} size - the size to make the picker ("minimize" or "maximize")
    * @public
    */
-  function minimizePicker(toggle) {
-    console.log("minimizePicker() - toggle=" + toggle);
-    switch(toggle) {
+  function resizePicker(size) {
+    console.log("resizePicker() - size=" + size);
+    switch(size) {
       case "minimize":
         ui.style.setProperty("width", "256px", "important");
         ui.style.setProperty("height", "100px", "important");
@@ -275,7 +321,7 @@ var Picker = Picker || (() => {
   /**
    * Moves the Picker to one of four corners on the screen. This is toggled by the UI between four corners.
    *
-   * @param corner {string} the corner to move to
+   * @param {string} corner - the corner to move to
    * @public
    */
   function movePicker(corner) {
@@ -311,52 +357,6 @@ var Picker = Picker || (() => {
   }
 
   /**
-   * Adds the click listener to prevent click events.
-   *
-   * @see https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener for more information about useCapture
-   * @private
-   */
-  function addClickListener() {
-    // removeClickListener();
-    console.log("addClickListener()");
-    // Important: We need the true to prevent clicks all the time; on some websites, if we leave out the true, it will still click.
-    // The third parameter is "useCapture" a boolean that indicates how the listener should be added in respect to bubbling/capturing
-    window.addEventListener("click", clickListener, true);
-  }
-
-  /**
-   * Removes the click listener that prevents click events.
-   *
-   * @private
-   */
-  function removeClickListener() {
-    console.log("removeClickListener()");
-    // Make sure we keep the true here as we added it in the event listener
-    window.removeEventListener("click", clickListener, true);
-  }
-
-  /**
-   * The click listener that prevents click events.
-   *
-   * @param event the event with target (element)
-   * @returns {boolean} false
-   * @see https://stackoverflow.com/a/60345546 Why we use window and stopImmediatePropagation()
-   * @see https://stackoverflow.com/a/64913288 Why we return false
-   * @private
-   */
-  const clickListener = function (event) {
-    console.log("clickListener()");
-    // Prevent the default click event from happening (sometimes doesn't work on some complex sites)
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-    event.preventDefault();
-    // We set the element from the event.target since it seems to be more accurate than HoverBox's target
-    element = event.target;
-    updateUI();
-    return false;
-  }
-
-  /**
    * Adds the UI.
    *
    * @private
@@ -364,14 +364,15 @@ var Picker = Picker || (() => {
   function addUI() {
     // removeUI();
     console.log("addUI()");
+    // Note: For the border, we use black no matter the theme. However, if desired, we can have PickerUI send a message back to us to initPicker(), and we can get the theme's border color and override it then
+    const UI_STYLE = "background: initial; border: 1px solid black; border-radius: 0; box-shadow: none; clear: both; display: block; float: none; height: 200px; max-width: none; max-height: none; min-height: 0; min-width: 0; margin: 0; opacity: 1; outline: 0; overflow: hidden; padding: 0; pointer-events: auto; position: fixed; visibility: visible;  width: 500px; z-index: 2147483647;";
     ui = document.createElement("iframe");
     ui.style = UI_STYLE.replaceAll(";", " !important;");
-    ui.id = id;
     ui.scrolling = "no";
     ui.frameBorder = "0";
     ui.allowTransparency = "true";
     // We want to append directly to documentElement (html) instead of body so we don't interfere with the DOM's body for path finding
-    document.documentElement.append(ui);
+    (document.documentElement || document.body).append(ui);
     // Important: If we set the onload listener before appending the iframe to the document, the onload will execute twice, so we do it after appending
     // @see https://stackoverflow.com/questions/10781880/dynamically-created-iframe-triggers-onload-event-twice
     ui.onload = function () {
@@ -390,79 +391,10 @@ var Picker = Picker || (() => {
    */
   function removeUI() {
     console.log("removeUI()");
-    // if (ui && document.documentElement.contains(ui)) {
-    //   document.documentElement.removeChild(ui);
-    // }
     if (ui && typeof ui.remove === "function") {
       ui.remove();
     }
-    ui = undefined;
-  }
-
-  /**
-   * Updates the UI.
-   *
-   * @private
-   */
-  function updateUI() {
-    console.log("updateUI()");
-    if (!element) {
-      return;
-    }
-    if (type === "property") {
-      // Property
-      data = getElementPropertyValue(element);
-    } else {
-      // Selector or XPath
-      const domPath = DOMPath.generatePath(element, type, algorithm, quote, optimized, js);
-      data = domPath.path;
-      meta = domPath.meta;
-    }
-    // Build out the element object we will send to the UI to update
-    const elementObject = {};
-    elementObject.current = getElementDetails(element);
-    elementObject.parent = getElementDetails(element.parentElement);
-    elementObject.child = getElementDetails(element.children ? element.children[0] : undefined);
-    elementObject.next = getElementDetails(element.nextElementSibling);
-    elementObject.previous = getElementDetails(element.previousElementSibling);
-    // Note do not send out the type as that is how we differentiate between first-time updates (type only) and successive updates
-    Promisify.runtimeSendMessage({receiver: "background", greeting: "updatePickerUI", data: data, meta: meta, element: elementObject});
-    // console.log("parents:");
-    // let parent = element.parentNode;
-    // while (parent) {
-    //   console.log(parent.tagName);
-    //   parent = parent.parentNode;
-    // }
-    // console.log("children:");
-    // let child = element.children[0];
-    // while (child) {
-    //   console.log(child.tagName);
-    //   child = child.children[0];
-    // }
-  }
-
-  /**
-   * Gets the value of the element's property (like textContent). Nested properties are supported (like dataset.src).
-   *
-   * @param el the element
-   * @returns {*} the value of the element's property
-   * @private
-   */
-  function getElementPropertyValue(el) {
-    let value;
-    try {
-      value = el[property[0]];
-      for (let i = 1; i < property.length; i++) {
-        value = data[property[i]];
-      }
-      // // In case of something ridiculous, like being an element (e.g. via parentNode)
-      // value = JSON.stringify(value);
-    } catch(e) {
-      console.log("updateUI() - error getting property");
-      console.log(e);
-      value = e.message;
-    }
-    return value;
+    // ui = undefined;
   }
 
   /**
@@ -471,7 +403,7 @@ var Picker = Picker || (() => {
    * Note: We use nodeName instead of tagName because nodeName applies to all nodes (e.g. text,comments) whereas tagName
    * only applies to elements. Even though we're only looking at elements, we use nodeName just to be safe.
    *
-   * @param el the element
+   * @param {Element} el - the element
    * @returns {string|*} the element details
    * @private
    */
@@ -492,65 +424,27 @@ var Picker = Picker || (() => {
   }
 
   /**
-   * Adds the class that makes the cursor a cross hair.
+   * Gets the value of the element's property (like textContent). Nested properties are supported (like dataset.src).
    *
+   * @param {Element} el - the element
+   * @returns {*} the value of the element's property
    * @private
    */
-  function addClass() {
-    // removeClass();
-    console.log("addClass()");
-    if (CONTAINER) {
-      CONTAINER.classList.add(clazz)
+  function getElementPropertyValue(el) {
+    let value;
+    try {
+      value = el[property[0]];
+      for (let i = 1; i < property.length; i++) {
+        value = data[property[i]];
+      }
+      // // In case of something ridiculous, like being an element (e.g. via parentNode)
+      // value = JSON.stringify(value);
+    } catch (e) {
+      console.log("updatePicker() - error getting property");
+      console.log(e);
+      value = e.message;
     }
-  }
-
-  /**
-   * Removes the class that makes the cursor a cross hair.
-   *
-   * @private
-   */
-  function removeClass() {
-    console.log("removeClass()");
-    if (CONTAINER) {
-      CONTAINER.classList.remove(clazz)
-    }
-  }
-
-  /**
-   * Adds the style that makes the cursor a cross hair.
-   *
-   * @see https://stackoverflow.com/a/17529309 changing-the-mouse-cursor-on-each-and-every-part-of-the-web-page
-   * @private
-   */
-  function addStyle() {
-    // removeStyle();
-    console.log("addStyle()");
-    const nodeName = CONTAINER && CONTAINER.nodeName && typeof CONTAINER.nodeName.toLowerCase === "function" ? CONTAINER.nodeName.toLowerCase() : "";
-    style = document.createElement("style");
-    // Can't seem to use *:not(#UI_ID):hover in one rule declaration, so we need to override the * in a separate style for #UI_ID:
-    style.textContent =
-      nodeName + "." + clazz + ",\n" +
-      nodeName + "." + clazz + " *:hover,\n" +
-      nodeName + "." + clazz + " a:hover {\n" +
-      "  cursor: crosshair !important;\n" +
-      "}\n" +
-      "#" + id + ":hover {\n" +
-      "  cursor: initial !important;\n" +
-      "}";
-    (document.head || document.body || document.documentElement).appendChild(style);
-  }
-
-  /**
-   * Removes the style that makes the cursor a cross hair.
-   *
-   * @private
-   */
-  function removeStyle() {
-    console.log("removeStyle()");
-    if (style && typeof style.remove === "function") {
-      style.remove();
-    }
-    style = undefined;
+    return value;
   }
 
   /**
@@ -560,8 +454,8 @@ var Picker = Picker || (() => {
    * @private
    */
   async function getInstance() {
-    if (typeof Scroll !== "undefined" && typeof Scroll.getInstance === "function") {
-      return Scroll.getInstance();
+    if (typeof Scroll !== "undefined" && typeof Scroll.get === "function") {
+      return Scroll.get("instance");
     } else {
       return await Promisify.runtimeSendMessage({receiver: "background", greeting: "getInstance"});
     }
@@ -570,12 +464,12 @@ var Picker = Picker || (() => {
   /**
    * Sets the instance.
    *
-   * @param instance the instance
+   * @param {Object} instance - the instance
    * @private
    */
   async function setInstance(instance) {
-    if (typeof Scroll !== "undefined" && typeof Scroll.getInstance === "function") {
-      Scroll.setInstance(instance);
+    if (typeof Scroll !== "undefined" && typeof Scroll.set === "function") {
+      Scroll.set("instance", instance);
     } else {
       await Promisify.runtimeSendMessage({receiver: "background", greeting: "setInstance", instance: instance});
     }
@@ -583,14 +477,16 @@ var Picker = Picker || (() => {
 
   // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
   return {
+    get,
     openPicker,
     closePicker,
     initPicker,
     changePicker,
     savePicker,
     copyPicker,
-    minimizePicker,
-    movePicker
+    resizePicker,
+    movePicker,
+    updatePicker
   };
 
 })();

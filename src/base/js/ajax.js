@@ -5,8 +5,8 @@
  */
 
 /**
- * This is the AJAX append mode's injection script. It disables the page from removing elements and from scrolling the
- * user.
+ * This is the AJAX Native append mode's injection script. It disables the page from removing elements and from
+ * scrolling the user.
  *
  * Note: We do not use window.addEventListener("message", function) for security considerations.
  * Listening for a unique CustomEvent is much more secure.
@@ -20,14 +20,19 @@
  */
 (() => {
 
+  /**
+   * Variables
+   *
+   * @param {string} EVENT_AJAX - the custom event name
+   */
+  const EVENT_AJAX = "InfyScrollAJAX";
   // TODO: We can make the event name random by passing in a parameter to this script, like this:
   // const EVENT_AJAX = new URLSearchParams(document.currentScript.src.split("?")[1]).get("eventName");
-  const EVENT_AJAX = "InfyScrollAJAX";
 
   /**
    * Listens to the {@link EVENT_AJAX} event.
    *
-   * @param {CustomEvent} event the CustomEvent
+   * @param {CustomEvent} event - the custom event
    * @private
    */
   function listener(event) {
@@ -39,7 +44,7 @@
   /**
    * Disables the page from scrolling.
    *
-   * @param {CustomEvent.detail} detail the CustomEvent's detail
+   * @param {CustomEvent.detail} detail - the custom event's detail object
    * @private
    */
   function disableScroll(detail) {
@@ -49,7 +54,7 @@
     if (disableScrollObjects && disableScrollFunctions) {
       for (const disableScrollObject of disableScrollObjects) {
         // Note: even for window, window["window"] === window returns true
-        // @see https://developer.mozilla.org/en-US/docs/Web/API/Window/window
+        // @see https://developer.mozilla.org/docs/Web/API/Window/window
         const array = disableScrollObject.split(".");
         let object = window[array[0]];
         for (let i = 1; i < array.length; i++) {
@@ -90,7 +95,7 @@
   /**
    * Disables the page from removing specific elements.
    *
-   * @param {CustomEvent.detail} detail the CustomEvent's detail
+   * @param {CustomEvent.detail} detail - the custom event's detail object
    * @private
    */
   function disableRemove(detail) {

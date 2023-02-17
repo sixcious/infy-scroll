@@ -5,23 +5,37 @@
  */
 
 /**
- * Options handles all the option-specific logic needed on the Options Page. This includes letting the user change
- * various options and setting them into the storage. The Options Page will also display a Welcome dialog on install
- * and an Error dialog if it doesn't detect the chrome.* object (e.g. if the extension was installed in a Private
- * or Incognito window).
+ * Options handles the logic needed for the Options Page. This includes letting the user change various settings and
+ * saving them into the storage. The Options Page will also display a Welcome dialog on install and an Error dialog if
+ * it doesn't detect the chrome.* object (e.g. if the extension was installed in a Private or Incognito window).
  */
 const Options = (() => {
 
   /**
    * Variables
    *
-   * @param DOM      the DOM elements cache
-   * @param items    the storage items cache
-   * @param timeouts the reusable timeouts object that stores all named timeouts used on this page
+   * @param {Object} DOM - the DOM elements cache
+   * @param {Object} items - the storage items cache
+   * @param {Object} timeouts - the reusable timeouts object that stores all named timeouts used on this page
+   * @param {Object} undo - an object that stores the previous operation's data, in order to allow for it to be undone
    */
   const DOM = {};
   let items = {};
   let timeouts = {};
+  let charts = [];
+  let undo = {};
+
+  /**
+   * Gets the declared variables. This can be used by other parts of the app or for debugging purposes.
+   *
+   * @returns {*} the variables
+   * @public
+   */
+  function get() {
+    return {
+      DOM, items, timeouts, charts, undo
+    };
+  }
 
   /**
    * Initializes the Options window. This script is set to defer so the DOM is guaranteed to be parsed by this point.
@@ -50,17 +64,50 @@ const Options = (() => {
     for (const element of tooltips) {
       element.setAttribute("aria-label", chrome.i18n.getMessage(element.getAttribute("aria-label").replace(/-/g, '_')));
     }
-    // Add Event Listeners to the DOM elements
-    // MDC Tab Bar
-    MDC.tabBars.get("options-tab-bar").listen("MDCTabBar:activated", (event) => {
-      document.querySelector(".mdc-tab-content--active").classList.remove("mdc-tab-content--active");
-      document.querySelectorAll(".mdc-tab-content")[event.detail.index].classList.add("mdc-tab-content--active");
+    // Populate all values from storage
+    populateValuesFromStorage("all");
+    // Add event listeners after we initialize the inputs with the instance. For example, MDC select next/prev type listeners would have fired if we set their value after listening to them
+    addEventListeners();
+  }
+
+  /**
+   * Adds all the event listeners needed for the DOM elements. Only called one time by init().
+   *
+   * @private
+   */
+  function addEventListeners() {
+    // MDC Tab Bar (We have multiple tab bars)
+    MDC.tabBars.forEach(tabBar => { tabBar.listen("MDCTabBar:activated", (event) => {
+      console.log(event.target);
+      document.querySelector(".mdc-tab-content--active" + "[data-tab-bar='" + event.target.id + "']").classList.remove("mdc-tab-content--active");
+      document.querySelectorAll(".mdc-tab-content" + "[data-tab-bar='" + event.target.id + "']")[event.detail.index].classList.add("mdc-tab-content--active");
+      // The reason why this is here is because we can only resize the textareas to their scroll height after they've been painted on the screen
+      MDC.resize();
+    }) });
+    // MDC Snackbar
+    DOM["#undo-button"].addEventListener("click", async function() {
+      // Important: Right now this undo button is only needed for undoing the Delete Save operation, but it could be parameterized to handle multiple undo operations e.g. reset options, or restore data
+      console.log("The undo button was clicked, undoing previous operation..., undo=");
+      console.log(undo);
+      if (undo && undo.saves && Array.isArray(undo.saves) && undo.saves.length > 0) {
+        await Promisify.storageSet({"saves": undo.saves});
+        populateValuesFromStorage("saves");
+        MDC.openSnackbar(chrome.i18n.getMessage("saves_snackbar_undo_label"));
+      }
     });
     // UI
-    DOM["#theme-icon-div"].addEventListener("click", async function (event) {
+    DOM["#theme-button"].addEventListener("click", async function (event) {
       await changeTheme(items.theme === "default" ? "light" : items.theme === "light" ? "dark" : "default");
       populateValuesFromStorage("theme");
     });
+    DOM["#stats-button"].addEventListener("click", () => { MDC.dialogs.get("stats-dialog").open(); viewStats(true, false); });
+    DOM["#stats-switch-input"].addEventListener("change", async function () {
+      await Promisify.storageSet({"statsEnabled": this.checked});
+      items.statsEnabled = this.checked;
+      viewStats(false, true);
+    });
+    // This keeps the dialog from auto-focusing on an element we don't want it to
+    MDC.dialogs.get("stats-dialog").listen("MDCDialog:opened", () => { document.activeElement.blur(); });
     DOM["#on-switch-input"].addEventListener("change", async function () {
       await Promisify.storageSet({"on": this.checked});
       if (!this.checked) { chrome.runtime.sendMessage({receiver: "background", greeting: "turnOff"}); }
@@ -96,10 +143,6 @@ const Options = (() => {
     });
     // Database
     DOM["#database-tbody"].addEventListener("click", viewDatabase);
-    DOM["#database-dialog-stats-button"].addEventListener("click", () => {
-      DOM["#database-dialog-json"].style.display = DOM["#database-dialog-json"].style.display === "block" ? "none" : "block";
-      DOM["#database-dialog-stats"].style.display = DOM["#database-dialog-stats"].style.display === "block" ? "none" : "block";
-    });
     DOM["#database-download-button"].addEventListener("click", downloadDatabase);
     DOM["#database-delete-button"].addEventListener("click", deleteDatabase);
     MDC.selects.get("database-location-select").listen("MDCSelect:change", (el) => { chrome.storage.local.set({"databaseLocation": el.detail.value}); });
@@ -113,7 +156,7 @@ const Options = (() => {
     DOM["#database-whitelist-textarea"].addEventListener("input", function () { saveInput(this, "databaseWhitelist", "array-split-newline"); });
     // Shortcuts
     // Firefox: There is no programmatic way to go to the extension shortcuts screen, so display message telling the user where to go instead @see https://bugzilla.mozilla.org/show_bug.cgi?id=1538451
-    // Edge: Note that while Edge will redirect chrome://extensions/shortcuts to the proper URL, it has its own URI/namespace so we should probably use that
+    // Edge: Note that while Edge will redirect chrome://extensions/shortcuts to the proper URL, it has its own URI/namespace so we should probably use it
     DOM["#shortcuts-button"].addEventListener("click", function () {
       if (items?.browserName === "firefox") {
         MDC.dialogs.get("shortcuts-dialog").open();
@@ -128,13 +171,13 @@ const Options = (() => {
     // Scroll Detection changes the scroll append threshold view between pixels (sl) or pages (io)
     DOM["#scroll-detection-radios"].addEventListener("change", function (event) {
       saveInput(event.target, "scrollDetection", "value");
-      DOM["#scroll-append-threshold-pixels"].className = event.target.value === "sl" ? "display-block fade-in" : "display-none";
-      DOM["#scroll-append-threshold-pages"].className = event.target.value === "io" ? "display-block fade-in" : "display-none";
+      // DOM["#scroll-append-threshold-pixels"].className = event.target.value === "sl" ? "display-block fade-in" : "display-none";
+      // DOM["#scroll-append-threshold-pages"].className = event.target.value === "io" ? "display-block fade-in" : "display-none";
     });
     DOM["#scroll-behavior-radios"].addEventListener("change", function (event) { saveInput(event.target, "scrollBehavior", "value"); });
     DOM["#scroll-update-address-input"].addEventListener("change", function () { chrome.storage.local.set({"scrollUpdateAddress": this.checked}); });
     DOM["#scroll-update-title-input"].addEventListener("change", function () { chrome.storage.local.set({"scrollUpdateTitle": this.checked}); });
-    DOM["#scroll-append-threshold-pages-input"].addEventListener("change", function () { if (+this.value >= 0 && +this.value <= 3) { saveInput(this, "scrollAppendThresholdPages", "number");} });
+    // DOM["#scroll-append-threshold-pages-input"].addEventListener("change", function () { if (+this.value >= 0 && +this.value <= 3) { saveInput(this, "scrollAppendThresholdPages", "number");} });
     DOM["#scroll-append-threshold-pixels-input"].addEventListener("change", function () { if (+this.value >= 0 && +this.value <= 3000) { saveInput(this, "scrollAppendThresholdPixels", "number");} });
     DOM["#scroll-append-delay-input"].addEventListener("change", function () { if (+this.value >= 1000 && +this.value <= 10000) { saveInput(this, "scrollAppendDelay", "number");} });
     DOM["#scroll-divider-align-radios"].addEventListener("change", function (event) { saveInput(event.target, "scrollDividerAlign", "value"); });
@@ -142,6 +185,13 @@ const Options = (() => {
     DOM["#scroll-overlay-input"].addEventListener("change", function () { chrome.storage.local.set({"scrollOverlay": this.checked}); });
     DOM["#scroll-icon-input"].addEventListener("change", function () { chrome.storage.local.set({"scrollIcon": this.checked}); });
     DOM["#scroll-loading-input"].addEventListener("change", function () { chrome.storage.local.set({"scrollLoading": this.checked}); });
+    DOM["#scroll-maximum-pages-input"].addEventListener("change", function () { if (+this.value >= 0 && +this.value <= 100) { saveInput(this, "scrollMaximumPages", "number");} });
+    DOM["#scroll-maximum-pages-checkbox-input"].addEventListener("change", function () {
+      // We always reset this to 0 on every checkbox change to avoid issues
+      DOM["#scroll-maximum-pages-input"].value = 0;
+      saveInput(DOM["#scroll-maximum-pages-input"], "scrollMaximumPages", "number");
+      DOM["#scroll-maximum-pages"].className = this.checked ? "display-inline-block fade-in" : "display-none";
+    });
     // Next
     DOM["#next-path-textarea"].addEventListener("input", function () { saveInput(this, "nextLinkPath", "value"); });
     DOM["#next-keywords-textarea"].addEventListener("input", function () { saveInput(this, "nextLinkKeywords", "array-split-nospace-lowercase"); });
@@ -162,29 +212,45 @@ const Options = (() => {
     DOM["#custom-events-enable-input"].addEventListener("change", function () { chrome.storage.local.set({"customEventsEnabled": this.checked}); });
     DOM["#debug-enable-input"].addEventListener("change", function () { chrome.storage.local.set({"debugEnabled": this.checked}); });
     // Backup
-    DOM["#backup-button"].addEventListener("click", async function () {
+    DOM["#backup-button"].addEventListener("click", downloadBackup);
+    DOM["#restore-button"].addEventListener("click", uploadFile);
+    DOM["#manual-backup-button"].addEventListener("click", async function () {
       MDC.dialogs.get("backup-dialog").open();
       // Don't backup the databases due to size
       const backup = await Promisify.storageGet(undefined, undefined, ["databaseAP", "databaseIS"]);
       DOM["#backup-textarea"].value = JSON.stringify(backup, null, "  ");
     });
-    DOM["#restore-button"].addEventListener("click", () => { MDC.dialogs.get("restore-dialog").open(); });
-    DOM["#backup-download-button"].addEventListener("click", downloadBackup);
-    DOM["#restore-file-button"].addEventListener("click", uploadFile);
+    DOM["#backup-text-button"].addEventListener("click", copyText);
     DOM["#restore-text-button"].addEventListener("click", uploadText);
     // About
     DOM["#reset-options-button"].addEventListener("click", () => { MDC.dialogs.get("reset-options-dialog").open(); });
     DOM["#reset-options-button-yes"].addEventListener("click", resetOptions);
-    DOM["#manifest-name"].textContent = chrome.runtime.getManifest().name;
-    DOM["#manifest-version"].textContent = chrome.runtime.getManifest().version;
-    // Populate all values from storage
-    populateValuesFromStorage("all");
+    // Other
+    // We don't want to paste in the HTML for our contenteditable inputs, so we need to add this paste listener
+    // We could have simply done contenteditable="plaintext-only", but Firefox doesn't support that yet, see bug below
+    // @see https://bugzilla.mozilla.org/show_bug.cgi?id=1291467
+    // @see https://stackoverflow.com/a/36846308/988713 by Isaac
+    document.querySelectorAll("[contenteditable]").forEach(el => {
+      el.addEventListener("paste", (e) => {
+        console.log("contenteditable paste listener() - overriding default behavior to paste only plaintext");
+        e.preventDefault();
+        document.execCommand("insertHTML", false, e.clipboardData.getData("text/plain"));
+      })
+    });
+    // Version Theme
+    DOM["#version-theme"].addEventListener("click", function () {
+      const element = event.target;
+      if (element instanceof Element && ["SVG", "USE", "PATH"].includes(element?.nodeName?.toUpperCase())) {
+        UI.clickHoverCss(element, "hvr-buzz-out-click");
+        UI.fireConfetti(event);
+      }
+    });
   }
 
   /**
    * Populates the options form values from the extension storage.
    *
-   * @param values which values to populate, e.g. "all" for all or "xyz" for only xyz values (with fade-in effect)
+   * @param {string} values - the values to populate, e.g. "all" for all or "xyz" for only xyz values (with fade-in effect)
    * @private
    */
   async function populateValuesFromStorage(values) {
@@ -198,17 +264,17 @@ const Options = (() => {
       DOM["#theme-icon"].children[0].setAttribute("href", "../lib/feather/feather.svg#" + (items.theme === "light" ? "sun" : items.theme === "dark" ? "moon" : getPreferredColor() === "light" ? "sun" : "moon"));
       DOM["#theme-icon"].style.display = "initial";
       // Firefox doesn't officially support ariaLabel, so we have to use setAttribute to change it
-      DOM["#theme-icon-div"].setAttribute("aria-label", chrome.i18n.getMessage("theme_icon_tooltip").replaceAll("?", chrome.i18n.getMessage("theme_" + items.theme + "_label")));
+      DOM["#theme-button"].setAttribute("aria-label", chrome.i18n.getMessage("theme_button_tooltip").replaceAll("?", chrome.i18n.getMessage("theme_" + items.theme + "_label")));
     }
     if (values === "all" || values === "icon") {
       DOM["#icon-radio-dark"].checked = items.icon === "dark";
       DOM["#icon-radio-light"].checked = items.icon === "light";
     }
     if (values === "all" || values === "saves") {
-      buildSavesTable(items.saves);
+      buildSavesTable();
     }
     if (values === "all" || values === "database") {
-      buildDatabasesTable(items);
+      buildDatabasesTable();
       DOM["#database-options"].style.display = items.databaseAPEnabled || items.databaseISEnabled ? "block" : "none";
     }
     if (values === "all") {
@@ -229,6 +295,7 @@ const Options = (() => {
       DOM["#version-theme-input"].checked = items.versionTheme;
       DOM["#preferred-path-type-radio-selector"].checked = items.preferredPathType === "selector";
       DOM["#preferred-path-type-radio-xpath"].checked = items.preferredPathType === "xpath";
+      MDC.switches.get("stats-switch").checked = items.statsEnabled;
       // Saves
       MDC.switches.get("saves-switch").checked = items.savesEnabled;
       // Database
@@ -247,9 +314,9 @@ const Options = (() => {
       DOM["#scroll-behavior-smooth-input"].checked = items.scrollBehavior === "smooth";
       DOM["#scroll-update-address-input"].checked = items.scrollUpdateAddress;
       DOM["#scroll-update-title-input"].checked = items.scrollUpdateTitle;
-      DOM["#scroll-append-threshold-pixels"].className = items.scrollDetection === "sl" ? "display-block" : "display-none";
-      DOM["#scroll-append-threshold-pages"].className = items.scrollDetection === "io" ? "display-block" : "display-none";
-      DOM["#scroll-append-threshold-pages-input"].value = items.scrollAppendThresholdPages;
+      // DOM["#scroll-append-threshold-pixels"].className = items.scrollDetection === "sl" ? "display-block" : "display-none";
+      // DOM["#scroll-append-threshold-pages"].className = items.scrollDetection === "io" ? "display-block" : "display-none";
+      // DOM["#scroll-append-threshold-pages-input"].value = items.scrollAppendThresholdPages;
       DOM["#scroll-append-threshold-pixels-input"].value = items.scrollAppendThresholdPixels;
       DOM["#scroll-append-delay-input"].value = items.scrollAppendDelay;
       MDC.selects.get("scroll-divider-select").value = items.scrollDivider;
@@ -260,6 +327,9 @@ const Options = (() => {
       DOM["#scroll-overlay-input"].checked = items.scrollOverlay;
       DOM["#scroll-icon-input"].checked = items.scrollIcon;
       DOM["#scroll-loading-input"].checked = items.scrollLoading;
+      DOM["#scroll-maximum-pages-checkbox-input"].checked = items.scrollMaximumPages > 0;
+      DOM["#scroll-maximum-pages"].className = items.scrollMaximumPages > 0 ? "display-inline-block" : "display-none";
+      DOM["#scroll-maximum-pages-input"].value = items.scrollMaximumPages;
       // Next
       DOM["#next-path-textarea"].value = items.nextLinkPath;
       DOM["#next-keywords-textarea"].value = items.nextLinkKeywords;
@@ -289,10 +359,11 @@ const Options = (() => {
       DOM["#links-new-tab-enable-input"].checked = items.linksNewTabEnabled;
       DOM["#custom-events-enable-input"].checked = items.customEventsEnabled;
       DOM["#debug-enable-input"].checked = items.debugEnabled;
-      // Dialogs
-      DOM["#install-dialog-toolbar-browser"].textContent = chrome.i18n.getMessage("install_dialog_toolbar_" + (items.browserName ? items.browserName : "chrome"));
+      // About
+      DOM["#manifest-name"].textContent = chrome.runtime.getManifest().name;
+      DOM["#manifest-version"].textContent = chrome.runtime.getManifest().version;
       // Re-layout MDC (Needs timeout for some reason...)
-      setTimeout(() => { MDC.layout(); }, 500);
+      setTimeout(async () => { MDC.layout(); }, 500);
       // If first run (e.g. just been installed), open the install-dialog and set the default icon (default theme is system default, so no changes needed)
       if (items.firstRun) {
         MDC.dialogs.get("install-dialog").open();
@@ -308,11 +379,13 @@ const Options = (() => {
   /**
    * Gets the user's preferred color scheme.
    *
-   * Note: MV3 Service Worker does not have access to window and window.matchMedia, so setting the preferred icon color
-   * is now delegated to the Options. Offscreen Document may be a potential solution? Requires offscreen permission and
-   * flag + Chrome 109 @see https://bugs.chromium.org/p/chromium/issues/detail?id=1339382
+   * Note: The MV3 Service Worker does not have access to window and window.matchMedia, so setting the preferred icon
+   * color is now delegated to the Options.
+   *
+   * Offscreen Document may be a potential solution? Requires offscreen permission and flag + Chrome 109
    *
    * @returns {string} the preferred icon color, either "dark" or "light"
+   * @see https://bugs.chromium.org/p/chromium/issues/detail?id=1339382
    * @private
    */
   function getPreferredColor() {
@@ -327,7 +400,7 @@ const Options = (() => {
   /**
    * Changes the extension's icon in the browser's toolbar.
    *
-   * @param icon the icon color to change to
+   * @param {string} icon - the icon to change to (e.g. "light")
    * @private
    */
   async function changeIcon(icon) {
@@ -336,9 +409,9 @@ const Options = (() => {
   }
 
   /**
-   * Changes the theme from light mode to dark mode or vice-versa.
+   * Changes the overall theme between light mode and dark mode.
    *
-   * @param theme the theme to change to ("dark" or "light")
+   * @param {string} theme - the theme to change to ("default", "light", or "dark")
    * @private
    */
   async function changeTheme(theme) {
@@ -346,12 +419,12 @@ const Options = (() => {
   }
 
   /**
-   * Builds out the saved URLs table HTML using a template.
+   * Builds out the saves table HTML using a template.
    *
-   * @param saves the saved URLs to build from
    * @private
    */
-  function buildSavesTable(saves) {
+  function buildSavesTable() {
+    const saves = items?.saves;
     const savesExist = saves && saves.length > 0;
     const tbody = DOM["#saves-tbody"];
     const template = DOM["#saves-tr-template"];
@@ -362,12 +435,13 @@ const Options = (() => {
       for (const save of saves) {
         const date = new Date(save.date);
         const tr = template.content.children[0].cloneNode(true);
+        tr.dataset.id = save.id;
         tr.children[0].children[0].children[0].value = save.id;
         tr.children[1].textContent = save.id;
-        tr.children[2].children[0].textContent = save.title;
+        tr.children[2].children[0].textContent = save.name;
         tr.children[2].children[1].textContent = save.url;
         tr.children[2].children[1].dataset.id = save.id;
-        tr.children[2].children[1].title = chrome.i18n.getMessage("saves_dialog_opener_title") + (save.title || save.url);
+        tr.children[2].children[1].title = chrome.i18n.getMessage("saves_dialog_opener_title") + (save.name || save.url);
         // We test for save.date instead of date to allow users to save saves without dates and because Invalid Dates will still return a String "Invalid Date" which may be annoying to see
         tr.children[3].textContent = save.date ? date.toLocaleDateString() : " ";
         tr.children[3].title = save.date ? date.toLocaleDateString() + " " + date.toLocaleTimeString() : " ";
@@ -388,10 +462,10 @@ const Options = (() => {
   }
 
   /**
-   * Views a Saved URL.
-   * The user must click on a Saved URL in the table and a dialog will open containing its properties.
+   * Views a save.
+   * The user must click on the save's url or name in the table and a dialog will open containing its properties.
    *
-   * @param event the click event
+   * @param {Event} event - the click event that triggered this callback function
    * @private
    */
   function viewSave(event) {
@@ -404,16 +478,19 @@ const Options = (() => {
         const save = items.saves.find(e => e.id === id);
         DOM["#save-dialog-type"].value = "edit";
         DOM["#save-dialog-id"].value = id;
-        DOM["#save-dialog-title"].textContent = save.title || chrome.i18n.getMessage("save_dialog_default_title");
+        DOM["#save-dialog-title"].textContent = save.name || chrome.i18n.getMessage("save_dialog_default_title");
         DOM["#save-dialog-json"].textContent = JSON.stringify(save, null, "  ");
       } catch (e) {
         MDC.openSnackbar(chrome.i18n.getMessage("saves_snackbar_error_view_label") + e);
       }
     }
+    else {
+      console.log(element.textContent);
+    }
   }
 
   /**
-   * Allows users to add a new Save using a default template or an existing save's template if one is selected/checked.
+   * Allows users to add a new save using a default template or an existing save's template if one is selected/checked.
    *
    * @private
    */
@@ -424,15 +501,13 @@ const Options = (() => {
     console.log(checkboxes);
     const saves = await Promisify.storageGet("saves");
     // Users can add saves either using the default template or by using an existing save as a template
-    let template = {
-      action: "next",
-      append: "page",
-      nextLink: "[rel='next']",
-      keyword: true,
-      title: "",
-      url: "https://www.example.com",
-      type: "pattern"
-    };
+    let template = items.savesTemplate;
+    if (typeof Util.clone(template, "json", false) !== "object") {
+      console.log("addSave() - error parsing savesTemplate as an object, resetting to default storage items template...");
+      const options = await Promisify.runtimeSendMessage({receiver: "background", greeting: "getSDV"});
+      template = options?.savesTemplate || {};
+      template.comment = chrome.i18n.getMessage("saves_template_corrupted");
+    }
     if (checkboxes && checkboxes[0]) {
       for (const save of saves) {
         if (save.id === checkboxes[0]) {
@@ -448,13 +523,13 @@ const Options = (() => {
     MDC.dialogs.get("save-dialog").open();
     DOM["#save-dialog-type"].value = "add";
     DOM["#save-dialog-id"].value = template.id;
-    DOM["#save-dialog-title"].textContent = template.title || chrome.i18n.getMessage("save_dialog_default_title");
+    DOM["#save-dialog-title"].textContent = template.name || chrome.i18n.getMessage("save_dialog_default_title");
     DOM["#save-dialog-json"].textContent = JSON.stringify(template, null, "  ");
   }
 
   /**
-   * Edits a Save.
-   * This function is available from the Saved URL dialog prompt when the user clicks the SAVE button.
+   * Edits a save.
+   * This function is called when the user clicks the SAVE Button from the View Save dialog.
    *
    * @private
    */
@@ -471,10 +546,10 @@ const Options = (() => {
       }
       // Users can't edit the ID (normally) but are allowed to change the date, hence the slight difference in logic between these two assignments:
       json.id = Number(DOM["#save-dialog-id"].value) || (saves.length > 0 ? Math.max.apply(Math, saves.map(s => s.id)) + 1 : 1);
-      // Don't force adding in a date if they don't want one?
-      // if (!json.date) {
-      //   json.date = new Date().toJSON();
-      // }
+      // Should we not force adding in a date if they don't want one?
+      if (!json.date) {
+        json.date = new Date().toJSON();
+      }
       if (type === "add") {
         console.log("editSave - adding new save");
         saves.push(json);
@@ -501,22 +576,23 @@ const Options = (() => {
   }
 
   /**
-   * Deletes Saved URL(s) (all types) by their unique ID.
+   * Deletes save(s) by their unique IDs.
+   * This function is slightly complex because it provides an "UNDO" option.
    *
    * @private
    */
   async function deleteSave() {
     // We must get the checkbox ID values dynamically via a query (can't use the DOM Cache)
     const checkboxes = [...document.querySelectorAll("#saves-tbody input[type=checkbox]:checked")].map(o => +o.value);
-    console.log("deleteSaves() - checkboxes=");
-    console.log(checkboxes);
+    console.log("deleteSave() - checkboxes=" + checkboxes);
     if (!checkboxes || checkboxes.length <= 0) {
       MDC.openSnackbar(chrome.i18n.getMessage("saves_snackbar_select_delete_error_label"));
       return;
     }
     const saves = await Promisify.storageGet("saves");
-    console.log("deleteSave() - checkboxes=" + checkboxes + ", saves=" + saves);
-    if (saves && saves.length > 0) {
+    // We cache the current saves to allow for the undo operation. Note that we clone the saves to avoid ID issues if we store the saves as a reference
+    undo.saves = Util.clone(saves);
+    if (saves && Array.isArray(saves) && saves.length > 0) {
       const newSaves = saves.filter(o => !checkboxes.includes(o.id));
       // Re-generate IDs in case there is now a gap after filtering, e.g. if deleting ID 3 in this array: [1, 2, 4, 5, ...]
       newSaves.sort((a, b) => (a.id > b.id) ? 1 : -1);
@@ -529,57 +605,72 @@ const Options = (() => {
       newSaves.sort((a, b) => (a.url && b.url && a.url.length < b.url.length) ? 1 : -1);
       await Promisify.storageSet({saves: newSaves});
       populateValuesFromStorage("saves");
-      MDC.openSnackbar(chrome.i18n.getMessage("saves_snackbar_delete_label"));
+      // Make sure to give the user infinite time to undo this operation
+      MDC.openSnackbar(chrome.i18n.getMessage("saves_snackbar_delete_label"), -1, "mdc-snackbar-undo");
     }
   }
 
   /**
-   * Views a Database's items and its stats.
+   * Views a database's items or its stats.
    *
-   * The user must click on a Database in the table and a dialog will open containing its items.
+   * This function handles both types of data. The user can click on the "Items" count to view the items or the "Chart"
+   * icon to view the stats.
    *
-   * @param event the click event
+   * @param {Event} event - the click event that triggered this callback function
    * @private
    */
   function viewDatabase(event) {
     const element = event.target;
-    if (element && element.dataset.id && element.classList.contains("database-dialog-opener")) {
+    console.log(element);
+    if (element && element.dataset.key && element.dataset.dialog && element.classList.contains("database-dialog-opener")) {
       MDC.dialogs.get("database-dialog").open();
-      // Must convert the element's dataset id (now a string) back to a number for proper comparison
-      const id = element.dataset.id;
-      if (id === "AP" || id === "IS") {
-        const database = Util.clone(items["database" + id]);
-        if (id === "AP") {
-          // Remove the microformat from the array before calculating the stats (it should always be the last item since we manually push it to the end)
-          database.pop();
+      const property = getDatabases().find(x => x.key === element.dataset.key);
+      if (property) {
+        const database = Util.clone(items["database" + property.key]);
+        const dialog = element.dataset.dialog;
+        DOM["#database-dialog"].dataset.dialog = dialog;
+        DOM["#database-dialog-title"].textContent = chrome.i18n.getMessage("database_dialog_" + dialog + "_title").replace("?", property.name);
+        DOM["#database-dialog-helper-text"].textContent = chrome.i18n.getMessage("database_dialog_" + dialog + "_helper_text");
+        DOM["#database-dialog-items"].className = dialog === "stats" ? "display-none" : "display-block";
+        DOM["#database-dialog-stats"].className = dialog === "stats" ? "display-block" : "display-none";
+        if (dialog === "items") {
+          database.sort((a, b) => (!a.updated_at || a.updated_at < b.updated_at) ? 1 : -1);
+          DOM["#database-items-json"].textContent = JSON.stringify(database, null, "  ");
+        } else {
+          let creators = new Map();
+          database.forEach(d => { creators.set(d.created_by, (creators.get(d.created_by) || 0) + 1); });
+          creators = new Map([...creators].sort((a, b) => b[1] - a[1] || a[0]?.localeCompare(b[0])));
+          let keys = new Map();
+          database.forEach(d => { const iterations = Object.keys(d).filter(k => !["created_by", "resource_url", "updated_at", "name"].includes(k)); for (const key of iterations) { keys.set(key, (keys.get(key) || 0) + 1); } });
+          keys = new Map([...keys].sort((a, b) => b[1] - a[1] || a[0]?.localeCompare(b[0])));
+          // Tab Values (#)
+          DOM["#database-stats-tab-creators-value"].textContent = "(" + creators.size + ")";
+          DOM["#database-stats-tab-keys-value"].textContent = "(" + keys.size + ")";
+          // Table
+          for (const stat of [{name: "creators", map: creators}, {name: "keys", map: keys}]) {
+            const tbody = DOM["#database-stats-" + stat.name + "-tbody"];
+            const template = DOM["#database-stats-" + stat.name + "-tr-template"];
+            const trs = [];
+            if (stat.map && stat.map.size > 0) {
+              for (const [key, value] of stat.map) {
+                const tr = template.content.children[0].cloneNode(true);
+                tr.children[0].textContent = key?.toString();
+                tr.children[1].textContent = value?.toString();
+                trs.push(tr);
+              }
+            }
+            // The reason why this is outside the if stat.map.size > 0 is if the user deletes the database, this table will then always be updated each time they try to view the stats (e.g. empty table)
+            // Note: Node.replaceChildren() is only supported since Chrome 86+, otherwise need to do tbody.deleteRow() and tbody.appendChild(tr) @see https://stackoverflow.com/a/65413839
+            tbody.replaceChildren(...trs);
+            MDC.tables.get("database-stats-" + stat.name + "-data-table").layout();
+          }
         }
-        database.sort((a, b) => (!a.updated_at || a.updated_at < b.updated_at) ? 1 : -1);
-        const property = getDatabases().filter(x => x.key === id)[0];
-        DOM["#database-dialog-title"].textContent = property.name + chrome.i18n.getMessage("database_label");
-        DOM["#database-dialog-json"].textContent = JSON.stringify(database, null, "  ");
-        let creators = new Map();
-        database.forEach(d => { creators.set(d.created_by, (creators.get(d.created_by) || 0) + 1); });
-        creators = new Map([...creators].sort((a, b) => b[1] - a[1]));
-        const usersArray = [];
-        creators.forEach((key, value) => { usersArray.push(value + " - " + key); });
-        let keys = new Map();
-        database.forEach(d => { const iterations = Object.keys(d).filter(k => !["created_by", "resource_url", "updated_at"].includes(k)); for (const key of iterations) { keys.set(key, (keys.get(key) || 0) + 1); } });
-        keys = new Map([...keys].sort((a, b) => b[1] - a[1]));
-        const keysArray = [];
-        keys.forEach((key, value) => { keysArray.push(value + " - " + key); });
-        DOM["#database-dialog-stats"].textContent = (
-          chrome.i18n.getMessage("database_creators_label") + JSON.stringify(usersArray, null, 2) + "\r\n" +
-          chrome.i18n.getMessage("database_keys_label") + JSON.stringify(keysArray, null, 2)
-        ).replaceAll(/[,\[\]"]/g, "");
-        // Reset display in case the STATS button was clicked previously
-        DOM["#database-dialog-json"].style.display = "block";
-        DOM["#database-dialog-stats"].style.display = "none";
       }
     }
   }
 
   /**
-   * Downloads the database(s).
+   * Downloads and updates the selected database(s).
    *
    * @private
    */
@@ -604,14 +695,14 @@ const Options = (() => {
   }
 
   /**
-   * Deletes the database(s).
+   * Deletes the database(s) from the storage items (obviously not from the server!).
    *
    * @private
    */
   async function deleteDatabase() {
     // We must get the checkbox ID values dynamically via a query (can't use the DOM Cache)
     const checkboxes = [...document.querySelectorAll("#database-tbody input[type=checkbox]:checked")].map(o => +o.value);
-    console.log("downloadDatabase() - checkboxes=");
+    console.log("deleteDatabase() - checkboxes=");
     console.log(checkboxes);
     if (!checkboxes || checkboxes.length <= 0) {
       MDC.openSnackbar(chrome.i18n.getMessage("database_snackbar_select_error"));
@@ -638,10 +729,9 @@ const Options = (() => {
   /**
    * Builds out the databases table HTML using a template.
    *
-   * @param items the storage items that contain database data to build from
    * @private
    */
-  function buildDatabasesTable(items) {
+  function buildDatabasesTable() {
     const tbody = DOM["#database-tbody"];
     const template = DOM["#database-tr-template"];
     const trs = [];
@@ -653,9 +743,13 @@ const Options = (() => {
         tr.children[1].children[0].href = tr.children[1].children[0].href.replace("database.name", database.name);
         tr.children[1].children[0].textContent = database.name;
         tr.children[2].children[0].textContent = database.size;
-        tr.children[2].children[0].dataset.id = database.key;
-        tr.children[3].textContent = database.location;
-        tr.children[4].textContent = database.date ? new Date(database.date).toLocaleString() : "";
+        tr.children[2].children[0].dataset.key = database.key;
+        // SVG and Path can also be clicked on so we need to give them the key as well
+        tr.children[3].children[0].dataset.key = database.key;
+        tr.children[3].children[0].children[0].dataset.key = database.key;
+        tr.children[3].children[0].children[0].children[0].dataset.key = database.key;
+        tr.children[4].textContent = database.location;
+        tr.children[5].textContent = database.date ? new Date(database.date).toLocaleString() : "";
         trs.push(tr);
       }
       // Remove all existing rows in case the user resets the options to re-populate them
@@ -668,7 +762,7 @@ const Options = (() => {
   /**
    * Gets an array containing database properties and stats. Used for the various database functions.
    *
-   * @returns {*} the databases in an array
+   * @returns {Object[]} the database objects in an array
    * @private
    */
   function getDatabases() {
@@ -713,9 +807,9 @@ const Options = (() => {
    * This function is called as the user is typing in a text input or textarea that is updated dynamically.
    * We don't want to call chrome.storage after each key press, as it's an expensive procedure, so we set a timeout delay.
    *
-   * @param input      the text input or textarea
-   * @param storageKey the storage key to set
-   * @param type       the type (number, value, or array)
+   * @param {HTMLInputElement} input - the input element (e.g. text input or textarea)
+   * @param {string} storageKey - the key of the storage items to set
+   * @param {string} type - the input's type of value (e.g. "value", "number", "array")
    * @private
    */
   function saveInput(input, storageKey, type) {
@@ -739,7 +833,7 @@ const Options = (() => {
   /**
    * Validates the custom selection regular expression fields and then performs the desired action.
    *
-   * @param action the action to perform (test or save)
+   * @param {string} action - the action to perform ("test" or "save")
    * @private
    */
   async function customSelection(action) {
@@ -823,6 +917,7 @@ const Options = (() => {
     a.download = (chrome.runtime.getManifest().name + " Backup " + (date ? date : "")).replaceAll(/[\s.:]/g, "_") + ".json";
     a.dispatchEvent(new MouseEvent("click"));
     setTimeout(function () { URL.revokeObjectURL(blob); }, 5000);
+    // MDC.openSnackbar(chrome.i18n.getMessage("backup_snackbar_success_label"));
   }
 
   /**
@@ -836,8 +931,8 @@ const Options = (() => {
     timeouts.uploadFile = setTimeout(function () {
       const input = document.createElement("input");
       input.type = "file";
-      // For historical reasons, always accept both .txt and .json
-      input.accept = ".txt,.json";
+      // For historical reasons, always accept .txt in addition to .json
+      input.accept = ".json,.txt";
       input.addEventListener("change", function(event) {
         console.log("uploadFile() - addEventListener() - change");
         const files = event.target.files;
@@ -861,17 +956,27 @@ const Options = (() => {
   function uploadText() {
     clearTimeout(timeouts.uploadText);
     timeouts.uploadText = setTimeout(function () {
-      restoreData(DOM["#restore-textarea"].value);
+      restoreData(DOM["#backup-textarea"].value);
     }, 100);
+  }
+
+  /**
+   * Copies data from a text input into the clipboard.
+   *
+   * @private
+   */
+  async function copyText() {
+    const text = DOM["#backup-textarea"].value;
+    await navigator.clipboard.writeText(text);
+    MDC.openSnackbar(chrome.i18n.getMessage("copied_label"), 4000);
   }
 
   /**
    * Restores the user's data from either a file or text input. Called when either of the two Upload Buttons is clicked.
    *
-   * @param value the value of the data to restore, either from a file or text input
-   * @returns {Promise<void>}
+   * @param {string} value - the stringified value of the data to restore, either from a file or text input
    * @see https://stackoverflow.com/questions/38833178/using-google-chrome-extensions-to-import-export-json-files
-   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file
+   * @see https://developer.mozilla.org/docs/Web/HTML/Element/input/file
    * @private
    */
   async function restoreData(value) {
@@ -887,12 +992,14 @@ const Options = (() => {
       if (!data || typeof data !== "object") {
         throw new Error(chrome.i18n.getMessage("restore_snackbar_error_json"));
       }
-      // We always require the currentVersion to do any type of restoration, we started adding currentVersion in the storage items when we added this feature
-      if (!data.currentVersion) {
+      // We always require "version" to do any type of restoration
+      // We used to use "currentVersion" in 0.7, so we need to check for it and change it to "version"
+      data.version = data.version || data.currentVersion;
+      if (!data.version) {
         throw new Error(chrome.i18n.getMessage("restore_snackbar_error_version"));
       }
       // Leverage storage.js to restore the data by passing it to the Background to give to it
-      const response = await Promisify.runtimeSendMessage({receiver: "background", greeting: "restoreData", data: data, previousVersion: data.currentVersion});
+      const response = await Promisify.runtimeSendMessage({receiver: "background", greeting: "restoreData", data: data, previousVersion: data.version});
       console.log("restoreData() - restore response=" + JSON.stringify(response));
       MDC.openSnackbar(chrome.i18n.getMessage("restore_snackbar_success_label"));
       // Now populate the Options with the restored data. Note: populateValuesFromStorage always get a new copy of the storage when called
@@ -900,8 +1007,143 @@ const Options = (() => {
     } catch (e) {
       console.log("restoreData() - Error:");
       console.log(e);
-      MDC.openSnackbar(e.message);
+      MDC.openSnackbar(chrome.i18n.getMessage("error_label") + ": " + e.message);
     }
+  }
+
+  /**
+   * Shows the user's stats. This includes the total number of pages appended.
+   * Additional charts are also displayed via Chart.js. Stats are completely optional and the user must opt-in to them.
+   *
+   * @param {boolean} delay - indicates if the charts should be generated after a small delay
+   * @param {boolean} showSnackbar - indicates if a snackbar should be displayed after opening this dialog (e.g. if enabling stats with no data)
+   * @private
+   */
+  async function viewStats(delay, showSnackbar) {
+    DOM["#stats-dialog-data"].dataset.statsEnabled = items.statsEnabled ? "true" : "false";
+    const pages = items.statsEnabled && Array.isArray(items.stats.appends) && items.stats.appends.every(v => typeof v === "number") ? items.stats.appends.reduce((a, b) => a + b, 0) : 0;
+    animateNumber(DOM["#stats-pages"], pages);
+    const elements = items.statsEnabled && Array.isArray(items.stats.elements) && items.stats.elements.every(v => typeof v === "number") ? items.stats.elements.reduce((a, b) => a + b, 0) : 0;
+    animateNumber(DOM["#stats-elements"], elements);
+    // Snackbar if the user is enabling stats with zero data (extra feedback)
+    if (showSnackbar && items.statsEnabled && pages < 1) {
+      MDC.openSnackbar(chrome.i18n.getMessage("stats_snackbar_enable_label"));
+    }
+    // We need to delete all the charts before we create them in case this is being called again or else we'll get an error
+    for (const chart of charts) {
+      if (chart instanceof Chart) {
+        chart.destroy();
+      }
+    }
+    // We need to introduce a tiny delay if we're opening the dialog to prevent a scrollbar from showing up
+    if (delay) {
+      await Promisify.sleep(200);
+    }
+    charts.push(new Chart(DOM["#actions-chart"], buildChart("Actions", ["Next Link", "Increment URL", "Click Button", "URL List"], items.statsEnabled ? items.stats.actions : [0,0,0,0])));
+    charts.push(new Chart(DOM["#appends-chart"], buildChart("Appends", ["Page", "Iframe", "Element", "Media", "None", "AJAX"], items.statsEnabled ? items.stats.appends : [0,0,0,0,0,0])));
+  }
+
+  /**
+   * Animates a number so that it rolls from start to end in the specified duration.
+   *
+   * Note: This function is derived from code written by User Rebo @ stackoverflow.com.
+   *
+   * @param {Element} element - the element's textContent to set the animated number to
+   * @param {number} end - the final number to animate to
+   * @param {number} start - the starting number the animation should start from
+   * @param {number} duration - the animation's duration in ms
+   * @param {string} suffix - any extra string characters to append to the number (e.g. "%")
+   * @see https://stackoverflow.com/a/60291224/988713
+   * @private
+   */
+  function animateNumber(element, end, start = 0, duration = 800, suffix = "") {
+    // Note that NumberFormat stops its denominations at trillions
+    // If a stat is bigger than "999T" (999 Trillion), "1Q+" (1 Quadrillion) is displayed to avoid horizontal scrollbars
+    // 999e12 is scientific notation for 999000000000000 (e12 means to the 10th power, or just add e number of 0 digits and move the decimal over if decimal)
+    const beyond = "1Q+";
+    const limit = 999e12;
+    const formatter = Intl.NumberFormat("en", { notation: "compact" });
+    let startTimestamp = null;
+    function step(timestamp) {
+      if (!startTimestamp) {
+        startTimestamp = timestamp;
+      }
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      // Note we need this subtraction to support negative numbers or rolling numbers backwards:
+      const value = Math.floor(progress * (end - start) + start);
+      // const value = Math.floor(progress * end);
+      element.textContent = (value < limit ? formatter.format(value) : beyond) + suffix;
+      if (progress < 1) {
+        window.requestAnimationFrame(step);
+      }
+    }
+    window.requestAnimationFrame(step);
+  }
+
+  /**
+   * Builds a chart for displaying stats using Chart.js.
+   *
+   * @param {string} label - the chart's label
+   * @param {string[]} labels - the chart's array of labels
+   * @param {number[]} data - the chart's array of data values
+   * @returns {*} the chart
+   */
+  function buildChart(label, labels, data) {
+    const style = window.getComputedStyle(document.body);
+    // We need to change the default colors in case the theme is Dark Mode
+    Chart.defaults.color = style.getPropertyValue("--mdc-theme-on-surface");
+    return {
+      type: "doughnut",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: label,
+          data: data,
+          // Use the default Chart.js colors
+          backgroundColor: [
+            "rgb(54, 162, 235)",
+            "rgb(255, 99, 132)",
+            "rgb(75, 192, 192)",
+            "rgb(255, 205, 86)",
+            "rgb(201, 203, 207)",
+            style.getPropertyValue("--mdc-theme-primary")
+          ],
+          borderColor: style.getPropertyValue("--mdc-theme-background"),
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        plugins: {
+          legend: {
+            display: false
+          },
+          // @see https://stackoverflow.com/a/70032264/988713
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                return context.dataset.label + ": " + context.raw + " (" + (context.raw / (context.chart._metasets[context.datasetIndex].total || 1) * 100).toFixed(1) + "%)";
+              }
+            }
+          }
+        }
+      },
+      // @see https://stackoverflow.com/a/46113791/988713
+      plugins: [{
+        beforeInit: function(chart, args, options) {
+          console.log("buildChart() - building chart:");
+          console.log(chart);
+          const data = chart.data.datasets[0].data;
+          if (data.some(d => d > 0)) {
+            return;
+          }
+          chart.data.datasets[0].backgroundColor = "#CCCCCC";
+          chart.data.datasets[0].borderWidth = 0;
+          chart.data.datasets[0].data = [-1];
+          chart.data.labels = [""];
+          chart.options.plugins.tooltip.enabled = false;
+        }
+      }]
+    };
   }
 
   /**
@@ -922,27 +1164,23 @@ const Options = (() => {
       const options = await Promisify.runtimeSendMessage({receiver: "background", greeting: "getSDV"});
       // Second, replace some of the specific default values with existing user options (if they exist!)
       if (items) {
-        options.installVersion = items.installVersion || options.installVersion;
-        options.installDate = items.installDate || options.installDate;
-        options.icon = items.icon || options.icon;
-        options.theme = items.theme || options.theme;
-        options.saves = items.saves || options.saves;
-        options.savesEnabled = typeof items.savesEnabled === "boolean" ? items.savesEnabled : options.savesEnabled;
-        options.databaseAP = items.databaseAP || options.databaseAP;
-        options.databaseAPDate = items.databaseAPDate || options.databaseAPDate;
-        options.databaseAPLocation = items.databaseAPLocation || options.databaseAPLocation;
-        options.databaseAPEnabled = typeof items.databaseAPEnabled === "boolean" ? items.databaseAPEnabled : options.databaseAPEnabled;
-        options.databaseIS = items.databaseIS || options.databaseIS;
-        options.databaseISDate = items.databaseISDate || options.databaseISDate;
-        options.databaseISLocation = items.databaseISLocation || options.databaseISLocation;
-        options.databaseISEnabled = typeof items.databaseISEnabled === "boolean" ? items.databaseISEnabled : options.databaseISEnabled;
-        options.databaseDate = items.databaseDate || options.databaseDate;
-        options.databaseLocation = items.databaseLocation || options.databaseLocation;
-        // Note: When validating databaseUpdate, we use typeof instead of existence because it can sometimes be 0, which is a truthy value (false)
-        options.databaseUpdate = typeof items.databaseUpdate === "number" ? items.databaseUpdate : options.databaseUpdate;
-        options.databaseMode = typeof items.databaseMode === "string" && ["blacklist", "whitelist"].includes(items.databaseMode) ? items.databaseMode : options.databaseMode;
-        options.databaseBlacklist = items.databaseBlacklist || options.databaseBlacklist;
-        options.databaseWhitelist = items.databaseWhitelist || options.databaseWhitelist;
+        // We store a map of string "types" and arrays of storage "keys" we want to preserve, so long as:
+        // If the item values match their type, we replace the default options value with the items value
+        // Note: We store dates as strings, so we should include them in the strings array
+        const map = new Map();
+        map.set("number", ["databaseUpdate"]);
+        map.set("string", ["installVersion", "icon", "theme", "databaseAPLocation", "databaseISLocation", "databaseLocation", "databaseMode", "installDate", "databaseAPDate", "databaseISDate", "databaseDate"]);
+        map.set("boolean", ["savesEnabled", "databaseAPEnabled", "databaseISEnabled", "statsEnabled"]);
+        map.set("array", ["saves", "databaseAP", "databaseIS", "databaseBlacklist", "databaseWhitelist"]);
+        map.set("object", ["stats"]);
+        //, "statsSites", "statsActions", "statsAppends", "statsElements"
+        for (const [type, keys] of map) {
+          for (const key of keys) {
+            if (type === "array" ? Array.isArray(items[key]) : typeof items[key] === type) {
+              options[key] = items[key];
+            }
+          }
+        }
       }
       // Third, clear the storage for a clean slate, set the new options as the storage, and populate the Options screen with the new options
       await Promisify.storageClear();
@@ -956,9 +1194,9 @@ const Options = (() => {
   /**
    * Listen for requests from chrome.runtime.sendMessage (e.g. Background).
    *
-   * @param request      the request containing properties to parse (e.g. greeting message)
-   * @param sender       the sender who sent this message, with an identifying tabId
-   * @param sendResponse the optional callback function (e.g. for a reply back to the sender)
+   * @param {Object} request - the request containing properties to parse (e.g. greeting message)
+   * @param {Object} sender - the sender who sent this message, with an identifying tab
+   * @param {function} sendResponse - the optional callback function (e.g. for a reply back to the sender)
    * @private
    */
   async function messageListener(request, sender, sendResponse) {
@@ -983,5 +1221,10 @@ const Options = (() => {
 
   // Initialize Options
   init();
+
+  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
+  return {
+    get
+  };
 
 })();

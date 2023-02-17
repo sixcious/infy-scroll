@@ -12,7 +12,7 @@
   "commands": { "down": { "description": "Down one page"}, "up": { "description": "Up one page" }, "power": { "description": "Turn on or off" }, "blacklist": { "description":  "Blacklist or whitelist a URL" }, "auto": { "description": "Pause or resume Auto" }},
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": ["*://*.jsdelivr.net/*", "*://*.statically.io/*", "*://*.github.io/*", "*://wedata.net/*"],
-  "content_scripts": [{ "matches": ["<all_urls>"], "run_at": "document_idle", "js": ["js/promisify.js", "js/util.js", "js/saves.js", "js/next.js", "js/increment.js", "js/button.js", "js/list.js", "js/element.js", "js/auto.js", "js/action.js", "js/scripts.js", "js/cryptography.js", "js/instance.js", "js/scroll.js", "lib/dompath/dompath.js", "lib/iframe-resizer/iframeResizer.js"]}],
+  "content_scripts": [ { "matches": ["<all_urls>"], "run_at": "document_idle", "js": ["js/promisify.js", "js/requestify.js", "js/util.js", "js/saves.js", "js/next.js", "js/increment.js", "js/click.js", "js/list.js", "js/elementify.js", "js/iframe.js", "js/auto.js", "js/action.js", "js/workflow.js", "js/scripts.js", "js/cryptography.js", "js/instance.js", "js/scroll.js", "lib/domnode/domnode.js", "lib/dompath/dompath.js", "lib/iframe-resizer/iframeResizer.js"] } ],
   "web_accessible_resources": [{ "matches": ["<all_urls>"], "resources": ["/html/picker-ui.html", "js/ajax.js", "/lib/iframe-resizer/iframeResizer.contentWindow.js"]}],
   "minimum_chrome_version": "102"
 }

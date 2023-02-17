@@ -16,7 +16,7 @@ const Background = (() => {
   /**
    * Variables
    *
-   * @param BROWSER_ACTION_BADGES The browser action badges are displayed against the extension icon. Each "badge" consists of a text string and backgroundColor.
+   * @param {Object} BROWSER_ACTION_BADGES - the browser action badges displayed against the extension icon (each "badge" consists of a text string and backgroundColor)
    */
   const BROWSER_ACTION_BADGES = {
     "incrementm": { "text": "+",    "backgroundColor": "#000000" },
@@ -25,7 +25,7 @@ const Background = (() => {
     "decrement":  { "text": "-",    "backgroundColor": "#000000" },
     "next":       { "text": ">",    "backgroundColor": "#000000" },
     "prev":       { "text": "<",    "backgroundColor": "#000000" },
-    "button":     { "text": "BTN",  "backgroundColor": "#000000" },
+    "click":      { "text": "CLK",  "backgroundColor": "#000000" },
     "list":       { "text": "LIST", "backgroundColor": "#000000" },
     "return":     { "text": "RET",  "backgroundColor": "#000000" },
     "skip":       { "text": "SKIP", "backgroundColor": "#000000" },
@@ -42,11 +42,11 @@ const Background = (() => {
    * Sets the browser action badge for this tabId. Can either be temporary or for an indefinite time.
    * Note that when the tab is updated, the browser removes the badge.
    *
-   * @param tabId           the tab ID to set this badge for
-   * @param badge           the badge key to set from BROWSER_ACTION_BADGES
-   * @param temporary       boolean indicating whether the badge should be displayed temporarily (true) or not (false)
-   * @param text            (optional) the text to use instead of the the badge text
-   * @param backgroundColor (optional) the backgroundColor to use instead of the badge backgroundColor
+   * @param {number} tabId - the tab ID to set this badge for
+   * @param {string} badge - the badge key to set from BROWSER_ACTION_BADGES
+   * @param {boolean} temporary - boolean indicating whether the badge should be displayed temporarily (true) or not (false)
+   * @param {string} text - (optional) the text to use instead of the the badge text
+   * @param {string} backgroundColor - (optional) the backgroundColor to use instead of the badge backgroundColor
    * @private
    */
   function setBadge(tabId, badge, temporary, text, backgroundColor) {
@@ -83,7 +83,7 @@ const Background = (() => {
   /**
    * Sets the browser action icon (the toolbar icon) to the specified icon.
    *
-   * @param icon the icon to set
+   * @param {string} icon - the icon to set
    * @private
    */
   function setIcon(icon) {
@@ -103,7 +103,7 @@ const Background = (() => {
   /**
    * Listen for installation changes and do storage/extension initialization work.
    *
-   * @param details the installation details
+   * @param {Object} details - the details object that contains properties relevant to the installation/update
    * @private
    */
   async function installedListener(details) {
@@ -130,8 +130,9 @@ const Background = (() => {
    * For example, when Chrome is started, when the extension is installed or updated, or when the
    * extension is re-enabled after being disabled.
    *
-   * @param caller who called this function (useful because startupListener can be called from three different places!)
+   * Note: caller is useful because startupListener can be called from multiple different places!
    *
+   * @param {string} caller - the caller who called this function (e.g. "popup")
    * @private
    */
   async function startupListener(caller) {
@@ -154,11 +155,11 @@ const Background = (() => {
   }
 
   /**
-   * Listen for requests from chrome.runtime.sendMessage (e.g. Content Scripts). Note: sender contains tab
+   * Listen for requests from chrome.runtime.sendMessage (e.g. Content Scripts).
    *
-   * @param request      the request containing properties to parse (e.g. greeting message)
-   * @param sender       the sender who sent this message, with an identifying tab
-   * @param sendResponse the optional callback function (e.g. for a reply back to the sender)
+   * @param {Object} request - the request containing properties to parse (e.g. greeting message)
+   * @param {Object} sender - the sender who sent this message, with an identifying tab
+   * @param {function} sendResponse - the optional callback function (e.g. for a reply back to the sender)
    * @private
    */
   async function messageListener(request, sender, sendResponse) {
@@ -169,7 +170,8 @@ const Background = (() => {
     // if (sender && sender.url && sender.tab && !sender.tab.url) {
     // sender.tab.url = sender.url;
     // }
-    const tabId = request && request.tabId ? request.tabId : sender && sender.tab && sender.tab.id ? sender.tab.id : 0;
+    // const tabId = request && request.tabId ? request.tabId : sender && sender.tab && sender.tab.id ? sender.tab.id : 0;
+    const tabId = request?.tabId || sender?.tab?.id || 0;
     // Default response
     let response = {};
     switch (request.greeting) {
@@ -199,17 +201,21 @@ const Background = (() => {
       //   break;
       case "turnOff":
         const tabs = await Promisify.tabsQuery({});
+        // const promises = [];
         if (tabs) {
           for (const tab of tabs) {
-            if (tab && tab.id) {
+            // We already manually call stop on the tab that initiated this
+            if (tab && tab.id && tab.id !== tabId) {
               console.log("messageListener() - sending a stop message to tab.id=" + tab.id);
-              chrome.tabs.sendMessage(tab.id, {receiver: "contentscript", greeting: "stop", caller: "background"});
+              chrome.tabs.sendMessage(tab.id, {receiver: "contentscript", greeting: "stop", caller: request.caller});
+              // promises.push(Promisify.tabsSendMessage(tab.id, {receiver: "contentscript", greeting: "stop", caller: "background"}));
             }
           }
         }
+        // await Promise.all(promises);
         break;
       case "initPicker":
-        chrome.tabs.sendMessage(tabId, {receiver: "contentscript", greeting: "initPicker", algorithm: request.algorithm, quote: request.quote, optimized: request.optimized, js: request.js, property: request.property, minimize: request.minimize, corner: request.corner });
+        chrome.tabs.sendMessage(tabId, {receiver: "contentscript", greeting: "initPicker", algorithm: request.algorithm, quote: request.quote, optimized: request.optimized, js: request.js, property: request.property, size: request.size, corner: request.corner });
         break;
       case "changePicker":
         chrome.tabs.sendMessage(tabId, {receiver: "contentscript", greeting: "changePicker", change: request.change, value: request.value});
@@ -223,8 +229,8 @@ const Background = (() => {
       case "closePicker":
         chrome.tabs.sendMessage(tabId, {receiver: "contentscript", greeting: "closePicker"});
         break;
-      case "minimizePicker":
-        chrome.tabs.sendMessage(tabId, {receiver: "contentscript", greeting: "minimizePicker", toggle: request.toggle});
+      case "resizePicker":
+        chrome.tabs.sendMessage(tabId, {receiver: "contentscript", greeting: "resizePicker", size: request.size});
         break;
       case "movePicker":
         chrome.tabs.sendMessage(tabId, {receiver: "contentscript", greeting: "movePicker", corner: request.corner});
@@ -241,7 +247,7 @@ const Background = (() => {
   /**
    * Listen for commands (Browser Extension shortcuts) and perform the command's action.
    *
-   * @param command the shortcut command that was performed
+   * @param {string} command - the shortcut command that was performed
    * @private
    */
   async function commandListener(command) {

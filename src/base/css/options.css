@@ -27,11 +27,14 @@ header#options-header > #options-header-buttons > *:not(:last-child) {
   margin-right: 1rem;
 }
 
-/* display: none to avoid flicker effect until we know the theme set */
-#theme-icon {
+/* Make these icons bigger a little bigger than normal to make them stand out like regular buttons */
+header#options-header .options-header-svg {
   width: 26px;
   height: 26px;
-  cursor: pointer;
+}
+
+/* display: none to avoid flicker effect until we know the theme is set */
+#theme-icon {
   display: none;
 }
 
@@ -73,8 +76,18 @@ input[type="image"]:focus {
 /* Dialogs */
 
 /* Including the mascot image requires more max-width */
-#install-dialog .mdc-dialog__surface, #error-dialog .mdc-dialog__surface, #save-dialog .mdc-dialog__surface, #database-dialog .mdc-dialog__surface {
+#install-dialog .mdc-dialog__surface,
+#error-dialog .mdc-dialog__surface,
+#save-dialog .mdc-dialog__surface,
+#database-dialog .mdc-dialog__surface,
+#stats-dialog .mdc-dialog__surface {
   max-width: 600px;
+}
+
+/* We use vw instead of % to target the window's size, 1vw = 1% of the window, whereas percentage targets the element's max-width only */
+/* @see https://stackoverflow.com/a/35237091/988713 */
+#database-dialog[data-dialog="items"] .mdc-dialog__surface {
+  max-width: 90vw;
 }
 
 #install-dialog-list, #error-dialog-list {
@@ -101,6 +114,54 @@ input[type="image"]:focus {
 /* Need the margin-top for extra padding space for the mascot */
 .mdc-dialog .mascot {
   margin-top: 1rem;
+}
+
+/* Stats */
+
+/* If the stats are enabled, the text should be more colorful (e.g. blacker or whiter depending on theme); if disabled, text should be normal color */
+#stats-dialog [data-stats-enabled="true"] {
+  color: var(--color);
+}
+
+/* line-height because mdc-dialog__content forces a fixed line-height in its content */
+.stats-number, .stats-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: initial;
+}
+
+.stats-number {
+  font-size: 4rem;
+}
+
+.stats-row {
+  justify-content: space-evenly;
+  text-align: center;
+}
+
+/* Chart */
+
+.chart-row {
+  margin-top: 1rem;
+  justify-content: center;
+}
+
+/* Controls how big the charts are */
+.chart-container {
+  display: inline-block;
+  width: 225px;
+  overflow-x: hidden;
+}
+
+.chart-label {
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+/* Make it right aligned for symmetry */
+#appends-label {
+  text-align: right;
 }
 
 /* Tab Bar */
@@ -209,10 +270,9 @@ input[type="image"]:focus {
   display: inline-block;
 }
 
-#version-link {
+#version-number {
   display: block;
   margin-bottom: 4px;
-  color: inherit;
 }
 
 #website {
@@ -258,7 +318,6 @@ input[type="image"]:focus {
   list-style: none;
   margin-top: 8px;
   margin-bottom: 8px;
-  font-size: 1em;
 }
 
 #credits-you {
@@ -314,7 +373,7 @@ input[type="image"]:focus {
 }
 
 /* TODO: Refactor ON and Saves switches to use the same styling */
-#saves-switch-label {
+#saves-switch-label, #stats-switch-label {
   font-size: 0.9rem;
   font-weight: 500;
   vertical-align: bottom;
@@ -361,7 +420,7 @@ table tbody .url-cell .saves-dialog-opener, table tbody .database-dialog-opener 
   white-space: pre-wrap;
   word-break: break-all;
   margin-top: 0.5rem;
-  padding: 2px;
+  padding: 4px;
 }
 
 .dialog-helper-action {
@@ -376,7 +435,12 @@ table tbody .url-cell .saves-dialog-opener, table tbody .database-dialog-opener 
 
 /* Database */
 
-#database-buttons > button:not(last-child) {
+/* Default width truncates the date if we don't do this */
+[data-id='table-heading-database-updated'] {
+  width: 20%;
+}
+
+#database-buttons > button:not(:last-child) {
   margin-right: 2rem;
 }
 
@@ -398,12 +462,16 @@ table tbody .url-cell .saves-dialog-opener, table tbody .database-dialog-opener 
 
 /* Scroll */
 
-#scroll-append-threshold-pages-text-field, #scroll-append-threshold-pixels-text-field, #scroll-append-delay-text-field {
+#scroll-append-threshold-pages-text-field, #scroll-append-threshold-pixels-text-field, #scroll-append-delay-text-field, #scroll-maximum-pages-text-field {
   width: 78px;
 }
 
 #scroll-divider-select .mdc-select__anchor {
   width: 310px;
+}
+
+#scroll-maximum-pages {
+  margin-left: 2rem;
 }
 
 /* About */
@@ -416,7 +484,7 @@ table tbody .url-cell .saves-dialog-opener, table tbody .database-dialog-opener 
 /* Media */
 
 /* Make the version theme and tagline disappear when the screen is small */
-@media (max-width: 560px) {
+@media (max-width: 580px) {
   .version-theme-medium {
     display: none;
   }

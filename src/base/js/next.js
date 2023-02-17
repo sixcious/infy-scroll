@@ -16,7 +16,7 @@ const Next = (() => {
   /**
    * Variables
    *
-   * @param {*} urls the object of all url candidates for the next or previous link
+   * @param {*} urls - the object of all url candidates for the next or previous link
    */
   let urls;
 
@@ -31,58 +31,96 @@ const Next = (() => {
   }
 
   /**
-   * Finds the next or prev URL using an instance.
+   * Finds the next or prev link using an instance and an array of potential documents and pages (convenience function).
    *
-   * @param instance    the instance containing the link properties
-   * @param action      the type of link ("next" or "prev")
-   * @param documents   the array of documents to check for a link
-   * @returns {{url}|*} the next or prev url (if found) along with the subtype and keyword that was used to find it
+   * @param {Object} instance - the instance containing the link properties
+   * @param {Object} items - the storage items containing the global link properties
+   * @param {string} action - the type of link ("next" or "prev")
+   * @param {Document[]} documents - the array of documents to check for a link
+   * @param {Object[]} pages - (optional) the current pages that have been appended
+   * @returns {*} the next or prev url (if found) along with extra details used to find it or an error message
    * @public
    */
-  function findLinkWithInstance(instance, action, documents = [document]) {
+  function findLinkWithInstance(instance, items, action, documents , pages ) {
+    console.log("findLinkWithInstance()");
+    return findLinkWithProperties(
+      instance[action + "LinkPath"],
+      instance[action + "LinkType"],
+      instance[action + "LinkProperty"],
+      instance[action + "LinkKeywordsEnabled"],
+      items[action + "LinkKeywords"],
+      instance[action + "LinkKeyword"],
+      // This is always false because if we have an instance, we know we have the keyword; this should only be true if the Popup is checking for the next/prev link
+      false,
+      documents,
+      pages,
+      instance.url,
+      instance.debugEnabled);
+  }
+
+  /**
+   * Finds the next or prev link using properties and an array of potential documents and pages (convenience function).
+   *
+   * @param {string} path - the selector, xpath, or js path
+   * @param {string} type - the path type to use ("selector", "xpath") or context ("document", "shadow", "iframe")
+   * @param {string[]} property - the array of properties to use e.g. ["href"] or ["parentNode", "href"] for nested properties like parentNode.href
+   * @param {boolean} keywordsEnabled - whether to use the next or prev keywords as a fallback to the selector/xpath expression
+   * @param {string[]} keywords - the next or prev keywords list to use, ordered and sorted in priority
+   * @param {Object} keywordObject - the static keyword object to use for this instance's pages
+   * @param {boolean} checkOtherKeywords - if this is the first page or not in order to determine whether we should fallback to other keywords (true or false)
+   * @param {Document[]} documents - the array of documents to check for a link
+   * @param {Object[]} pages - (optional) the current pages that have been appended
+   * @param {string} currentURL - the instance.url to check to see if the next url is a duplicate of it
+   * @param {boolean} highlight - whether to highlight the next/prev element
+   * @returns {*} the next or prev url (if found) along with extra details used to find it or an error message
+   * @public
+   */
+  function findLinkWithProperties(path, type, property , keywordsEnabled, keywords, keywordObject, checkOtherKeywords, documents = [document], pages = [], currentURL, highlight = false) {
+    console.log("findLinkWithProperties()");
     let result;
     for (const doc of documents) {
-      if (!doc) {
-        continue;
-      }
-      result = Next.findLink(
-        instance[action + "LinkType"],
-        instance[action + "LinkPath"],
-        instance[action + "LinkProperty"],
-        instance[action + "LinkKeywordsEnabled"],
-        instance[action + "LinkKeywords"],
-        instance[action + "LinkKeyword"],
-        false,
-        instance.debugEnabled,
-        doc);
-      if (result && result.url) {
-        break;
+      // Firefox Dead Object Error - Need to wrap this in a try-catch in case one of the documents (namely currentDocument) is dead
+      try {
+        if (!doc) {
+          continue;
+        }
+        result = Next.findLink(path, type, property, keywordsEnabled, keywords, keywordObject, checkOtherKeywords, doc, highlight);
+        // We purposely only accept the link if it is different than one we've already found
+        // TODO: We may be still returning duplicate links sometimes with # params as the only difference, make a decision on this
+        result.duplicate = (result.url === currentURL) || !!(pages && pages.find(p => p.url === result.url));
+        if (result.url && !result.duplicate) {
+          break;
+        }
+      } catch (e) {
+        console.log("findLinkWithProperties() - error most likely Firefox Dead Object Error, Error:")
+        console.log(e);
       }
     }
+    console.log("returning result, result=");
+    console.log(result);
     return result;
   }
 
   /**
-   * Finds the next or prev URL based on the CSS Selector or XPath expression. Falls back to parsing the page using
-   * common next or prev keywords.
+   * Finds the next or prev link using a path or keywords.
    *
    * TODO: Parse iframes (and older frames and framesets?) nested inside the document
    * TODO: Ideally, we should stop checking keywords as soon as we find one that is self equals attributes
    *
-   * @param type               the path type to use ("selector" or "xpath")
-   * @param path               the css selector or xpath expression to use
-   * @param property           the array of properties to use e.g. ["href"] or ["parentNode", "href"] for nested properties like parentNode.href
-   * @param keywordsEnabled    whether to use the next or prev keywords as a fallback to the selector/xpath expression
-   * @param keywords           the next or prev keywords list to use
-   * @param keywordObject      the static keyword object to use for this instance's pages
-   * @param checkOtherKeywords if this is the first page or not in order to determine whether we should fallback to other keywords (true or false)
-   * @param highlight          whether to highlight the next/prev DOM element
-   * @param doc (optional)     Infy Scroll only: the current document on the page to query
-   * @returns {*} the next or prev url (if found) along with the subtype and keyword that was used to find it
+   * @param {string} path - the selector, xpath, or js path
+   * @param {string} type - the path type to use ("selector", "xpath") or context ("document", "shadow", "iframe")
+   * @param {string[]} property - the array of properties to use e.g. ["href"] or ["parentNode", "href"] for nested properties like parentNode.href
+   * @param {boolean} keywordsEnabled - whether to use the next or prev keywords as a fallback to the selector/xpath expression
+   * @param {string[]} keywords - the next or prev keywords list to use, ordered and sorted in priority
+   * @param {Object} keywordObject - the static keyword object to use for this instance's pages
+   * @param {boolean} checkOtherKeywords - if this is the first page or not in order to determine whether we should fallback to other keywords (true or false)
+   * @param {Document} doc - (optional) Infy Scroll only: the current document on the page to query
+   * @param {boolean} highlight - whether to highlight the next/prev element
+   * @returns {*} the next or prev url (if found) along with extra details used to find it or an error message
    * @public
    */
-  function findLink(type, path, property = ["href"], keywordsEnabled, keywords, keywordObject, checkOtherKeywords, highlight = false, doc = document) {
-    console.log("findLink() - type=" + type + ", path=" + path + ", property=" + property + ", keywordsEnabled=" + keywordsEnabled + ", keywords=" + keywords + ", keywordObject=" + keywordObject + ", document=" + (doc ? doc.location : "") + ", highlight=" + highlight);
+  function findLink(path, type, property = ["href"], keywordsEnabled, keywords, keywordObject, checkOtherKeywords, doc = document, highlight = false) {
+    console.log("findLink() - path=" + path + ", type=" + type + ", property=" + property + ", keywordsEnabled=" + keywordsEnabled + ", keywords=" + keywords + ", keywordObject=" + keywordObject + ", checkOtherKeywords=" + checkOtherKeywords + ", doc=" + doc + ", highlight=" + highlight);
     // The urls object stores the Path URL (selector or xpath), and Keywords URLs (self/child/parent attribute and innerText)
     urls = {
       "path": undefined,
@@ -119,7 +157,7 @@ const Next = (() => {
     ];
     // Stores the exception or error message in order to return it back to the user for feedback (e.g. invalid selector)
     const details = { error: undefined };
-    checkPath(type, path, property, doc, details);
+    checkPath(path, type, property, doc, details);
     // If a URL was found using the selector or xpath path, return it (minus the element)
     if (urls.path) {
       console.log("findLink() - found a URL using the " + urls.path.method + " path " + urls.path.path + ": " + urls.path.url);
@@ -133,7 +171,6 @@ const Next = (() => {
       console.log("findLink() - found the following next/prev URLs via keywords (no path match):");
       console.log(urls);
       if (keywordObject) {
-        // const value = urls.keywords[keywordObject.relationship][keywordObject.type][keywordObject.subtype].get(keywordObject.keyword);
         let value;
         try {
           // keywordObject Array: 0=relationship, 1=type, 2=subtype, 3=keyword
@@ -173,22 +210,21 @@ const Next = (() => {
   /**
    * Checks if the selector or xpath matches against an element's property (i.e. a.href).
    *
-   * @param type     the path type to use ("selector" or "xpath")
-   * @param path     the css selector or xpath expression to use
-   * @param property the array of properties to use e.g. ["href"] or ["parentNode", "href"] for nested properties like parentNode.href
-   * @param doc      the current document on the page to query
-   * @param details  the details object that stores details about this action, such as error messages that were caught
+   *
+   * @param {string} path - the selector, xpath, or js path
+   * @param {string} type - the path type to use ("selector", "xpath") or context ("document", "shadow", "iframe")
+   * @param {string[]} property - the array of properties to use e.g. ["href"] or ["parentNode", "href"] for nested properties like parentNode.href
+   * @param {Document} doc - (optional) Infy Scroll only: the current document on the page to query
+   * @param {Object} details - the details object that stores details about this action, such as error messages that were caught
    * @private
    */
-  function checkPath(type, path, property, doc, details) {
+  function checkPath(path, type, property, doc, details) {
     try {
-      let element;
-      let defaultProperty;
-      if (type === "xpath") {
-        element = doc.evaluate(path, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-      } else {
-        element = doc.querySelector(path);
+      const result = DOMNode.getElement(path, type, "first", doc);
+      if (result.error) {
+        throw new Error(result.error);
       }
+      const element = result.element;
       // No element found, don't bother continuing. We don't want to put any unnecessary errors into details at this point as the path was valid if it got to this point
       if (!element) {
         return;
@@ -198,6 +234,7 @@ const Next = (() => {
         url = url[property[i]];
       }
       // If no URL was found using the specified property, try using hard-coded properties that are known to contain URLs
+      let defaultProperty;
       if (!url) {
         defaultProperty = element.href ? "href" : element.action ? "action" : element.formAction ? "formAction" : undefined;
         // If we found a URL using one of the default properties, use it
@@ -221,8 +258,7 @@ const Next = (() => {
       // Fix the Link before testing if it's valid
       url = Util.fixURL(url);
       if (Util.isValidURL(url, "next-prev", details)) {
-        // TODO: i18n This whole object, especially defaultProperty
-        urls.path = { "url": url, "method": type, "path": path + "." + property.join(".") + (defaultProperty ? " (Using the Default Property)" : ""), "element": element };
+        urls.path = { "url": url, "method": type, "path": path + "." + property.join(".") + (defaultProperty ? chrome.i18n.getMessage("next_prev_default_property") : ""), "element": element };
       }
     } catch (e) {
       console.log("checkPath() - Exception caught when querying for selector or evaluating xpath. Error:");
@@ -235,9 +271,9 @@ const Next = (() => {
    * Checks the keywords against all elements with a URL (i.e. href).
    * Checks that the URL is valid and then checks the element's parent and the element itself if the keyword matches.
    *
-   * @param keywords the next or prev keywords list to use
-   * @param doc      the current document on the page to query
-   * @param details  the details object that stores details about this action, such as error messages that were caught
+   * @param {string[]} keywords - the next or prev keywords list to use, ordered and sorted in priority
+   * @param {Document} doc - (optional) Infy Scroll only: the current document on the page to query
+   * @param {Object} details - the details object that stores details about this action, such as error messages that were caught
    * @private
    */
   function checkKeywords(keywords, doc, details) {
@@ -283,14 +319,14 @@ const Next = (() => {
   }
 
   /**
-   * Checks if this element matches any of the keywords. This checks the element in multiple ways: attribute and
-   * innerText.
+   * Checks if an element and any of its child elements matches any of the keywords. This checks the elements in
+   * multiple ways: attribute and innerText.
    *
-   * @param keywords    the next or prev keywords list to use
-   * @param url         the URL of the link
-   * @param elementName the element's name
-   * @param children    the element
-   * @param level       the children level, e.g. first-level children, second-level children, ... up to a hard-coded max
+   * @param {string[]} keywords - the next or prev keywords list to use, ordered and sorted in priority
+   * @param {string} url - the URL of the link to check
+   * @param {string} elementName - the element's node name
+   * @param {HTMLCollection} children - the child elements to check (does not include text nodes)
+   * @param {number} level - the current children depth level, e.g. first-level children, second-level children, ... up to a hard-coded max
    * @private
    */
   function checkChildElements(keywords, url, elementName, children, level) {
@@ -308,11 +344,11 @@ const Next = (() => {
    * Checks if this element matches any of the keywords. This checks the element in multiple ways, including its
    * attributes and innerText.
    *
-   * @param keywords     the next or prev keywords list to use
-   * @param url          the URL of the link
-   * @param elementName  the element's name
-   * @param element      the element
-   * @param relationship the element's relationship (e.g. self is "" or parent is "parent")
+   * @param {string[]} keywords - the next or prev keywords list to use, ordered and sorted in priority
+   * @param {string} url - the URL of the link to check
+   * @param {string} elementName - the element's node name
+   * @param {HTMLElement} element - the element to check
+   * @param {string} relationship - the algorithm element relationship to use ("self", "child", or "parent")
    * @private
    */
   function checkElement(keywords, url, elementName, element, relationship) {
@@ -334,14 +370,14 @@ const Next = (() => {
    * Parses an element's text for keywords that might indicate a next or prev link.
    * Adds the link to the urls map if a match is found.
    *
-   * @param keywords     the next or prev keywords list to use
-   * @param type         the type of element text value to parse: attribute or innerText
-   * @param url          the URL of the link
-   * @param text         the element's attribute or innerText value to parse keywords from
-   * @param elementName  the element's name
-   * @param element      the element
-   * @param attribute    (optional) the element attribute's node name if it's needed
-   * @param relationship the element's relationship (e.g. self is "" or parent is "parent")
+   * @param {string[]} keywords - the next or prev keywords list to use, ordered and sorted in priority
+   * @param {string} type - the algorithm main type to use ("attribute" or "innerText")
+   * @param {string} url - the URL of the link to check
+   * @param {string} text - the element's attribute or innerText value to parse keywords from
+   * @param {string} elementName - the element's node name
+   * @param {HTMLElement} element - the element to check
+   * @param {string} attribute - (optional) the element attribute's node name if it's needed
+   * @param {string} relationship - the algorithm element relationship to use ("self", "child", or "parent")
    * @private
    */
   function parseText(keywords, type, url, text, elementName, element, attribute, relationship) {
@@ -357,17 +393,21 @@ const Next = (() => {
       } else if (text.includes(keyword)) {
         urls.keywords[relationship][type]["includes"].set(keyword, value);
       }
+      // Regex:
+      // if (keyword.startsWith("/") && keyword.endsWith("/") && new RegExp(keyword.slice(1,-1)).test(text)) {
+      //   urls.keywords[relationship][type]["equals"].set(keyword, value);
+      // }
     }
   }
 
   /**
    * Traverses the urls object to see if a URL was found. e.g. urls[attributes][equals][next]
    *
-   * @param relationship the algorithm element relationship to use: self, child, or parent
-   * @param type         the algorithm main type to use: attribute or innerText
-   * @param subtypes     the algorithm subtypes to use: equals, startsWith, endsWith, includes
-   * @param keywords     the ordered list of keywords sorted in priority
-   * @param highlight    whether to highlight the next/prev DOM element
+   * @param {string} relationship - the algorithm element relationship to use ("self", "child", or "parent")
+   * @param {string} type - the algorithm main type to use ("attribute" or "innerText")
+   * @param {string[]} subtypes - the algorithm subtypes to use ("equals", "startsWith", "endsWith", "includes")
+   * @param {string[]} keywords - the next or prev keywords list to use, ordered and sorted in priority
+   * @param {boolean} highlight - whether to highlight the next/prev element
    * @returns {*} the next or prev url (if found) along with the subtype and keyword that was used to find it
    * @private
    */
@@ -378,11 +418,7 @@ const Next = (() => {
           const value = urls.keywords[relationship][type][subtype].get(keyword);
           console.log("traverseResults() - a next/prev link was found:" + relationship + " - " +  type + " - " + subtype + " - " + keyword + " - " + value.elementName + " - " + value.attribute + " - " + value.url);
           highlightElement(value.element, highlight);
-          // keywordObject Array: 0=relationship, 1=type, 2=subtype, 3=keyword
           const keywordObject = relationship + " " + type + " " + subtype + " " + keyword;
-          // // keywordObject Array: 0=keyword, 1=subtype, 2=type, 3=relationship
-          // const keywordObject = keyword + " " + subtype + " " + type + " " + relationship;
-          // const keywordObject = {relationship: relationship, type: type, subtype: subtype, keyword: keyword};
           return { url: value.url, method: "keyword", keywordObject: keywordObject, element: value.elementName, attribute: value.attribute };
         }
       }
@@ -390,10 +426,11 @@ const Next = (() => {
   }
 
   /**
-   * Highlights the element on the document page.
+   * Highlights the element on the page.
+   * Important: If the element isn't in the top-level document, it can't be highlighted.
    *
-   * @param element   the DOM element to highlight
-   * @param highlight true if highlighting is enabled, false otherwise
+   * @param {Element} element - the element
+   * @param {boolean} highlight - true if this element should be highlighted, false otherwise
    * @private
    */
   function highlightElement(element, highlight) {
@@ -401,7 +438,7 @@ const Next = (() => {
       if (highlight && typeof HoverBox !== "undefined") {
         new HoverBox().highlightElement(element, true);
       }
-    } catch(e) {
+    } catch (e) {
       console.log("highlightElement() - Error:");
       console.log(e);
     }
@@ -411,6 +448,7 @@ const Next = (() => {
   return {
     get,
     findLink,
+    findLinkWithProperties,
     findLinkWithInstance
   };
 

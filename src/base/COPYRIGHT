@@ -4,6 +4,61 @@ Character Design and Artwork Copyright (c) 2020 Joyfool
 License: See LICENSE File
 https://github.com/sixcious/infy-scroll/blob/main/LICENSE
 
+AutoPagerize Database (Wedata)
+The AutoPagerize Database is created by swdyh and its contributors and hosted on wedata.net
+License: Public Domain
+http://wedata.net/help/about
+
+Balloon.css
+Copyright (c) 2016 Claudio Holanda
+License: MIT
+https://github.com/kazzkiq/balloon.css/blob/master/LICENSE
+
+Chart.js
+Copyright (c) 2014-2022 Chart.js Contributors
+License: MIT
+https://github.com/chartjs/Chart.js/blob/master/LICENSE.md
+
+Canvas Confetti
+Copyright (c) 2020, Kiril Vatev
+License: ISC
+https://github.com/catdad/canvas-confetti/blob/master/LICENSE
+
+DOM Node
+Copyright (c) 2020 Roy Six
+License: See LICENSE File
+https://github.com/sixcious/infy-scroll/blob/main/LICENSE
+
+DOM Paths
+Copyright (c) 2015 The Chromium Authors
+License: BSD 3-Clause
+https://github.com/chromium/chromium/blob/main/LICENSE
+
+Feather
+Copyright (c) 2013-2017 Cole Bemis
+License: MIT
+https://github.com/feathericons/feather/blob/master/LICENSE
+
+Font Awesome
+Copyright (c) Fonticons, Inc.
+License: MIT, CC BY 4.0 License, SIL OFL 1.1 License
+https://fontawesome.com/license/free
+
+Hover.css
+Copyright (c) 2017 Ian Lunn
+License: MIT, Extended Commercial License
+https://github.com/IanLunn/Hover/blob/master/license.txt
+
+Hover Box
+Copyright (c) 2019 Kevin Li
+License: MIT
+https://github.com/AlienKevin/blob/master/LICENSE.txt
+
+Iframe Resizer
+Copyright (c) 2013-2021 David J. Bradshaw
+License: MIT
+https://github.com/davidjbradshaw/iframe-resizer/blob/master/LICENSE
+
 Material Components for the web
 Copyright (c) 2014-2020 Google, Inc.
 License: MIT
@@ -18,43 +73,3 @@ Roboto Mono Font
 Copyright (c) 2011 Google, Inc.
 License: Apache
 https://fonts.google.com/specimen/Roboto+Mono/about
-
-Font Awesome
-Copyright (c) Fonticons, Inc.
-License: MIT, CC BY 4.0 License, SIL OFL 1.1 License
-https://fontawesome.com/license/free
-
-Feather
-Copyright (c) 2013-2017 Cole Bemis
-License: MIT
-https://github.com/feathericons/feather/blob/master/LICENSE
-
-Balloon.css
-Copyright (c) 2016 Claudio Holanda
-License: MIT
-https://github.com/kazzkiq/balloon.css/blob/master/LICENSE
-
-Hover.css
-Copyright (c) 2017 Ian Lunn
-License: MIT, Extended Commercial License
-https://github.com/IanLunn/Hover/blob/master/license.txt
-
-Iframe Resizer
-Copyright (c) 2013-2021 David J. Bradshaw
-License: MIT
-https://github.com/davidjbradshaw/iframe-resizer/blob/master/LICENSE
-
-Hover Box
-Copyright (c) 2019 Kevin Li
-License: MIT
-https://github.com/AlienKevin/blob/master/LICENSE.txt
-
-DOM Paths
-Copyright (c) 2015 The Chromium Authors
-License: BSD 3-Clause
-https://github.com/chromium/chromium/blob/main/LICENSE
-
-AutoPagerize Database (Wedata)
-The AutoPagerize Database is created by swdyh and its contributors and hosted on wedata.net
-License: Public Domain
-http://wedata.net/help/about

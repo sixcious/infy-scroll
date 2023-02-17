@@ -6,16 +6,18 @@
 
 /**
  * Storage handles all storage-specific tasks, such as updating data between versions and backing up and restoring data.
- * It features additional helper methods, such as getting the browser name and the preferred color scheme by the user.
+ * It features additional helper methods, such as getting the browser name.
+ *
+ * TODO: Rename this because "Storage" is a reserved interface name. ("Store"?)
  */
 const Storage = (() => {
 
   /**
    * Variables
    *
-   * @param ID_CHROME  the chrome extension id (used to help determine what browser this is)
-   * @param ID_EDGE    the edge extension id (used to help determine what browser this is)
-   * @param ID_FIREFOX the firefox extension id (used to help determine what browser this is)
+   * @param {string} ID_CHROME - the chrome extension id (used to help determine what browser this is)
+   * @param {string} ID_EDGE - the edge extension id (used to help determine what browser this is)
+   * @param {string} ID_FIREFOX - the firefox extension id (used to help determine what browser this is)
    */
   const ID_CHROME = "gdnpnkfophbmbpcjdlbiajpkgdndlino";
   const ID_EDGE = "fmdemgjiipojpgemeljnbaabjeinicba";
@@ -27,7 +29,7 @@ const Storage = (() => {
    * Note: Storage.set can only set top-level JSON objects, avoid using nested JSON objects.
    * Instead, prefix keys that should be grouped together with a label e.g. "auto"
    *
-   * @returns {*} the storage default values object
+   * @returns {Object} the storage default values object
    * @public
    */
   function getStorageDefaultValues() {
@@ -37,7 +39,7 @@ const Storage = (() => {
     const platformName = getPlatformName();
     const browserName = getBrowserName();
     const _ = {};
-    _.currentVersion = version;
+    _.version = version;
     _.installVersion = version;
     _.installDate = date;
     _.firstRun = false;
@@ -87,7 +89,7 @@ const Storage = (() => {
     _.autoBehavior = "smooth";
     _.autoStart = false;
     _.lazyLoad = "auto";
-    _.scrollDetection = platformName !== "mobile" ? "sl" : "io";
+    _.scrollDetection = "io";
     _.scrollDetectionThrottle = 200;
     _.scrollBehavior = "auto";
     _.scrollUpdateAddress = platformName !== "mobile";
@@ -95,6 +97,7 @@ const Storage = (() => {
     _.scrollAppendThresholdPages = 0;
     _.scrollAppendThresholdPixels = 500;
     _.scrollAppendDelay = 2000;
+    _.scrollMaximumPages = 0;
     _.scrollDivider = "element";
     _.scrollDividerAlign = "center";
     _.scrollDividerButtons = false;
@@ -103,6 +106,7 @@ const Storage = (() => {
     _.scrollLoading = true;
     _.saves = [];
     _.savesEnabled = true;
+    _.savesTemplate = { action: "next", append: "page", nextLink: "[rel='next']", keyword: true, name: "", url: "https://www.example.com", type: "pattern" };
     _.databaseAP = [];
     _.databaseAPDate = null;
     _.databaseAPLocation = null;
@@ -117,7 +121,7 @@ const Storage = (() => {
     _.databaseMode = "blacklist";
     _.databaseBlacklist = [];
     _.databaseWhitelist = [];
-    _.pickerMinimize = "maximize";
+    _.pickerSize = "maximize";
     _.pickerCorner = "top-left";
     _.pathAlgorithm = "internal";
     _.pathQuote = "single";
@@ -127,6 +131,11 @@ const Storage = (() => {
     _.linksNewTabEnabled = true;
     _.customEventsEnabled = false;
     _.debugEnabled = false;
+    _.stats = { actions: [0,0,0,0], appends: [0,0,0,0,0,0], elements: [0,0,0,0,0,0] };
+    // _.statsActions = [0,0,0,0];
+    // _.statsAppends = [0,0,0,0,0,0];
+    // _.statsElements = [0,0,0,0,0,0];
+    _.statsEnabled = false;
     return _;
   }
 
@@ -155,7 +164,7 @@ const Storage = (() => {
   }
 
   /**
-   * Gets this platform's name. This is primarily needed so we can change default settings depending on the platform.
+   * Gets this platform's name. This is primarily needed so we can change to better default settings for mobile users.
    *
    * @returns {string} the platform's name in all lowercase letters: "desktop", "mobile"
    * @private
@@ -171,10 +180,10 @@ const Storage = (() => {
   }
 
   /**
-   * Updates the storage items or jsonData from a previous version to the current version.
+   * Updates a previous version's storage items or jsonData to the current version.
    *
-   * @param previousVersion the previous version of the data
-   * @param jsonData        (optional) the json data to restore if restoring data
+   * @param {string} previousVersion - the previous version of the data
+   * @param {Object} jsonData - (optional) the json data object to restore (if restoring data)
    * @returns {Promise<boolean>} true if the update/restore was successful, false otherwise
    * @public
    */
@@ -209,8 +218,7 @@ const Storage = (() => {
   /**
    * Restores data from a text file or input and writes it into storage.
    *
-   * @param jsonData the JSON data to restore
-   * @returns {Promise<void>}
+   * @param {Object} jsonData - the JSON data to restore
    * @private
    */
   async function _restoreJson(jsonData) {
@@ -226,11 +234,11 @@ const Storage = (() => {
   }
 
   /**
-   * 0.2 Update: Add new options, force re-download database (if applicable), re-sort saves by ID to remove previously
-   * bad id duplicate id generation
+   * 0.2 Update:
+   * Add new options, force re-download database (if applicable), re-sort saves by ID to remove previously bad id
+   * duplicate id generation.
    *
-   * @param previousVersion the previous version that is being updated to this version
-   * @returns {Promise<void>}
+   * @param {string} previousVersion - the previous version that is being updated to this version
    * @private
    */
   async function _02(previousVersion) {
@@ -244,7 +252,7 @@ const Storage = (() => {
     const shouldDownloadDatabase = items && items.database && items.database.length > 0;
     console.log("_02() shouldDownloadDatabase=" + shouldDownloadDatabase);
     await Promisify.storageSet({
-      "currentVersion": "0.2",
+      "version": "0.2",
       "interfaceMessages": true,
       "whitelistEnabled": items && items.whitelist && items.whitelist.length > 0,
       "database": [],
@@ -277,11 +285,11 @@ const Storage = (() => {
   }
 
   /**
-   * 0.3 Update: Reset scroll options to better default values to avoid too many requests, change percentage thresholds
-   * to pixels thresholds, add new scripts and styles options
+   * 0.3 Update:
+   * Reset scroll options to better default values to avoid too many requests, change percentage thresholds to pixels
+   * thresholds, add new scripts and styles options.
    *
-   * @param previousVersion the previous version that is being updated to this version
-   * @returns {Promise<void>}
+   * @param {string} previousVersion - the previous version that is being updated to this version
    * @private
    */
   async function _03(previousVersion) {
@@ -294,7 +302,7 @@ const Storage = (() => {
     console.log(JSON.stringify(items));
     // Set new storage items and reset default values for some items
     await Promisify.storageSet({
-      "currentVersion": "0.3",
+      "version": "0.3",
       "customScriptsEnabled": true,
       "scrollAppendThresholdPages": items && items.scrollDetection === "io" ? 1 : 0,
       "scrollAppendThresholdPixels": 500,
@@ -319,11 +327,11 @@ const Storage = (() => {
   }
 
   /**
-   * 0.4 Update: Scroll Append Threshold pixels/pages changes. Also changed Append Element selector rule to target the
-   * children of the parent element, not the parent (this affects append element selector saves)
+   * 0.4 Update:
+   * Scroll Append Threshold pixels/pages changes. Also changed Append Element selector rule to target the children of
+   * the parent element, not the parent (this affects append element selector saves).
    *
-   * @param previousVersion the previous version that is being updated to this version
-   * @returns {Promise<void>}
+   * @param {string} previousVersion - the previous version that is being updated to this version
    * @private
    */
   async function _04(previousVersion) {
@@ -337,7 +345,7 @@ const Storage = (() => {
     // Reset default values for scroll append threshold due to internal algorithm change and new minimum values being 0, not -1
     // Reset scrollElementInsertRule due to selector rule change, add new autoBehavior and on storage items
     await Promisify.storageSet({
-      "currentVersion": "0.4",
+      "version": "0.4",
       "scrollAppendThresholdPages": 0,
       "scrollAppendThresholdPixels": 500,
       "scrollElementRule": "body > *",
@@ -357,10 +365,11 @@ const Storage = (() => {
   }
 
   /**
-   * 0.5 Update: Reset scrollAction due to Action consolidation. Three new options: scroll divider alignment, scroll icon, scroll wrap first page
+   * 0.5 Update:
+   * Reset scrollAction due to Action consolidation. Three new options: scroll divider alignment, scroll icon, scroll
+   * wrap first page.
    *
-   * @param previousVersion the previous version that is being updated to this version
-   * @returns {Promise<void>}
+   * @param {string} previousVersion - the previous version that is being updated to this version
    * @private
    */
   async function _05(previousVersion) {
@@ -373,7 +382,7 @@ const Storage = (() => {
     console.log(JSON.stringify(items));
     // Reset scrollAction and add new storage items for two options
     await Promisify.storageSet({
-      "currentVersion": "0.5",
+      "version": "0.5",
       "scrollAction": "next",
       "scrollWrapFirstPage": true,
       "scrollDividerAlign": "center",
@@ -394,11 +403,11 @@ const Storage = (() => {
   }
 
   /**
-   * 0.6 Update: Store browser name, increase button size to 50, scrollWrapFirstPage default change, new options added
-   * for iframe height wait, element iframe hybrid, and lazy load script
+   * 0.6 Update:
+   * Store browser name, increase button size to 50, scrollWrapFirstPage default change, new options added for iframe
+   * height wait, element iframe hybrid, and lazy load script.
    *
-   * @param previousVersion the previous version that is being updated to this version
-   * @returns {Promise<void>}
+   * @param {string} previousVersion - the previous version that is being updated to this version
    * @private
    */
   async function _06(previousVersion) {
@@ -411,7 +420,7 @@ const Storage = (() => {
     console.log(JSON.stringify(items));
     // Storage Items changes - Increase button size if still using default 40px size, make scroll wrap first page false (see certain websites with iframe mode for why)
     await Promisify.storageSet({
-      "currentVersion": "0.6",
+      "version": "0.6",
       "browserName": getBrowserName(),
       "buttonSize": items && items.buttonSize && items.buttonSize !== 40 ? items.buttonSize : 50,
       "interfaceTheme": false,
@@ -467,10 +476,10 @@ const Storage = (() => {
   }
 
   /**
-   * 0.6.0.6 Update: Make Fix Lazy Load default to true
+   * 0.6.0.6 Update:
+   * Make Fix Lazy Load default to true.
    *
-   * @param previousVersion the previous version that is being updated to this version
-   * @returns {Promise<void>}
+   * @param {string} previousVersion - the previous version that is being updated to this version
    * @private
    */
   async function _0606(previousVersion) {
@@ -483,17 +492,17 @@ const Storage = (() => {
     console.log(JSON.stringify(items));
     // Storage Items changes - scrollLazyLoad is now true by default
     await Promisify.storageSet({
-      "currentVersion": "0.6.0.6",
+      "version": "0.6.0.6",
       "scrollLazyLoad": true
     });
     // No changes to the saves
   }
 
   /**
-   * 0.7 Update: Rename scrollAction to action, Drawer Closed, Links New Tab extra option, Append Custom Styles, CustomEvents
+   * 0.7 Update:
+   * Rename scrollAction to action, Drawer Closed, Links New Tab extra option, Append Custom Styles, CustomEvents.
    *
-   * @param previousVersion the previous version that is being updated to this version
-   * @returns {Promise<void>}
+   * @param {string} previousVersion - the previous version that is being updated to this version
    * @private
    */
   async function _07(previousVersion) {
@@ -506,7 +515,7 @@ const Storage = (() => {
     console.log(JSON.stringify(items));
     // Storage Items changes - new append custom styles, need to reset the scrollElementRule stuff as we should never save it (it's always different for every page)
     await Promisify.storageSet({
-      "currentVersion": "0.7",
+      "version": "0.7",
       "tooltipsEnabled": true,
       "drawerCollapsed": false,
       "action": items && items.scrollAction ? items.scrollAction : "next",
@@ -538,10 +547,10 @@ const Storage = (() => {
   }
 
   /**
-   * 0.8 Update: Too much to list!
+   * 0.8 Update:
+   * Too much to list.
    *
-   * @param previousVersion the previous version that is being updated to this version
-   * @returns {Promise<void>}
+   * @param {string} previousVersion - the previous version that is being updated to this version
    * @private
    */
   async function _08(previousVersion) {
@@ -571,18 +580,19 @@ const Storage = (() => {
       "scrollElementRule", "scrollElementType", "scrollElementIframe", "scrollElementInsertRule",
       "scrollLazyLoad", "scrollLazyLoadMode", "scrollLazyLoadAttributeSource", "scrollLazyLoadAttributeDestination",
       "scrollAppendScripts", "scrollAppendStyles",
-      "scrollHeightWait", "shuffleLimit", "shuffleStart", "autoAction"
+      "scrollHeightWait", "shuffleLimit", "shuffleStart", "autoAction", "pickerMinimize",
+      "currentVersion"
     ]);
     // Storage Items changes - new platformName property, reset buttonPath to "" as we should never save it (it's always different for every page), button properties
     await Promisify.storageSet({
-      "currentVersion": "0.8",
+      "version": "0.8",
       // Keep the versions three characters for simplicity (e.g. 0.6.0.6 should become 0.6)
       "installVersion": items.installVersion?.substring(0,3) || "0.8",
       "platformName": getPlatformName(),
       "icon": items.toolbarIcon || "dark",
       "theme": "default",
       "versionTheme": !!items.interfaceTheme,
-      "preferredPathType": ["selector", "xpath"].includes(items?.nextType) ? items.nextType : "selector",
+      "preferredPathType": ["selector", "xpath"].includes(items.nextType) ? items.nextType : "selector",
       "buttonSize": typeof items.buttonSize !== "number" || items.buttonSize === 50 ? 40 : items.buttonSize,
       "scrollLoading": false,
       "scrollDividerButtons": false,
@@ -597,6 +607,7 @@ const Storage = (() => {
       "lazyLoad": items.scrollLazyLoad || "auto",
       // "lazyLoadSource": items && items.scrollLazyLoadAttributeSource ? items.scrollLazyLoadAttributeSource : "data-src",
       // "lazyLoadDestination": items && items.scrollLazyLoadAttributeDestination ? items.scrollLazyLoadAttributeDestination : "src",
+      "pickerSize": items.pickerMinimize || "maximize",
       "pathAlgorithm": "internal",
       "pathQuote": "single",
       "pathOptimized": true,
@@ -612,23 +623,24 @@ const Storage = (() => {
       "databaseLocation": "jsdelivr.net",
       "databaseMode": typeof items.databaseAutoActivate === "boolean" && !items.databaseAutoActivate ? "whitelist" : "blacklist",
       "databaseUpdate": typeof items.databaseAutoUpdate === "number" ? items.databaseAutoUpdate : 1,
-      "debugEnabled": false
+      "debugEnabled": false,
+      "stats": { actions: [0,0,0,0], appends: [0,0,0,0,0,0], elements: [0,0,0,0,0,0] }
     });
     // Next/Prev Selector XPath Double Quote to Single Quote
-    if (items?.nextSelector === "[rel=\"next\"]") {
+    if (items.nextSelector === "[rel=\"next\"]") {
       await Promisify.storageSet({"nextLinkSelector": "[rel='next']"});
     }
-    if (items?.nextXpath === "//*[@rel=\"next\"]") {
+    if (items.nextXpath === "//*[@rel=\"next\"]") {
       await Promisify.storageSet({"nextLinkXpath": "//*[@rel='next']"});
     }
-    if (items?.prevSelector === "[rel=\"prev\"],[rel=\"previous\"]") {
+    if (items.prevSelector === "[rel=\"prev\"],[rel=\"previous\"]") {
       await Promisify.storageSet({"prevSelector": "[rel='prev'],[rel='previous']"});
     }
-    if (items?.prevXpath === "//*[@rel=\"prev\"]|//*[@rel=\"previous\"]") {
+    if (items.prevXpath === "//*[@rel=\"prev\"]|//*[@rel=\"previous\"]") {
       await Promisify.storageSet({"prevXpath": "//*[@rel='prev']|//*[@rel='previous']"});
     }
     // Next Keywords 0.X > 0.8
-    if (items?.installVersion && items?.nextLinkKeywords && Array.isArray(items?.nextLinkKeywords)) {
+    if (items.installVersion && items.nextLinkKeywords && Array.isArray(items.nextLinkKeywords)) {
       const os = [
         {v: "0.1", k: ["pnnext", "nextpage", "next>", "next»", "next→", "next", "moreresults", "olderposts", "olderpost", "older", "forward", "次", "&gt;", ">", "›", "→", "»"]},
         {v: "0.2", k: ["pnnext", "nextpage", "next-page", "next_page", "next>", "next»", "next→", "next", "moreresults", "olderposts", "olderpost", "older", "forward", "次", "&gt;", ">", "›", "→", "»"]},
@@ -652,7 +664,7 @@ const Storage = (() => {
       }
     }
     // Prev Keywords 0.X > 0.8
-    if (items?.installVersion && items?.prevLinkKeywords && Array.isArray(items?.prevLinkKeywords)) {
+    if (items.installVersion && items.prevLinkKeywords && Array.isArray(items.prevLinkKeywords)) {
       const os = [
         {v: "0.1", k: ["pnprev", "previouspage", "<prev", "«prev", "←prev", "prev", "previous", "newerposts", "newerpost", "newer", "前", "&lt;", "<", "‹", "←", "«"]},
         {v: "0.2", k: ["pnprev", "previouspage", "prevpage", "prev-page", "prev_page", "<prev", "«prev", "←prev", "prev", "previous", "newerposts", "newerpost", "newer", "前", "&lt;", "<", "‹", "←", "«"]},
@@ -708,6 +720,7 @@ const Storage = (() => {
         }
       }
       save.append = save.scrollAppend;
+      save.name = save.title;
       save.shuffleURLs = save.shuffleURLs ? save.shuffleLimit : undefined;
       save.iframePageOne = save.scrollWrapFirstPage;
       save.pageElement = save.scrollElementRule;
@@ -720,20 +733,21 @@ const Storage = (() => {
       save.lazyLoadDestination = save.scrollLazyLoadAttributeDestination;
       save.nextLink = save.nextType === "xpath" ? save.nextXpath : save.nextSelector;
       save.nextLinkProperty = save.nextProperty;
-      // save.nextLinkKeyword = save.nextKeywordsEnabled;
       save.keyword = (save.action === "next" && save.nextKeywordsEnabled) || (save.action === "prev" && save.prevKeywordsEnabled);
       // save.nextLinkType = save.nextType;
       save.prevLink = save.prevType === "xpath" ? save.prevXpath : save.prevSelector;
       save.prevLinkProperty = save.prevProperty;
-      // save.prevLinkKeyword = save.prevKeywordsEnabled;
       // save.prevLinkType = save.prevType;
       save.selectionStrategy = save.selectionPriority;
       save.button = save.buttonRule;
-      // save.buttonDetection = "manual";
       save.buttonPosition = save.buttonScrollPixels;
       save.list = save.listArray;
+      if (save.action === "button") {
+        save.action = "click";
+      }
       delete save.order;
       delete save.scrollAppend;
+      delete save.title;
       delete save.shuffleLimit;
       delete save.scrollWrapFirstPage;
       delete save.scrollElementRule;
@@ -777,27 +791,22 @@ const Storage = (() => {
         delete save.nextLink;
         delete save.nextLinkType;
         delete save.nextLinkProperty;
-        // delete save.nextLinkKeyword;
       }
       if (save.action !== "prev") {
         delete save.prevLink;
         delete save.prevLinkType;
         delete save.prevLinkProperty;
-        // delete save.prevLinkKeyword;
       }
       // For next and prev actions, delete the nextLinkProperty if its the default ["href"] (This should be the vast majority of cases)
       if (save.action === "next" || save.action === "prev") {
         if (Array.isArray(save[save.action + "LinkProperty"]) && save[save.action + "LinkProperty"].length === 1 && save[save.action + "LinkProperty"][0] === "href") {
           delete save[save.action + "LinkProperty"];
         }
-        // if (!save[save.action + "LinkKeyword"]) {
-        //   delete save[save.action + "LinkKeyword"];
-        // }
       }
       if (!save.keyword) {
         delete save.keyword;
       }
-      if (save.action !== "button") {
+      if (save.action !== "click") {
         delete save.button;
         delete save.buttonPosition;
       }
@@ -869,11 +878,11 @@ const Storage = (() => {
         }
       }
       // Sort the save keys in alphabetical order, needed for Firefox
-      const nsave = {};
+      const newSave = {};
       for (const key of Object.keys(save).sort()) {
-        nsave[key] = save[key];
+        newSave[key] = save[key];
       }
-      saves[i] = nsave;
+      saves[i] = newSave;
     }
     // Merge Whitelist into Saves
     if (items.whitelistEnabled && items.whitelist && Array.isArray(items.whitelist)) {
@@ -891,10 +900,11 @@ const Storage = (() => {
         }
         // save.nextType = items.nextType;
         save.nextLink = items.nextType === "selector" ? items.nextSelector : items.nextXpath;
-        save.nextLinkKeyword = true;
+        // save.nextLinkKeyword = true;
+        save.keyword = true;
         // Include a source for bookkeeping and in case we need to fix something later with the merge
         save.source = "whitelist";
-        save.title = "";
+        save.name = "";
         // Exact "url"
         if (url.startsWith("\"") && url.endsWith("\"")) {
           save.type = "exact";
@@ -914,26 +924,28 @@ const Storage = (() => {
     // Merge Custom Database into Saves
     if (items.databaseCustomEnabled && items.databaseCustom && Array.isArray(items.databaseCustom)) {
       // Generates a new ID by finding the the save with the highest ID and incrementing it by 1 (or 1 if no save exists)
-      let id = saves.length > 0 ? Math.max.apply(Math, saves.map(s => s.id)) + 1 : 1;
+      let id = saves?.length > 0 ? Math.max.apply(Math, saves.map(s => s.id)) + 1 : 1;
       const date = new Date().toJSON();
       for (const item of items.databaseCustom) {
         const save = {};
+        // Include a source for bookkeeping and in case we need to fix something later with the merge
+        save.source = "customDatabase";
+        save.id = id++;
+        save.name = item.name ;
+        save.type = "regex";
         save.action = "next";
         save.append = "element";
         save.date = date;
-        save.id = id++;
         if (items.lazyLoad) {
           save.lazyLoad = "auto";
         }
-        save.nextLink = item.nextLink;
+        // Database items should have
+        const data = item?.data;
+        save.nextLink = data?.nextLink;
+        save.pageElement = data?.pageElement;
+        save.url = data?.url;
         // save.nextLinkType = "xpath"
-        save.pageElement = item.pageElement;
         // save.pageElementType = "xpath";
-        // Include a source for bookkeeping and in case we need to fix something later with the merge
-        save.source = "customDatabase";
-        save.title = "";
-        save.type = "regex";
-        save.url = item.url;
         saves.push(save);
       }
     }
@@ -951,11 +963,10 @@ const Storage = (() => {
   // /**
   //  * 0.9 Update
   //  *
-  //  * @param previousVersion the previous version that is being updated to this version
-  //  * @returns {Promise<void>}
+  //  * @param {string} previousVersion - the previous version that is being updated to this version
   //  * @private
   //  */
-  // async function _08(previousVersion) {
+  // async function _09(previousVersion) {
   //   if (previousVersion >= "0.9") {
   //     return;
   //   }
@@ -965,7 +976,7 @@ const Storage = (() => {
   //   console.log(JSON.stringify(items));
   //   // Storage Items changes - ...
   //   await Promisify.storageSet({
-  //     "currentVersion": "0.9",
+  //     "version": "0.9",
   //   });
   // }
 
@@ -973,9 +984,8 @@ const Storage = (() => {
    * First Version Run - if the previous version is lower than the current version, set firstVersionRun to true so we
    * can show the user what's new in this version.
    *
-   * @param previousVersion the previous version that is being updated to this version
-   * @param skip            if this function should be skipped
-   * @returns {Promise<void>}
+   * @param {string} previousVersion - the previous version that is being updated to this version
+   * @param {boolean} skip - if this function should be skipped
    * @private
    */
   async function _firstVersionRun(previousVersion, skip) {
@@ -983,7 +993,7 @@ const Storage = (() => {
     if ((previousVersion >= chrome.runtime.getManifest().version) || skip) {
       return;
     }
-    console.log("update() - setting firstVersionRun to true because currentVersion=" + chrome.runtime.getManifest().version);
+    console.log("update() - setting firstVersionRun to true because the current version=" + chrome.runtime.getManifest().version);
     await Promisify.storageSet({"firstVersionRun": true});
   }
 

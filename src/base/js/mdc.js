@@ -6,7 +6,7 @@
 
 /**
  * MDC is a global object that contains all the Material Design Components that are being used.
- * Each component is stored in a Map with its DOM ID as the key and the component as the value.
+ * Each component is stored in a Map with its element's ID as the key and the component as the value.
  */
 const MDC = {
 
@@ -86,7 +86,7 @@ const MDC = {
     return [el.id, new mdc.textField.MDCTextField(el)];
   })),
 
-  // TODO: Migrate to MDC Tooltips at some point when we upgrade the MDC version?
+  // TODO: Migrate to MDC Tooltips at some point when we upgrade the MDC version? (Balloon's Tooltips are better)
   // tooltips: new Map([].map.call(document.querySelectorAll('.mdc-tooltip'), function (el) {
   //   return [el.id, new mdc.ripple.MDCRipple(el)];
   // })),
@@ -113,14 +113,32 @@ const MDC = {
   },
 
   /**
-   * Opens the MDC Snackbar.
+   * Performs a resize for MDC objects, specifically textareas. This is called separately from layout and only after the
+   * element is confirmed to be painted on the screen.
    *
-   * @param labelText the text the snackbar should display
-   * @param timeoutMs the milliseconds the snackbar should be active for, the minimum is 4000 ms and -1 is until closed
    * @public
    */
-  openSnackbar: function(labelText, timeoutMs = 5000) {
-    const snackbar = MDC.snackbars.get("mdc-snackbar");
+  resize: function () {
+    MDC.textFields.forEach(el => {
+      if (el.input_.scrollHeight > 0 && el.input_.nodeName.toUpperCase() === "TEXTAREA") {
+        el.input_.style.height = el.input_.scrollHeight + "px";
+        el.layout();
+      }
+    });
+  },
+
+  /**
+   * Opens the MDC Snackbar.
+   *
+   * @param {string} labelText - the text the snackbar should display
+   * @param {number} timeoutMs - the milliseconds the snackbar should be active for, the minimum is 4000 ms and -1 is infinite (until closed)
+   * @param {string} snackbarId - the id of the snackbar to use (e.g. "mdc-snackbar" or "mdc-snackbar-undo")
+   * @public
+   */
+  openSnackbar: function(labelText, timeoutMs = 5000, snackbarId = "mdc-snackbar") {
+    // Close any previously open snackbars so they don't cover up the newest snackbar and to avoid issues like deleting and then adding new saves right afterwards
+    [...MDC.snackbars.values()].forEach(snackbar => snackbar.close());
+    const snackbar = MDC.snackbars.get(snackbarId);
     // Can't make snackbar timeoutMs lower than 4000?
     snackbar.timeoutMs = timeoutMs;
     // Since we're reusing the same snackbar, we need to reset the labelText before we open it, then set it after we open

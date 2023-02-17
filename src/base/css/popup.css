@@ -44,17 +44,17 @@
 #controls-icons {
   position: absolute;
   top: 2px;
-  right: 10px;
+  right: 8px;
 }
 
 #controls-icons span {
-  font-size: 1em;
+  font-size: 13px;
   font-weight: 500;
 }
 
 #controls-icons svg {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
 }
 
 /* Setup */
@@ -140,7 +140,8 @@ main {
 
 /* we use data-css attributes to generify this for multiple extensions that have multiple mdc-list-groups */
 .mdc-drawer.drawer-collapsed .mdc-list-group[data-css="mdc-list-group-2"] .mdc-list[data-css="mdc-list-2"] {
-  margin-top: 46px;
+  /* margin-top: 46px; */
+  margin-top: 28px;
 }
 
 /* show tooltip in collapsed drawer */
@@ -160,14 +161,6 @@ main {
   border-radius: 0 0 0 0;
   border-left-width: 1px;
   border-left-style: solid;
-}
-
-.mdc-drawer-app-content.drawer-collapsed #next-path-text-field, .mdc-drawer-app-content.drawer-collapsed #prev-path-text-field {
-  width: 448px;
-}
-
-.mdc-drawer-app-content.drawer-collapsed #button-path-text-field {
-  width: 540px;
 }
 
 .mdc-drawer-app-content.drawer-collapsed #switches {
@@ -241,7 +234,7 @@ main > section:not(:first-child) {
 #drawer-collapsed-app-icon-div {
   position: fixed;
   left: 10px;
-  bottom: 10px;
+  bottom: 4px;
   z-index: 7;
 }
 
@@ -334,42 +327,32 @@ header {
 #prev-path-text-field,
 #button-path-text-field,
 #page-element-path-text-field,
-#element[data-type="ajax"] #page-element-path-text-field,
-#remove-element-path-text-field {
-  width: 508px;
+#element[data-type="ajax"] #page-element-path-text-field {
+  width: 495px;
 }
 
 .mdc-drawer-app-content.drawer-collapsed #next-path-text-field,
 .mdc-drawer-app-content.drawer-collapsed #prev-path-text-field,
 .mdc-drawer-app-content.drawer-collapsed #button-path-text-field,
 .mdc-drawer-app-content.drawer-collapsed #page-element-path-text-field,
-.mdc-drawer-app-content.drawer-collapsed #element[data-type="ajax"] #page-element-path-text-field,
+.mdc-drawer-app-content.drawer-collapsed #element[data-type="ajax"] #page-element-path-text-field {
+  width: 643px;
+}
+
+#load-element-path-text-field,
+#remove-element-path-text-field {
+  width: 240px;
+}
+
+.mdc-drawer-app-content.drawer-collapsed #load-element-path-text-field,
 .mdc-drawer-app-content.drawer-collapsed #remove-element-path-text-field {
-  width: 656px;
+  width: 388px;
 }
 
 /* Next */
 
 #next-property-text-field, #prev-property-text-field {
   width: 80px;
-}
-
-#next-prev-inputs, #page-element-iframe {
-  position: relative;
-}
-
-#next-prev-link-type, #page-element-iframe-mode {
-  position: absolute;
-  bottom: -14px;
-  right: 0;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-/* Need this to make the label hide underneath the nextLinkProperty and insertBefore tooltips, position: relative required for z-index to work */
-#next-prev-chip-set-label, #page-element-iframe-mode-chip-set-label {
-  position: relative;
-  z-index: -1;
 }
 
 /* Increment */
@@ -394,18 +377,15 @@ header {
   width: 86px;
 }
 
-#base-case label:not(:last-child) {
-  margin-right: 1em;
-}
-
 /* display inline-block to remove whitespace from link */
 #base-date-format-a, #base-custom-a {
   display: inline-block;
 }
 
-/* margin-right so last roman radio tooltip isn't passing right edge of popup (may introduce scrollbars in Firefox) */
-#base-roman {
-  margin-right: 1rem;
+#base-case .chip-set-label, #base-roman .chip-set-label {
+  position: absolute;
+  margin-top: -12px;
+  margin-left: -24px;
 }
 
 #multi-button svg, #shuffle-button svg {
@@ -423,18 +403,8 @@ header {
 /* Button */
 
 /* Infy Scroll Only */
-#button-detection-select .mdc-select__anchor {
-  width: 124px;
-}
-
-/* Infy Scroll Only */
 #button-position-text-field {
   width: 118px;
-}
-
-/* Keeps the row from breaking on the select (alternative is to use flex-row on the row) */
-#button-detection-select {
-  display: inline-block;
 }
 
 /* List */
@@ -496,7 +466,7 @@ footer #extras svg {
 
 /* Save Dialog */
 
-#save-title-textarea {
+#save-name-textarea {
   height: 31px;
 }
 
@@ -522,10 +492,9 @@ footer #extras svg {
 
 /* Switches */
 
-/* Make the switches left-justified when the drawer is open. Use -150px if we don't want any change when the drawer closes/opens */
+/* To make the switches left-justified when the drawer is open use margin-left 196px */
 /* z-index 7 so it doesn't get hidden in drawer but doesn't override dialog */
 #switches {
-  margin-left: -196px;
   z-index: 7;
 }
 
@@ -533,13 +502,32 @@ footer #extras svg {
   color: var(--auto-color);
 }
 
-/* Styles the AUTO Switch label the way I want it to appear (not using Roboto font-family on purpose be) */
+/* Styles the AUTO Switch label the way I want it to appear (not using Roboto font-family intentionally) */
 .mdc-switch__label {
   font-family: "Segoe UI", Arial, sans-serif;
   font-weight: bold;
   font-style: italic;
   font-size: 18px;
   margin-right: 0.7rem;
+}
+
+/* chip-set */
+
+.chip-set {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.chip-set-absolute {
+  position: absolute;
+  bottom: -14px;
+  right: 0;
+}
+
+/* Need this to make the label hide underneath the nextLinkProperty and insertBefore tooltips, position: relative required for z-index to work */
+.chip-set-label {
+  position: relative;
+  z-index: -1;
 }
 
 /* Icon Button */
@@ -558,6 +546,23 @@ footer #extras svg {
 /* Firefox: Need to vertically align the element picker buttons to top (Chrome doesn't need this, but respects it) */
 .element-picker-button {
   vertical-align: top;
+}
+
+/* Type Label */
+
+/* width keeps this the same width no matter the label text (e.g. se, xp, js); we could use a monospace font as well */
+.type-label {
+  color: var(--mdc-theme-primary);
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  vertical-align: top;
+  width: 10px;
+}
+
+/* Don't make the cursor be a pointer due to the nearby element picker button */
+.type-label[aria-label][data-balloon-pos] {
+  cursor: initial;
 }
 
 /* SVG Fill Icon Colors */
@@ -627,7 +632,7 @@ footer #extras svg {
 
 #messages {
   margin: 1rem;
-  width: 626px;
+  width: 670px;
   font-size: 1rem;
 }
 
@@ -648,6 +653,33 @@ footer #extras svg {
 #popup-error-details, #popup-error-reason {
   color: var(--mdc-theme-error);
   font-weight: 500;
+}
+
+#manage-button {
+  background: var(--mdc-theme-error);
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+}
+
+/* Help Dialog */
+
+#debug-copy-button {
+  background: var(--mdc-theme-error);
+}
+
+#help-dialog-notice {
+  text-align: left;
+}
+
+/* Switch to white-space: break-spaces when Chromium bug is fixed: https://bugs.chromium.org/p/chromium/issues/detail?id=1261435 */
+#debug {
+  margin-top: 2rem;
+}
+
+#debug pre {
+  word-break: break-all;
+  white-space: pre-wrap;
 }
 
 /* Version */
@@ -676,14 +708,16 @@ footer #extras svg {
 
 .drawer-collapsed #version-theme {
   top: initial;
-  bottom: 36px;
-  left: 25px;
+  bottom: 24px;
+  left: 40px;
   font-size: 0.9rem;
 }
 
+/* display-none for 0.8 */
 .drawer-collapsed #version-theme svg#version-theme-icon {
   width: 14px;
   height: 14px;
+  display: none;
 }
 
 /* Firefox Width Fixes - prevents horizontal scrollbars from showing up on the entire Popup and mdc-data-table. */
@@ -736,16 +770,10 @@ footer #extras svg {
   width: 102px;
 }
 
-#media-type-select .mdc-select__anchor {
-  width: 125px;
-}
-
-#remove-element-delay {
-  display: inline-block;
-}
-
-#ajax, #ajax-unused {
-  display: none;
+/* Keeps the media type chip-set from taking up more space and the same as the other append modes */
+#media-type {
+  position: absolute;
+  margin-top: -4px;
 }
 
 /* Footer */
@@ -771,25 +799,26 @@ footer #extras #scripts-button svg {
   display: none;
 }
 
+/* Note: inline-block has margin-bottom issues with AJAX due to insert before text field (Chrome only) */
 html[data-extra-document] [data-extra], html[data-extra-document] [data-extra].text-field-container.path {
-  display: inline-block;
+  display: inline;
 }
 
 html[data-extra-document] #next-path-text-field, html[data-extra-document] #prev-path-text-field {
-  width: 425px;
+  width: 412px;
 }
 
 html[data-extra-document] #page-element-path-text-field {
-  width: 403px;
+  width: 390px;
 }
 
 html[data-extra-document] .mdc-drawer-app-content.drawer-collapsed #next-path-text-field,
 html[data-extra-document] .mdc-drawer-app-content.drawer-collapsed #prev-path-text-field {
-  width: 573px;
+  width: 560px;
 }
 
 html[data-extra-document] .mdc-drawer-app-content.drawer-collapsed #page-element-path-text-field {
-  width: 551px;
+  width: 538px;
 }
 
 /* TODO: Decide on List Options */

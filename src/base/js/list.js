@@ -14,7 +14,7 @@ const List = (() => {
   /**
    * Finds all the links (URLs) on the page and returns them as an array.
    *
-   * @returns {[]} the array of links (URLs)
+   * @returns {string[]} the array of links (URLs)
    * @public
    */
   function findLinks() {

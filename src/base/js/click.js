@@ -5,39 +5,32 @@
  */
 
 /**
- * Button handles all logic needed for the "Click Button" action, mainly finding the button on the page or clicking it.
- *
- * The algorithm is similar to Next in that it finds the button element via a Selector/XPath expression.
+ * Click handles all logic needed for the "Click Button" action. This includes finding the button on the page and
+ * clicking it.
  */
-const Button = (() => {
+const Click = (() => {
 
   /**
    * Finds a button on the page.
    *
-   * TODO: Parse iframes (and older frames and framesets?) nested inside the document
-   *
-   * @param type the path type to use ("selector" or "xpath")
-   * @param path the css selector or xpath expression to use
-   * @param highlight true if this element should be highlighted, false otherwise
-   * @param doc the current document on the page to query
-   * @returns {*} the button element (if found) and the details object
+   * @param {string} path - the selector, xpath, or js path
+   * @param {string} type - the path type to use ("selector", "xpath") or context ("document", "shadow", "iframe")
+   * @param {Document} doc - the document to evaluate against
+   * @param {boolean} highlight - true if this element should be highlighted, false otherwise
+   * @returns {{button: Element, details: Object}} the button element (if found) and the details object
    * @public
    */
-  function findButton(type, path, highlight, doc) {
+  function findButton(path, type, doc, highlight) {
     let button;
     // Stores the exception or error message in order to return it back to the user for feedback (e.g. invalid selector)
     const details = {};
     try {
       // TODO: We always get the "last" button on the page, not the "first"?
-      if (type === "xpath") {
-        // button = doc.evaluate(path, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-        const result = doc.evaluate(path, doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-        button = result && result.snapshotLength > 0 ? result.snapshotItem(result.snapshotLength - 1) : undefined;
-      } else {
-        // button = doc.querySelector(path);
-        const result = doc.querySelectorAll(path);
-        button = result && result.length > 0 ? result[result.length - 1] : undefined;
-      }
+      const result = DOMNode.getElement(path, type, "last", doc);
+      button = result.element;
+      // TODO: Should we ensure the button is visible on the page?
+      //   Some sites only hide the button after the last page, but it is still clickable and can repeat the last page (e.g. sr.com)
+      details.error = result.error;
       details.found = !!button;
       details.clickable = !!(button && typeof button.click === "function");
       details.buttonNode = button ? button.nodeName : "";
@@ -55,20 +48,24 @@ const Button = (() => {
   /**
    * Clicks a button on the page.
    *
-   * @param type the path type to use ("selector" or "xpath")
-   * @param path the css selector or xpath expression to use
-   * @param doc the current document on the page to query
-   * @returns {boolean}
-   * @returns {*} true if the button action was performed, false otherwise and the url of the button if it exists
+   * @param {string} path - the selector, xpath, or js path
+   * @param {string} type - the path type to use ("selector", "xpath") or context ("document", "shadow", "iframe")
+   * @param {Document} doc - the document to evaluate against
+   * @returns {{clicked: boolean, url: string}} true if the button was clicked, false otherwise and the url of the button if it exists
    * @public
    */
-  function clickButton(type, path, doc) {
+  function clickButton(path, type, doc) {
     let clicked = false;
     let url = "";
-    const button = findButton(type, path, false, doc).button;
+    const button = findButton(path, type, doc, false).button;
     try {
       if (button && typeof button.click === "function") {
         url = button.href || button.action || button.formAction || "";
+        // If this isn't the top-level document (i.e. this is an iframe). Some sites will open the next page in a new tab and have target="_blank" (e.g. Amazon Search)
+        if (doc !== document && button.target && button.target !== "_self") {
+          console.log("clickButton() - changing target because button.target=" + button.target);
+          button.setAttribute("target", "_self");
+        }
         button.click();
         clicked = true;
       }
@@ -81,10 +78,11 @@ const Button = (() => {
   }
 
   /**
-   * Highlights the element on the document page.
+   * Highlights the element on the page.
+   * Important: If the element isn't in the top-level document, it can't be highlighted.
    *
-   * @param element   the DOM element to highlight
-   * @param highlight true if highlighting is enabled, false otherwise
+   * @param {Element} element - the element
+   * @param {boolean} highlight - true if this element should be highlighted, false otherwise
    * @private
    */
   function highlightElement(element, highlight) {
@@ -92,7 +90,7 @@ const Button = (() => {
       if (highlight && typeof HoverBox !== "undefined") {
         new HoverBox().highlightElement(element, true);
       }
-    } catch(e) {
+    } catch (e) {
       console.log("highlightElement() - Error:");
       console.log(e);
     }

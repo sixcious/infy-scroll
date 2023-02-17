@@ -21,8 +21,8 @@
  *
  * In general, we should only use this API in secure contexts.
  *
- * How to use it
- * -------------
+ * How to use Cryptography
+ * -----------------------
  *
  * 1. Random Numbers:
  * Generate a random number between a minimum and maximum value by supplying the two arguments to the function
@@ -43,23 +43,23 @@
  * const hash = await Cryptography.hash("plaintext", salt);
  *
  * 5/6. Encrypting/Decrypting:
- * Generate a secret key however you prefer (for quick demonstration purposes,this uses Cryptography.salt())
+ * Generate a secret key however you prefer (for quick demonstration purposes, this uses Cryptography.salt())
  *
  * const key = Cryptography.salt();
  * const encryption = await Cryptography.encrypt("plaintext", key);
  * const decryption = await Cryptography.decrypt(encryption.ciphertext, encryption.iv, key);
- * @see https://developer.mozilla.org/en-US/docs/Web/API/crypto_property
+ * @see https://developer.mozilla.org/docs/Web/API/crypto_property
  */
 const Cryptography = (() => {
 
   /**
-   * Generates a securely random number in the range of min (inclusive) and max (inclusive).
+   * Generates a random number securely in the range of min (inclusive) and max (inclusive).
    * For example, randomNumber(0,16) will return a number between 0-16.
    *
-   * @param min       the minimum number in the range (inclusive)
-   * @param max       the maximum number in the range (inclusive)
-   * @returns {number} the random number
-   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random#getting_a_random_integer_between_two_values
+   * @param {number} min - the minimum number in the range (inclusive)
+   * @param {number} max - the maximum number in the range (inclusive)
+   * @returns {number} the randomly generated number
+   * @see https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Math/random#getting_a_random_integer_between_two_values
    * @see https://stackoverflow.com/a/62792582
    * @public
    */
@@ -71,11 +71,11 @@ const Cryptography = (() => {
   }
 
   /**
-   * Generates a securely random string.
+   * Generates a random string securely using an alphabet of characters in the desired length.
    *
-   * @param length   the length the string should be
-   * @param alphabet the alphabet containing the valid characters in the string
-   * @returns {string} the random string
+   * @param {number} length - the length the string should be
+   * @param {string} alphabet - the alphabet containing the character candidates in the string
+   * @returns {string} the randomly generated string
    * @public
    */
   function randomString(length = 16, alphabet = "abcdefghijklmnopqrstuvwxyz") {
@@ -90,8 +90,8 @@ const Cryptography = (() => {
    * Calculates a cryptographic hash. We use the PBKDF2 algorithm with an Hmac-SHA512 hash function.
    * For simplicity, we hardcode the algorithm, hash, and iterations. Note: 512 Bits = 64 Bytes = 88 B64 Characters. (Note: Firefox hangs if the text is empty.)
    *
-   * @param text the text to hash
-   * @param salt the salt to hash with
+   * @param {string} text - the text to hash
+   * @param {string} salt - the salt to hash with
    * @returns {Promise<string>} the hash as a base 64 encoded string
    * @public
    */
@@ -104,7 +104,7 @@ const Cryptography = (() => {
   /**
    * Generates a random cryptographic salt.
    *
-   * @param length the length of the generated string
+   * @param {number} length - the length of the generated string
    * @returns {string} the salt as a base 64 encoded string
    * @public
    */
@@ -116,8 +116,8 @@ const Cryptography = (() => {
    * Encrypts plaintext into ciphertext using a symmetric key. We use the AES-GCM algorithm with a SHA256 hash function.
    * For simplicity, we hardcode the algorithm. Note: 256 Bits = 32 Bytes = 44 B64 Characters.
    *
-   * @param plaintext the text to encrypt
-   * @param secret    the secret key
+   * @param {string} plaintext - the text to encrypt
+   * @param {string} secret - the secret key
    * @returns {Promise<{iv: string, ciphertext: string}>} the iv and ciphertext as base 64 encoded strings
    * @public
    */
@@ -133,9 +133,9 @@ const Cryptography = (() => {
    * Decrypts ciphertext into plaintext using a symmetric key. We use the AES-GCM algorithm with a SHA256 hash function.
    * For simplicity, we hardcode the algorithm. Note: 256 Bits = 32 Bytes = 44 B64 Characters.
    *
-   * @param ciphertext the text to decrypt
-   * @param iv         the initialization vector for the algorithm
-   * @param secret     the secret key
+   * @param {string} ciphertext - the text to decrypt
+   * @param {string} iv - the initialization vector for the algorithm
+   * @param {string} secret - the secret key
    * @returns {Promise<string>} the decrypted text
    * @public
    */
@@ -150,7 +150,7 @@ const Cryptography = (() => {
   /**
    * Converts an 8-bit Unsigned Integer Array to a Base 64 Encoded String.
    *
-   * @param u8a the unsigned 8-bit integer array
+   * @param {Uint8Array} u8a - the unsigned 8-bit integer array
    * @returns {string} the base 64 encoded string
    * @private
    */
@@ -161,7 +161,7 @@ const Cryptography = (() => {
   /**
    * Converts a Base 64 Encoded String to an 8-bit Unsigned Integer Array.
    *
-   * @param b64 the base 64 encoded string
+   * @param {string} b64 - the base 64 encoded string
    * @returns {Uint8Array} the unsigned 8-bit integer array
    * @private
    */

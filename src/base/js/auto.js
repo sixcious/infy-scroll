@@ -13,7 +13,7 @@ const Auto = (() => {
   /**
    * Variables
    *
-   * @param autoTimer the {@link AutoTimer} object
+   * @param {AutoTimer} autoTimer - the timer that Auto manages
    */
   let autoTimer;
 
@@ -21,7 +21,7 @@ const Auto = (() => {
    * Gets the auto timer.
    * Note that this function is only needed for debugging purposes.
    *
-   * @returns {*} the auto timer
+   * @returns {AutoTimer} the auto timer
    * @public
    * @debug
    */
@@ -33,8 +33,8 @@ const Auto = (() => {
    * Starts the auto timer for the instance by doing all the necessary start-up work (convenience function).
    * Note that this function will "clear" (stop) any existing AutoTimers that may be running for this instance.
    *
-   * @param instance the instance to start an auto timer for
-   * @param caller   the caller asking to start the auto timer
+   * @param {Object} instance - the instance
+   * @param {string} caller - the caller who called this function (e.g. "popup")
    * @public
    */
   function startAutoTimer(instance, caller) {
@@ -52,15 +52,17 @@ const Auto = (() => {
   /**
    * Stops the auto timer for the instance by doing all the necessary stopping work (convenience function).
    *
+   * Note that when Auto stops, it does NOT call the stop action on the instance. The instance resumes in ON status.
+   *
    * This function can be called by the following callers and situations:
    *
    * 1. Auto.autoListener() - After Auto expires normally, like when autoTimes reaches 0
-   * 2. Action.performAction() - After the following actions fail: next, prev, button
+   * 2. Action.perform() - After the following actions fail: next, prev, button
    * 3. Scroll.stop() - After an off action is performed, the stop() will call this
    * 4. Popup - Whenever the user clicks the ACCEPT Button and Auto is not toggled on
    *
-   * @param instance the instance's auto timer to stop
-   * @param caller   the caller asking to stop the auto timer (to determine how to set the badge)
+   * @param {Object} instance - the instance
+   * @param {string} caller - the caller who called this function (e.g. "popup")
    * @public
    */
   function stopAutoTimer(instance, caller) {
@@ -69,7 +71,7 @@ const Auto = (() => {
     instance.autoEnabled = false;
     instance.autoPaused = false;
     instance.autoTimes = instance.autoTimesOriginal;
-    Scroll.setInstance(instance);
+    Scroll.set("instance", instance);
     if (caller === "auto" || caller === "action") {
       chrome.runtime.sendMessage({receiver: "background", greeting: "setBadge", badge: "on", temporary: false}, function (response) { if (chrome.runtime.lastError) {} });
     }
@@ -87,33 +89,33 @@ const Auto = (() => {
    * 4. Auto.setTimeout() because autoRepeating is true calls Action.returnToStart()
    * 5. Action.returnToStart() sets autoRepeating to false, resets all the instance properties (including multi, array)
    *
-   * Note: This function is no longer public. We moved the call to repeat from Action.performAction (stop) to the Auto
+   * Note: This function is no longer public. We moved the call to repeat from Action.perform (stop) to the Auto
    * Listener here
    *
-   * @param instance the instance's auto timer to repeat
+   * @param {Object} instance - the instance
    * @private
    */
   function repeatAutoTimer(instance) {
     console.log("repeatAutoTimer() - repeating auto timer");
     instance.autoRepeating = true;
     instance.autoRepeatCount++;
-    Scroll.setInstance(instance);
+    Scroll.set("instance", instance);
     startAutoTimer(instance);
   }
 
   /**
    * Sets the instance's auto timeout and then performs the auto action after the time has elapsed.
    *
-   * @param instance the instance's timeout to set
+   * @param {Object} instance - the instance
    * @private
    */
   function setAutoTimeout(instance) {
     autoTimer = new AutoTimer(function () {
       // If instance is in slideshow mode and auto repeating, return to start; otherwise perform a down action
       if (instance.autoRepeating) {
-        Action.performAction("return", "auto", instance);
+        Workflow.execute("return", "auto");
       } else {
-        Action.performAction("down", "auto", instance);
+        Workflow.execute("down", "auto");
       }
     }, instance.autoSeconds * 1000);
   }
@@ -121,7 +123,7 @@ const Auto = (() => {
   /**
    * Clears the instance's auto timeout and deletes the auto timer.
    *
-   * @param instance the instance's timeout to clear
+   * @param {Object} instance - the instance
    * @private
    */
   function clearAutoTimeout(instance) {
@@ -135,7 +137,7 @@ const Auto = (() => {
   /**
    * Pauses or resumes the instance's auto timer. If the instance is paused, it resumes or vice versa.
    *
-   * @param instance the instance's auto timer to pause or resume
+   * @param {Object} instance - the instance
    * @public
    */
   function pauseOrResumeAutoTimer(instance) {
@@ -161,17 +163,17 @@ const Auto = (() => {
         }
       }
       // Update instance.autoPaused boolean state (This is necessary)
-      Scroll.setInstance(instance);
+      Scroll.set("instance", instance);
     }
   }
 
 
   /**
-   * The auto listener that fires when Auto is enabled and each time after an action is performed.
+   * The instance's auto listener that fires when Auto is enabled and each time after an action is performed.
    * Decides whether or not to set the autoTimeout based on the instance's current properties.
    * Also decides when it is time to delete the instance when the auto times count has reached 0.
    *
-   * @param instance the instance that auto listens for
+   * @param {Object} instance - the instance
    * @public
    */
   function autoListener(instance) {
@@ -201,7 +203,7 @@ const Auto = (() => {
       } else {
         // Two possibilities: if auto repeat (slideshow), repeat the auto timer, else stop the auto timer
         // Note: stopping will clearAutoTimeout and removeAutoListener, so we don't have to do it here
-        // Action.performAction("stop", "auto", instance);
+        // Workflow.execute("stop", "auto", instance);
         // Handle Auto Slideshow
         if (instance.autoSlideshow) {
           // Create a new deep copy of the instance for the repeat
@@ -213,7 +215,7 @@ const Auto = (() => {
           stopAutoTimer(instance, "auto", "on");
         }
         // Update the Popup in case the window is still open (except in Auto Slideshow mode, since that repeats all the time)
-        instance = Scroll.getInstance();
+        instance = Scroll.get("instance");
         if (!instance.autoSlideshow) {
           chrome.runtime.sendMessage({receiver: "popup", greeting: "updatePopupInstance", caller: "auto", action: "", instance: instance}, function (response) { if (chrome.runtime.lastError) {} });
         }
@@ -234,14 +236,14 @@ const Auto = (() => {
   class AutoTimer {
 
     /**
-     * Variables (Class Fields, requires Chrome 75+)
+     * Class Fields
      *
-     * @param callback  the callback function to call when the timer has finished
-     * @param delay     the delay timeout to wait (in ms)
-     * @param timeout   the actual set timeout object
-     * @param start     the current time stamp (Date.now)
-     * @param remaining the remaining time left until the timeout will execute the callback
-     * @param wait      {boolean} if true, wait until the tab has completely loaded, false otherwise (not used in some extensions/apps)
+     * @param {function} callback - the callback function to call when the timer has finished
+     * @param {number} delay - the delay timeout to wait (in ms)
+     * @param {Object} timeout - the actual set timeout object
+     * @param {Date} start - the current time stamp (Date.now)
+     * @param {number} remaining - the remaining time left until the timeout will execute the callback
+     * @param {boolean} wait - if true, wait until the tab has completely loaded, false otherwise (not used in some extensions/apps)
      */
     callback;
     delay;
@@ -253,8 +255,8 @@ const Auto = (() => {
     /**
      * The AutoTimer Constructor.
      *
-     * @param callback the callback function to call when the timer has finished
-     * @param delay    the delay timeout to wait (in ms)
+     * @param {function} callback - the callback function to call when the timer has finished
+     * @param {number} delay - the delay timeout to wait (in ms)
      */
     constructor(callback, delay) {
       this.callback = callback;
@@ -295,7 +297,7 @@ const Auto = (() => {
      * Sets the wait boolean parameter.
      * Note: This is optional.
      *
-     * @param wait {boolean} if true, wait until the tab has completely loaded, false otherwise (not used in some extensions/apps)
+     * @param {boolean} wait - if true, wait until the tab has completely loaded, false otherwise (not used in some extensions/apps)
      */
     setWait(wait) {
       this.wait = wait;

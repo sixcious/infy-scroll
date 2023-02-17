@@ -5,11 +5,11 @@
  */
 
 /**
- * Scripts is an array of scripts that are custom-made for some popular websites to fix broken HTML or images due to the
+ * Scripts is an array of objects that are custom-made for some popular websites to fix broken HTML or images due to the
  * unnatural way of how pages are appended. The custom scripts are only ran after each page is appended. These scripts
  * are usually intended to fix missing thumbnail images, but could serve to do anything to the appended elements.
  *
- * @type {*[]} the array of scripts
+ * @type {Object[]} the array of script objects
  */
 const Scripts = [
   {

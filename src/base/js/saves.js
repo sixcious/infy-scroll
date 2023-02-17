@@ -5,8 +5,8 @@
  */
 
 /**
- * Saves handles all Save specific logic, such as adding a new save, deleting a save (by URL), and determining if a
- * URL matches an existing save. Editing saves is done by deleting the existing save adding a new save.
+ * Saves handles all save specific logic, such as adding a new save, deleting a save (by URL), and determining if a
+ * URL matches an existing save. Editing saves is done by deleting the existing save and adding a new save.
  */
 const Saves = (() => {
 
@@ -16,8 +16,8 @@ const Saves = (() => {
    * Note: This function is also called when editing an existing save. The existing save is deleted and a new save
    * is added in its place.
    *
-   * @param instance the instance properties
-   * @returns {Promise<{}>} the newly added save with the generated ID
+   * @param {Object} instance - the instance to save
+   * @returns {Object} the newly added save with the generated ID
    * @public
    */
   async function addSave(instance) {
@@ -29,9 +29,9 @@ const Saves = (() => {
     // Create the save object
     const save = {};
     save.id = id;
-    save.type = instance.saveType;
+    save.name = instance.saveName;
     save.url = instance.saveURL;
-    save.title = instance.saveTitle;
+    save.type = instance.saveType;
     save.date = new Date().toJSON();
     save.action = instance.action;
     save.append = instance.append;
@@ -49,7 +49,6 @@ const Saves = (() => {
       save.spa = instance.spa;
     }
     if (instance.action === "next" || instance.action === "prev") {
-      // save[instance.action + "LinkType"] = instance[instance.action + "LinkType"];
       save[instance.action + "LinkPath"] = instance[instance.action + "LinkPath"];
       if (!(Array.isArray(instance[instance.action + "LinkProperty"]) && instance[instance.action + "LinkProperty"].length === 1 && instance[instance.action + "LinkProperty"][0] === "href")) {
         save[instance.action + "LinkProperty"] = instance[instance.action + "LinkProperty"];
@@ -97,9 +96,8 @@ const Saves = (() => {
         save.shuffleURLs = instance.shuffleURLs;
       }
     }
-    if (instance.action === "button") {
+    if (instance.action === "click") {
       save.buttonPath = instance.buttonPath;
-      // save.buttonType = instance.buttonType;
       if (instance.buttonDetection === "manual") {
         save.buttonPosition = instance.buttonPosition;
       }
@@ -127,15 +125,11 @@ const Saves = (() => {
     }
     if (instance.append === "element") {
       save.pageElementPath = instance.pageElementPath;
-      // save.pageElementType = instance.pageElementType;
       if (instance.insertBeforePath) {
         save.insertBeforePath = instance.insertBeforePath;
       }
       if (instance.pageElementIframe) {
         save.pageElementIframe = instance.pageElementIframe;
-        if (instance.pageElementIframeWait) {
-          save.pageElementIframeWait = instance.pageElementIframeWait;
-        }
       }
     }
     if (instance.append === "media") {
@@ -143,21 +137,33 @@ const Saves = (() => {
     }
     if (instance.append === "ajax") {
       save.pageElementPath = instance.pageElementPath;
-      // save.pageElementType = instance.pageElementType;
-      if (instance.removeElementPath) {
-        save.removeElementPath = instance.removeElementPath;
+      if (instance.ajaxMode === "native") {
+        save.ajaxMode = instance.ajaxMode;
+        // AJAX Native Experimental Inputs
+        for (const o of ["removeElementPath", "hideElementPath", "disableScrollObjects", "disableScrollElementPath", "disableScrollFunctions", "disableRemoveElementPath", "disableRemoveFunctions"]) {
+          if (instance[o]) {
+            save[o] = instance[o];
+          }
+        }
       }
-      if (instance.disableScrollElementPath) {
-        save.disableScrollElementPath = instance.disableScrollElementPath;
-      }
-      if (instance.disableRemoveElementPath) {
-        save.disableRemoveElementPath = instance.disableRemoveElementPath;
-      }
-      if (instance.hideElementPath) {
-        save.hideElementPath = instance.hideElementPath;
-      }
-      if (instance.removeElementDelay) {
-        save.removeElementDelay = instance.removeElementDelay;
+    }
+    // These settings below are technically only needed for Element Iframe and AJAX Iframe
+    if (instance.append === "ajax" && instance.ajaxMode !== "native" && instance.mirrorPage) {
+      save.mirrorPage = instance.mirrorPage;
+    }
+    if (instance.loadElementPath) {
+      save.loadElementPath = instance.loadElementPath;
+    }
+    if (instance.scrollIframeEnabled === false) {
+      save.scrollIframeEnabled = false;
+    }
+    if (instance.transferNode) {
+      save.transferNode = instance.transferNode;
+    }
+    // Scroll Options
+    for (const key of Instance.getInstanceOptionKeys()) {
+      if (instance.hasOwnProperty("_" + key)) {
+        save[key] = instance["_" + key];
       }
     }
     // Translate the instance back to the source keys
@@ -178,10 +184,10 @@ const Saves = (() => {
    * Note: This function has a boolean argument, writeToStorage, that determines whether or not it will write the new
    * saves array into storage.
    *
-   * @param id             the ID to lookup this save by
-   * @param url            the URL to lookup this save by
-   * @param writeToStorage true if writing to the storage items, false otherwise
-   * @returns {Promise<{}>} the new saves array after deleting the save
+   * @param {number} id - the ID to lookup this save by
+   * @param {string} url - the URL to lookup this save by
+   * @param {boolean} writeToStorage - true if writing to the storage items, false otherwise
+   * @returns {Object[]} the new saves array after deleting the save
    * @public
    */
   async function deleteSave(id, url, writeToStorage) {
@@ -210,9 +216,9 @@ const Saves = (() => {
   /**
    * Tests if a URL matches a save of any type (exact, pattern, regex).
    *
-   * @param url  the URL to match
-   * @param save the saved URL (exact, pattern, or regex)
-   * @returns {{matches: *}} the matches
+   * @param {string} url - the URL to match
+   * @param {Object} save - the save object
+   * @returns {{matches: boolean}} the matches
    * @public
    */
   function matchesSave(url, save) {
@@ -221,14 +227,18 @@ const Saves = (() => {
     let result = { matches: false };
     if (url && save && save.url) {
       try {
-        if (save.type === "exact") {
-          result = matchesExact(url, save);
-        } else if (save.type === "pattern") {
-          result = matchesPattern(url, save);
-        }
-        // The default will be regex so we don't have to have a type for Save / Database IS sources
-        else {
-          result = matchesRegularExpression(url, save);
+        switch (save.type) {
+          case "exact":
+            result = matchesExact(url, save);
+            break;
+          case "pattern":
+            result = matchesPattern(url, save);
+            break;
+          // The default will be regex so we don't have to have a type for Save / Database IS sources
+          case "regex":
+          default:
+            result = matchesRegularExpression(url, save);
+            break;
         }
       } catch (e) {
         console.log("matchesSave() - Error:");
@@ -249,15 +259,15 @@ const Saves = (() => {
    * 5. Alternative Exact - For matching Database URLs. Surrounded by ( )
    *
    * Alternative Exact Note:
-   * The altURL is used to match only against database URLs. For example, you can exclude Database Generic Rules like:
+   * The altURL is used to match only against database URLs. For example, you can exclude Database Generic Items like:
    * ^https?://. ^https?://.+ ^https?://.. ^https?://...
-   * SPECIFICALLY, and without having to exclude ALL Database URLs that would match those rules in using a regular
+   * SPECIFICALLY, and without having to exclude ALL Database URLs that would match those items in using a regular
    * expression or pattern.
    *
-   * @param url      the URL to match (the actual tab URL)
-   * @param altURL   the alternative URL to match (e.g. the database URL, not tab URL; only applies to database lists)
-   * @param list     the list of url patterns or regular expressions that might match the url
-   * @param listName the name of the list (e.g. "Whitelist", "Database Blacklist", "Database Whitelist")
+   * @param {string} url - the URL to match (the actual tab URL)
+   * @param {string} altURL - the alternative URL to match (e.g. the database URL, not tab URL; only applies to database lists)
+   * @param {string[]} list - the array of url patterns or regular expressions that might match the url
+   * @param {string} listName - the name of the list (e.g. "Whitelist", "Database Blacklist", "Database Whitelist"); this is only used for console logging
    * @returns {{type: string, matches: boolean, url: string}} the matches
    * @public
    */
@@ -300,9 +310,9 @@ const Saves = (() => {
   /**
    * Tests if a save matches a URL exactly. This process is somewhat complex in the case of incrementing.
    *
-   * @param url  the URL to match
-   * @param save the saved exact URL
-   * @returns {{selection: {selectionStart: *, selection: *}, matches: *}} the matches with selection
+   * @param {string} url - the URL to match
+   * @param {Object} save - the save object
+   * @returns {{selection: {selectionStart: *, selection: *}, matches: boolean}} the matches with selection
    * @private
    */
   function matchesExact(url, save) {
@@ -330,9 +340,9 @@ const Saves = (() => {
    * Tests if a saved pattern matches a URL.
    * Note: A "pattern" is either a "substring" or "wildcard."
    *
-   * @param url  the URL to match
-   * @param save the saved pattern
-   * @returns {{matches: *}} the matches
+   * @param {string} url - the URL to match
+   * @param {Object} save - the save object
+   * @returns {{matches: boolean}} the matches
    * @private
    */
   function matchesPattern(url, save) {
@@ -351,9 +361,9 @@ const Saves = (() => {
    * Tests if a saved regular expression matches a URL.
    * Note: We do not escape regular expressions.
    *
-   * @param url  the URL to match
-   * @param save the saved regular expression
-   * @returns {{matches: *}} the matches
+   * @param {string} url - the URL to match
+   * @param {Object} save - the save object
+   * @returns {{matches: boolean}} the matches
    * @private
    */
   function matchesRegularExpression(url, save) {

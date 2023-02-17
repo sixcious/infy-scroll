@@ -7,7 +7,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <title>EP UI</title>
+    <title>EP</title>
     <link rel="stylesheet" href="../lib/material/material-components-web.min.css">
     <link rel="stylesheet" href="../lib/balloon/balloon.min.css">
     <link rel="stylesheet" href="../lib/hover/hover.css">
@@ -72,9 +72,9 @@
       </div>
     </header>
     <nav id="nav">
-      <div id="minimize-button" class="icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="minimize-button" data-balloon-pos="down">
+      <div id="resize-button" class="icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="resize-button" data-balloon-pos="down">
         <label class="hvr-grow">
-          <svg id="minimize-svg" class="smaller-icon"><use href="../lib/fontawesome/regular.svg#window-minimize"></use></svg>
+          <svg id="resize-svg" class="smaller-icon"><use href="../lib/fontawesome/regular.svg#window-minimize"></use></svg>
         </label>
       </div>
       <div id="move-button" class="icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="move-button" data-balloon-pos="down">
@@ -90,11 +90,16 @@
     </nav>
     <main id="main">
       <section id="tips">
-        <span data-id="picker-tips" data-i18n="textContent"></span>
-        <a href="https://github.com/sixcious/infy-scroll/wiki/Element-Picker" target="_blank" data-id="picker-tips-guide" data-i18n="textContent"></a>.
-        <br><br>
-        <svg class="error-icon smaller-icon"><use href="../lib/fontawesome/alt.svg#solid-circle-exclamation"></use></svg>
-        <span data-id="picker-tips-disclaimer" data-i18n="textContent"></span>
+        <div id="tips-maximized">
+          <span data-id="picker-tips" data-i18n="textContent"></span>
+          <a href="https://github.com/sixcious/infy-scroll/wiki/Element-Picker" target="_blank" data-id="picker-tips-guide" data-i18n="textContent"></a>.
+          <br><br>
+          <svg class="error-icon smaller-icon"><use href="../lib/fontawesome/alt.svg#solid-circle-exclamation"></use></svg>
+          <span data-id="picker-tips-disclaimer" data-i18n="textContent"></span>
+        </div>
+        <div id="tips-minimized">
+          <span data-id="picker-tips-minimized" data-i18n="textContent"></span>
+        </div>
       </section>
       <section id="content">
         <div class="grid-row-2c">
@@ -104,7 +109,14 @@
               <div id="element-current"></div>
             </div>
             <div id="data">
-              <div id="data-label"></div>
+              <div id="data-label-copy">
+                <span id="data-label"></span>
+                <div id="data-copy" class="icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="data-copy" data-balloon-pos="right">
+                  <label class="hvr-grow">
+                    <svg class="smaller-icon"><use href="../lib/fontawesome/regular.svg#clipboard"></use></svg>
+                  </label>
+                </div>
+              </div>
               <div id="data-value"></div>
             </div>
           </div>

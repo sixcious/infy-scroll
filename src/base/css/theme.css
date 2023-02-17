@@ -8,7 +8,7 @@
 /* @see https://github.com/material-components/material-components-web/blob/master/docs/theming.md */
 
 /* Variables */
-/* --mdc-theme-primary - URL Incrementer: #33335B Infy Scroll: #615492 Downloadyze: #262626 */
+/* --mdc-theme-primary - URL Incrementer: #33335B/#5A5A82 Infy Scroll: #615492/#6E619F Downloadyze: #262626/? */
 
 :root {
   --mdc-theme-primary-light: #615492;
@@ -19,7 +19,8 @@
   --mdc-theme-secondary-dark: #009A86;
   --mdc-theme-error-light: #B00020;
   --mdc-theme-error-dark: #B64D60;
-  --mdc-theme-warning: var(--auto-color);
+  --mdc-theme-warning-light: #FFCD56;
+  --mdc-theme-warning-dark: #FFCD56;
   --light-background: #FFFFFF;
   --light-background-rgb: 255,255,255;
   --dark-background: #202124; /* #202124 is by Google, also consider: #1C1B22 (Firefox), #0D1117 (GitHub), #1A1E24 (?), #1E1E1E, #191919, #121212 */
@@ -68,6 +69,7 @@
   --mdc-theme-primary-rgb: var(--mdc-theme-primary-light-rgb);
   --mdc-theme-secondary: var(--mdc-theme-secondary-light);
   --mdc-theme-error: var(--mdc-theme-error-light);
+  --mdc-theme-warning: var(--mdc-theme-warning-light);
   --mdc-theme-background: var(--light-background);
   --mdc-theme-on-surface: var(--light-color);
   --mdc-theme-surface: var(--light-background);
@@ -99,6 +101,7 @@
   --mdc-theme-primary-rgb: var(--mdc-theme-primary-dark-rgb);
   --mdc-theme-secondary: var(--mdc-theme-secondary-dark);
   --mdc-theme-error: var(--mdc-theme-error-dark);
+  --mdc-theme-warning: var(--mdc-theme-warning-dark);
   --mdc-theme-background: var(--dark-background);
   --mdc-theme-on-surface: var(--dark-color);
   --mdc-theme-surface: var(--dark-background);
@@ -130,6 +133,7 @@
     --mdc-theme-primary-rgb: var(--mdc-theme-primary-dark-rgb);
     --mdc-theme-secondary: var(--mdc-theme-secondary-dark);
     --mdc-theme-error: var(--mdc-theme-error-dark);
+    --mdc-theme-warning: var(--mdc-theme-warning-dark);
     --mdc-theme-background: var(--dark-background);
     --mdc-theme-on-surface: var(--dark-color);
     --mdc-theme-surface: var(--dark-background);
@@ -188,7 +192,8 @@ body {
   border-color: var(--mdc_border-color);
 }
 
-.mdc-data-table__row, .mdc-data-table__pagination {
+.mdc-data-table__row,
+.mdc-data-table__pagination {
   border-top-color: var(--mdc_border-color);
 }
 
@@ -211,13 +216,15 @@ body {
 }
 
 /* Note: This override is needed due to setting the dark/light color and the rule not being as specific with the leading ".mdc-drawer " */
-.mdc-drawer .mdc-list-item--selected .mdc-list-item__graphic, .mdc-drawer .mdc-list-item--activated .mdc-list-item__graphic {
+.mdc-drawer .mdc-list-item--selected .mdc-list-item__graphic,
+.mdc-drawer .mdc-list-item--activated .mdc-list-item__graphic {
   color: var(--mdc-theme-primary);
 }
 
 /* mdc-icon */
 
-.mdc-icon-button::before, .mdc-icon-button::after {
+.mdc-icon-button::before,
+.mdc-icon-button::after {
   background: var(--color);
 }
 
@@ -267,26 +274,49 @@ body {
 .mdc-drawer .mdc-list-item__graphic,
 .mdc-select:not(.mdc-select--disabled) .mdc-floating-label,
 .mdc-tab .mdc-tab__text-label,
-.mdc-text-field:not(.mdc-text-field--disabled) .mdc-floating-label,
-.mdc-text-field:not(.mdc-text-field--disabled)+.mdc-text-field-helper-line .mdc-text-field-helper-text {
+.mdc-text-field:not(.mdc-text-field--disabled):not(.mdc-text-field--invalid) .mdc-floating-label,
+.mdc-text-field:not(.mdc-text-field--disabled):not(.mdc-text-field--invalid)+.mdc-text-field-helper-line .mdc-text-field-helper-text {
   color: var(--mdc-tab__text-label_color);
 }
 
 .mdc-checkbox__native-control:enabled:not(:checked):not(:indeterminate):not([data-indeterminate=true])~.mdc-checkbox__background,
-.mdc-data-table__header-row-checkbox .mdc-checkbox__native-control:enabled:not(:checked):not(:indeterminate):not([data-indeterminate=true])~.mdc-checkbox__background, .mdc-data-table__row-checkbox .mdc-checkbox__native-control:enabled:not(:checked):not(:indeterminate):not([data-indeterminate=true])~.mdc-checkbox__background,
+.mdc-data-table__header-row-checkbox .mdc-checkbox__native-control:enabled:not(:checked):not(:indeterminate):not([data-indeterminate=true])~.mdc-checkbox__background,
+.mdc-data-table__row-checkbox .mdc-checkbox__native-control:enabled:not(:checked):not(:indeterminate):not([data-indeterminate=true])~.mdc-checkbox__background,
 .mdc-radio .mdc-radio__native-control:enabled:not(:checked)+.mdc-radio__background .mdc-radio__outer-circle {
   border-color: var(--mdc-checkbox_border-color);
 }
 
-.mdc-select--outlined:not(.mdc-select--disabled) .mdc-notched-outline__leading, .mdc-select--outlined:not(.mdc-select--disabled) .mdc-notched-outline__notch, .mdc-select--outlined:not(.mdc-select--disabled) .mdc-notched-outline__trailing,
-.mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__leading, .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__notch, .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__trailing,
-.mdc-text-field--textarea:not(.mdc-text-field--disabled) .mdc-notched-outline__leading, .mdc-text-field--textarea:not(.mdc-text-field--disabled) .mdc-notched-outline__notch, .mdc-text-field--textarea:not(.mdc-text-field--disabled) .mdc-notched-outline__trailing {
+.mdc-select--outlined:not(.mdc-select--disabled) .mdc-notched-outline__leading,
+.mdc-select--outlined:not(.mdc-select--disabled) .mdc-notched-outline__notch,
+.mdc-select--outlined:not(.mdc-select--disabled) .mdc-notched-outline__trailing,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__leading,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__notch,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__trailing,
+.mdc-text-field--textarea:not(.mdc-text-field--disabled) .mdc-notched-outline__leading,
+.mdc-text-field--textarea:not(.mdc-text-field--disabled) .mdc-notched-outline__notch,
+.mdc-text-field--textarea:not(.mdc-text-field--disabled) .mdc-notched-outline__trailing {
   border-color: var(--mdc-text-field--outlined_color);
 }
 
-.mdc-select--outlined:not(.mdc-select--disabled):not(.mdc-select--focused) .mdc-select__anchor:hover .mdc-notched-outline .mdc-notched-outline__leading, .mdc-select--outlined:not(.mdc-select--disabled):not(.mdc-select--focused) .mdc-select__anchor:hover .mdc-notched-outline .mdc-notched-outline__notch, .mdc-select--outlined:not(.mdc-select--disabled):not(.mdc-select--focused) .mdc-select__anchor:hover .mdc-notched-outline .mdc-notched-outline__trailing,
-.mdc-text-field--outlined:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):hover .mdc-notched-outline .mdc-notched-outline__leading, .mdc-text-field--outlined:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):hover .mdc-notched-outline .mdc-notched-outline__notch, .mdc-text-field--outlined:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):hover .mdc-notched-outline .mdc-notched-outline__trailing,
-.mdc-text-field--textarea:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):hover .mdc-notched-outline .mdc-notched-outline__leading, .mdc-text-field--textarea:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):hover .mdc-notched-outline .mdc-notched-outline__notch, .mdc-text-field--textarea:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):hover .mdc-notched-outline .mdc-notched-outline__trailing {
+/* This is related to the above border-color style; mdc-text-field--invalid is tricky to set so we have to set it manually */
+.mdc-text-field--outlined:not(.mdc-text-field--disabled).mdc-text-field--invalid .mdc-notched-outline__leading,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled).mdc-text-field--invalid .mdc-notched-outline__notch,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled).mdc-text-field--invalid .mdc-notched-outline__trailing,
+.mdc-text-field--textarea:not(.mdc-text-field--disabled).mdc-text-field--invalid .mdc-notched-outline__leading,
+.mdc-text-field--textarea:not(.mdc-text-field--disabled).mdc-text-field--invalid .mdc-notched-outline__notch,
+.mdc-text-field--textarea:not(.mdc-text-field--disabled).mdc-text-field--invalid .mdc-notched-outline__trailing {
+  border-color: var(--mdc-theme-error);
+}
+
+.mdc-select--outlined:not(.mdc-select--disabled):not(.mdc-select--focused) .mdc-select__anchor:hover .mdc-notched-outline .mdc-notched-outline__leading,
+.mdc-select--outlined:not(.mdc-select--disabled):not(.mdc-select--focused) .mdc-select__anchor:hover .mdc-notched-outline .mdc-notched-outline__notch,
+.mdc-select--outlined:not(.mdc-select--disabled):not(.mdc-select--focused) .mdc-select__anchor:hover .mdc-notched-outline .mdc-notched-outline__trailing,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):not(.mdc-text-field--invalid):hover .mdc-notched-outline .mdc-notched-outline__leading,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):not(.mdc-text-field--invalid):hover .mdc-notched-outline .mdc-notched-outline__notch,
+.mdc-text-field--outlined:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):not(.mdc-text-field--invalid):hover .mdc-notched-outline .mdc-notched-outline__trailing,
+.mdc-text-field--textarea:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):not(.mdc-text-field--invalid):hover .mdc-notched-outline .mdc-notched-outline__leading,
+.mdc-text-field--textarea:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):not(.mdc-text-field--invalid):hover .mdc-notched-outline .mdc-notched-outline__notch,
+.mdc-text-field--textarea:not(.mdc-text-field--disabled):not(.mdc-text-field--focused):not(.mdc-text-field--invalid):hover .mdc-notched-outline .mdc-notched-outline__trailing {
   border-color: var(--mdc-text-field__input_color);
 }
 
@@ -302,4 +332,9 @@ body {
 /* Note: mdc-select dropdown icon requires the mask set in a CSS rule above for dark/light theme */
 .mdc-select--focused .mdc-select__dropdown-icon {
   background: var(--mdc-theme-primary);
+}
+
+/* This is normally set as mdc-theme-primary by mdc, but it's a little hard to see the caret cursor on dark themes */
+.mdc-text-field:not(.mdc-text-field--invalid) .mdc-text-field__input {
+  caret-color: var(--mdc-text-field__input_color);
 }

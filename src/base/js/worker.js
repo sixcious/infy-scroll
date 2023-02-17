@@ -8,9 +8,11 @@
  * Worker is the service worker for the Manifest V3 extension. The manifest file no longer supports multiple background
  * scripts, so the worker imports the scripts every time the background needs to run.
  *
+ * Note: No name is used for this object because of the reserved interface name, {@link Worker}.
+ *
  * @see https://stackoverflow.com/questions/66406672/chrome-extension-mv3-modularize-service-worker-js-file
  */
-const Worker = (() => {
+(() => {
 
   console.log("Service Worker Started");
 

@@ -10,15 +10,17 @@
  *
  * Because the chrome.* api uses callbacks, this is a convenience object that allows the extension to use async/await
  * and be coded in a simpler fashion.
+ *
+ * Note: The name "Promisify" is used instead of the reserved object name, {@link Promise}.
  */
 const Promisify = (() => {
 
   /**
    * Gets the storage items via a promise-based wrapper for async/await callers.
    *
-   * @param key       (optional) the storage item key to get or null for all items
-   * @param namespace (optional) the storage namespace, either "local" or "sync"
-   * @param deletes   (optional) the items to delete from the cache; databases and saves are assumed to be deleted
+   * @param {string|string[]|null} key - (optional) the storage item key to get or null for all items
+   * @param {string} namespace - (optional) the storage namespace, either "local", "sync", or "session"
+   * @param {string[]} deletes - (optional) the items to delete from the cache; databases and saves are assumed to be deleted
    * @returns {Promise<{}>} the storage items
    * @public
    */
@@ -26,7 +28,7 @@ const Promisify = (() => {
     return new Promise(resolve => {
       chrome.storage[namespace].get(key, items => {
         deletes.forEach(del => { if (del !== key) { delete items[del]; } });
-        key ? resolve(items[key]) : resolve(items);
+        key && !Array.isArray(key) ? resolve(items[key]) : resolve(items);
       });
     });
   }
@@ -34,8 +36,8 @@ const Promisify = (() => {
   /**
    * Sets the storage items via a promise-based wrapper for async/await callers.
    *
-   * @param items     the storage items (object {}) to set
-   * @param namespace (optional) the storage namespace, either "local" or "sync"
+   * @param {Object} items - the storage items to set
+   * @param {string} namespace - (optional) the storage namespace, either "local" or "sync"
    * @returns {Promise<{}>}
    * @public
    */
@@ -49,8 +51,8 @@ const Promisify = (() => {
    * Removes a storage item via a promise-based wrapper for async/await callers.
    * Example: chrome.storage.local.remove("myStorageItemToRemove");
    *
-   * @param items     the storage items to remove, this can either be a String for one value or Array [] for multiple
-   * @param namespace (optional) the storage namespace, either "local" or "sync"
+   * @param {string|string[]} items - the storage items to remove, this can either be a String for one value or Array [] for multiple
+   * @param {string} namespace - (optional) the storage namespace, either "local" or "sync"
    * @returns {Promise<{}>}
    * @public
    */
@@ -63,7 +65,7 @@ const Promisify = (() => {
   /**
    * Clears the storage items via a promise-based wrapper for async/await callers.
    *
-   * @param namespace (optional) the storage namespace, either "local" or "sync"
+   * @param {string} namespace - (optional) the storage namespace, either "local" or "sync"
    * @returns {Promise<{}>}
    * @public
    */
@@ -94,7 +96,7 @@ const Promisify = (() => {
   /**
    * Sends a message to the extension's runtime (background) via a promise-based wrapper for async/await callers.
    *
-   * @param message the message object e.g. {greeting: "doSomething"}
+   * @param {Object} message - the message object e.g. {greeting: "doSomething"}
    * @returns {Promise<{}>} the response
    * @public
    */
@@ -114,8 +116,8 @@ const Promisify = (() => {
   /**
    * Sends a message to a tab's content script via a promise-based wrapper for async/await callers.
    *
-   * @param tabId   the content script's tab ID to send the message to
-   * @param message the message object e.g. {greeting: "doSomething"}
+   * @param {number} tabId - the content script's tab ID to send the message to
+   * @param {Object} message - the message object e.g. {greeting: "doSomething"}
    * @returns {Promise<{}>} the response
    * @public
    */
@@ -138,8 +140,8 @@ const Promisify = (() => {
    * Important: This should be the only chrome.* api function that handles a reject in the promise.
    * Example Usage: await Promisify.tabsExecuteScript(tabs[0].id, {file: "/js/script.js", runAt: "document_end"});
    *
-   * @param tabId   the content script's tab ID to send the message to
-   * @param details the details object e.g. {file: "my-content-script.js"}
+   * @param {number} tabId - the content script's tab ID to send the message to
+   * @param {Object} details - the details object e.g. {file: "my-content-script.js"}
    * @returns {Promise<{}>} the results array of the last statement executed in the content script
    * @public
    */
@@ -175,7 +177,7 @@ const Promisify = (() => {
   /**
    * Gets the queried tabs via a promise-based wrapper for async/await callers.
    *
-   * @param queryInfo (optional) the query object to use
+   * @param {Object} queryInfo - (optional) the query object to use
    * @returns {Promise<{}>} the tabs
    * @public
    */
@@ -193,7 +195,7 @@ const Promisify = (() => {
   //  *
   //  * Important: This should be the only chrome.* api function that handles a reject in the promise.
   //  *
-  //  * @param options the download options to use to download an item
+  //  * @param {Object} options - the download options to use to download an item
   //  * @returns {Promise<{}>} the downloadId of the downloaded item after successfully commencing, or undefined if an error
   //  * @public
   //  */
@@ -213,7 +215,7 @@ const Promisify = (() => {
   // /**
   //  * Cancels a download for async/await callers.
   //  *
-  //  * @param downloadId the id of the download to cancel
+  //  * @param {number} downloadId - the id of the download to cancel
   //  * @returns {Promise<{}>}
   //  * @public
   //  */
@@ -227,7 +229,7 @@ const Promisify = (() => {
   // /**
   //  * Requests a permission via a promise-based wrapper for async/await callers.
   //  *
-  //  * @param permission the permission object to request, e.g. {origins: ["<all_urls>"]}
+  //  * @param {Object} permission - the permission object to request, e.g. {origins: ["<all_urls>"]}
   //  * @returns {Promise<{}>} true if granted, false if not granted
   //  * @public
   //  */
@@ -243,7 +245,7 @@ const Promisify = (() => {
   // /**
   //  * Removes a permission via a promise-based wrapper for async/await callers.
   //  *
-  //  * @param permission the permission object to remove, e.g. {origins: ["<all_urls>"]}
+  //  * @param {Object} permission - the permission object to remove, e.g. {origins: ["<all_urls>"]}
   //  * @returns {Promise<{}>} true if removed, false if not removed
   //  * @public
   //  */
@@ -256,59 +258,14 @@ const Promisify = (() => {
   //   });
   // }
 
-  // Infy Scroll:
-  /**
-   * Loads an iframe.
-   *
-   * @param iframe the iframe
-   * @returns {Promise<{}>}
-   * @public
-   */
-  function iframeLoad(iframe) {
-    return new Promise((resolve, reject) => {
-      iframe.onload = resolve;
-      iframe.onerror = function () {
-        console.log("iframeLoad() onerror()");
-        reject("iframeLoad() onerror() - promise rejected");
-      };
-    });
-  }
-
-  /**
-   * Makes an XMLHttpRequest to a URL and returns its document via a promise-based wrapper for async/await callers.
-   *
-   * @param url          the url to make the request to
-   * @param method       the HTTP request method, e.g. "GET"
-   * @param responseType the request's response type, e.g. "document" ("text" is the default if not specified in XHR)
-   * @returns {Promise<>} the response
-   * @public
-   */
-  function xhr(url, method = "GET", responseType = "document") {
-    console.log("xhr() - method=" + method + ", responseType=" + responseType + ", url=" + url);
-    return new Promise((resolve, reject) => {
-      const request = new XMLHttpRequest();
-      request.open(method, url);
-      request.responseType = responseType;
-      request.onload = function (event) {
-        console.log("xhr() onload() - request.response=" + request.response);
-        resolve(request.response);
-      };
-      request.onerror = function () {
-        console.log("xhr() onerror() - request=" + request);
-        reject("xhr() onerror() - promise rejected");
-      };
-      request.send();
-    });
-  }
-
   /**
    * Makes the thread sleep for the specified duration (milliseconds).
    *
-   * @param ms the milliseconds to sleep
+   * @param {number} ms - the milliseconds to sleep
    * @returns {Promise<>}
    */
   function sleep(ms) {
-    console.log("Promisify.sleep()");
+    // console.log("Promisify.sleep()");
     return new Promise((resolve) => {
       setTimeout(resolve, ms);
     });
@@ -329,8 +286,6 @@ const Promisify = (() => {
     // downloadsCancel,
     // permissionsRequest,
     // permissionsRemove,
-    iframeLoad,
-    xhr,
     sleep
   };
 

@@ -115,9 +115,9 @@ textarea {
   overflow: hidden;
 }
 
-/* Firefox adds a blue border/outline if we don't specify an outline. This matches the default Chromium outline */
+/* Firefox adds a blue border/outline if we don't specify an outline. */
 pre:focus {
-  outline: 2px solid var(--mdc-theme-on-surface);
+  outline: 1px solid var(--mdc-theme-on-surface);
   border-radius: 3px;
 }
 
@@ -207,13 +207,17 @@ pre:focus {
   visibility: hidden;
 }
 
+.position-relative {
+  position: relative;
+}
+
 /* Classes */
 
 .below-table-row {
   margin-top: 2rem;
 }
 
-.button-group > button:not(last-child) {
+.button-group > .mdc-button:not(:last-child) {
   margin-right: 1rem;
 }
 
@@ -315,7 +319,7 @@ pre:focus {
   margin: -40px 0 0 -120px;
   opacity: 0;
   background: var(--balloon-color);
-  letter-spacing: .0178571429em;
+  letter-spacing: .0178571429rem;
   border-radius: 5px;
   color: rgba(255,255,255,.87);
   font-size: .875rem;
@@ -336,6 +340,7 @@ pre:focus {
 
 .overlay ul.error li:first-child {
   color: var(--error-overlay-color);
+  font-weight: 700;
 }
 
 .overlay-visible {
@@ -379,6 +384,11 @@ input[type="number"]:hover, input[type="number"]:focus {
 
 .mdc-button--outlined svg {
   fill: var(--mdc-theme-primary);
+}
+
+.mdc-button--raised:not(:disabled).mdc-button--red,
+.mdc-button--unelevated:not(:disabled).mdc-button--red {
+  background-color: var(--mdc-theme-error);
 }
 
 /* mdc-card */
@@ -485,6 +495,11 @@ svg.mdc-fab--icon {
 
 /* mdc-dialog */
 
+/* This is by default hidden and removes the scrollbar if one is present, causing an annoying reflow/jump in content */
+.mdc-dialog-scroll-lock {
+  overflow: auto;
+}
+
 .mdc-dialog__title {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -587,11 +602,6 @@ svg.mdc-chip__icon--leading {
   line-height: 1rem;
 }
 
-/* This is normally set as mdc-theme-primary by mdc, but it's a little hard to see the caret cursor on dark themes */
-.mdc-text-field .mdc-text-field__input {
-  caret-color: var(--mdc-text-field__input_color);
-}
-
 .mdc-text-field.mdc-text-field--textarea {
   height: auto;
 }
@@ -661,6 +671,15 @@ svg.mdc-chip__icon--leading {
   letter-spacing: normal;
 }
 
+/* Custom Widths needed on certain tooltips in the Popup */
+[aria-label][data-balloon-pos][data-balloon-mod="100"]:after {
+  width: 100px;
+}
+
+[aria-label][data-balloon-pos][data-balloon-mod="125"]:after {
+  width: 125px;
+}
+
 /* Balloon sets this to always be cursor:pointer, but tooltips without underline shouldn't change their cursor */
 /* TODO: Unfortunately, this overrides the cursor for things like MDC chips, which should be pointer. */
 /*[aria-label][data-balloon-pos].tooltip-without-underline {
@@ -674,5 +693,4 @@ svg.mdc-chip__icon--leading {
 .mascot {
   width: 334px;
   height: 549px;
-  z-index: 2147483647;
 }

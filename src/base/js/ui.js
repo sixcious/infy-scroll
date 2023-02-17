@@ -5,7 +5,7 @@
  */
 
 /**
- * UI provides user-interface specific logic, such as generating alert messages and clicking buttons.
+ * UI provides user interface functions, such as generating alert messages and clicking buttons.
  */
 const UI = (() => {
 
@@ -15,8 +15,8 @@ const UI = (() => {
    * This function is derived from the sample Google extension, Proxy Settings,
    * by Mike West.
    *
-   * @param messages the messages array to display, line by line
-   * @param isError  true if this is an error alert, false otherwise
+   * @param {string[]} messages - the messages array to display, line by line
+   * @param {boolean} isError - true if this is an error alert, false otherwise
    * @see https://developer.chrome.com/extensions/samples#search:proxy
    * @public
    */
@@ -40,10 +40,10 @@ const UI = (() => {
   }
 
   /**
-   * Applies a Hover.css effect to DOM elements on click events.
+   * Applies a Hover.css effect to elements on click events.
    *
-   * @param el     the DOM element to apply the effect to
-   * @param effect the Hover.css effect (class name) to use
+   * @param {Element} el - the element to apply the effect to
+   * @param {string} effect - the Hover.css effect (class name) to use
    * @public
    */
   function clickHoverCss(el, effect) {
@@ -52,10 +52,33 @@ const UI = (() => {
     setTimeout(function () { el.classList.add(effect); }, 50);
   }
 
+  /**
+   * Fires confetti using Canvas Confetti!
+   *
+   * This function is derived from the sample Canvas Confetti realistic option by catdad.
+   *
+   * @param {PointerEvent} event - the pointer event that triggered this
+   * @see https://www.kirilv.com/canvas-confetti/#realistic
+   * @public
+   */
+  function fireConfetti(event) {
+    const options = [
+      { particleRatio: 0.25, spread: 26, startVelocity: 55, scalar: 1.0, angle: 45 },
+      { particleRatio: 0.20, spread: 60, scalar: 1.0, angle: 135 },
+      { particleRatio: 0.35, spread: 100,                    decay: 0.81, scalar: 0.8, angle: 60 },
+      { particleRatio: 0.10, spread: 120, startVelocity: 25, decay: 0.82, scalar: 1.2, angle: 120 },
+      { particleRatio: 0.10, spread: 120, startVelocity: 45, angle: 90 }
+    ];
+    for (const option of options) {
+      confetti(Object.assign({ origin: { x: event.clientX / (document.documentElement?.clientWidth || 1), y: event.clientY / (document.documentElement?.clientHeight || 1) } }, option, { particleCount: Math.floor(200 * option.particleRatio) }));
+    }
+  }
+
   // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
   return {
     generateAlert,
-    clickHoverCss
+    clickHoverCss,
+    fireConfetti
   };
 
 })();

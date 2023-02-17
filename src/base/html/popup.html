@@ -64,10 +64,10 @@
                   <span class="mdc-list-item__text" id="action-increment-label" data-i18n="textContent"></span>
                   <div class="drawer-collapsed-tooltip tooltip-without-underline" aria-describedby="tooltip" aria-label="action-increment-label" data-balloon-pos="right">&nbsp;</div>
                 </li>
-                <li class="mdc-list-item" data-action="button">
+                <li class="mdc-list-item" data-action="click">
                   <svg class="mdc-list-item__graphic"><use href="../lib/fontawesome/solid.svg#circle-dot"></use></svg>
-                  <span class="mdc-list-item__text" id="action-button-label" data-i18n="textContent"></span>
-                  <div class="drawer-collapsed-tooltip tooltip-without-underline" aria-describedby="tooltip" aria-label="action-button-label" data-balloon-pos="right">&nbsp;</div>
+                  <span class="mdc-list-item__text" id="action-click-label" data-i18n="textContent"></span>
+                  <div class="drawer-collapsed-tooltip tooltip-without-underline" aria-describedby="tooltip" aria-label="action-click-label" data-balloon-pos="right">&nbsp;</div>
                 </li>
                 <li class="mdc-list-item" data-action="list">
                   <svg class="mdc-list-item__graphic"><use href="../lib/fontawesome/regular.svg#rectangle-list"></use></svg>
@@ -99,8 +99,6 @@
                   <span class="mdc-list-item__text" id="append-media-label" data-i18n="textContent"></span>
                   <div class="drawer-collapsed-tooltip tooltip-without-underline" aria-describedby="tooltip" aria-label="append-media-label" data-balloon-pos="right">&nbsp;</div>
                 </li>
-              </ul>
-              <ul id="append-button-list" class="mdc-list" data-css="mdc-list-2">
                 <li class="mdc-list-item" data-append="none">
                   <svg class="mdc-list-item__graphic"><use href="../lib/fontawesome/solid.svg#ban"></use></svg>
                   <span class="mdc-list-item__text" id="append-none-label" data-i18n="textContent"></span>
@@ -114,7 +112,7 @@
               </ul>
             </div>
             <div id="version-theme" class="display-none">
-              <span id="version-theme-number" data-id="version-number" data-i18n="textContent"></span><svg id="version-theme-icon"><use href="../lib/fontawesome/solid.svg#ghost"></use></svg>
+              <span id="version-theme-number" data-id="version-number" data-i18n="textContent"></span><svg id="version-theme-icon"><use href="../img/symbol.svg#icon"></use></svg>
             </div>
           </div>
         </aside>
@@ -166,7 +164,7 @@
                     </div>
                   </div>
                 </div>
-                <div id="next-prev-inputs">
+                <div id="next-prev-inputs" class="position-relative">
                   <div id="next">
                     <div id="next-path" class="section">
                       <div id="next-path-text-field-container" class="text-field-container display-inline-block">
@@ -181,7 +179,8 @@
                           </div>
                         </div>
                       </div>
-                      <div id="element-picker-next-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="left">
+                      <div id="next-type-label" class="type-label"></div>
+                      <div id="element-picker-next-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                         <label class="hvr-grow-2x">
                           <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
                         </label>
@@ -228,7 +227,8 @@
                           </div>
                         </div>
                       </div>
-                      <div id="element-picker-prev-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="left">
+                      <div id="prev-type-label" class="type-label"></div>
+                      <div id="element-picker-prev-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                         <label class="hvr-grow-2x">
                           <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
                         </label>
@@ -261,26 +261,26 @@
                       </div>
                     </div>
                   </div>
-                  <div id="next-prev-link-type">
-                    <label id="next-prev-chip-set-label" data-i18n="textContent"></label>
+                  <div id="next-prev-link-type" class="chip-set chip-set-absolute">
+                    <label data-id="next-prev-chip-set-label" class="chip-set-label" data-i18n="textContent"></label>
                     <div id="next-prev-chip-set" class="mdc-chip-set mdc-chip-set--choice" role="grid">
                       <div id="prev-chip" class="mdc-chip" role="row" data-action="prev">
                         <div class="mdc-chip__ripple"></div>
                         <svg class="mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
                         <span role="gridcell">
-                      <span role="button" tabindex="0" class="mdc-chip__primary-action">
-                        <span data-id="prev-label" data-i18n="textContent" class="mdc-chip__text"></span>
-                      </span>
-                    </span>
+                          <span role="button" tabindex="0" class="mdc-chip__primary-action">
+                            <span data-id="prev-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                          </span>
+                        </span>
                       </div>
                       <div id="next-chip" class="mdc-chip" role="row" data-action="next">
                         <div class="mdc-chip__ripple"></div>
                         <svg class="material-icons mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
                         <span role="gridcell">
-                      <span role="button" tabindex="0" class="mdc-chip__primary-action">
-                        <span data-id="next-label" data-i18n="textContent" class="mdc-chip__text"></span>
-                      </span>
-                    </span>
+                          <span role="button" tabindex="0" class="mdc-chip__primary-action">
+                            <span data-id="next-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                          </span>
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -428,27 +428,28 @@
                     <label id="leading-zeros-pad-label" for="leading-zeros-input" data-i18n="textContent"></label>
                   </div>
                   <div id="base-case" class="display-none">
-                    <div class="mdc-form-field">
-                      <div class="mdc-radio">
-                        <input class="mdc-radio__native-control" type="radio" id="base-case-lowercase-input" name="base-case" value="lowercase">
-                        <div class="mdc-radio__background">
-                          <div class="mdc-radio__outer-circle"></div>
-                          <div class="mdc-radio__inner-circle"></div>
+                    <div class="chip-set">
+                      <label id="base-case-chip-set-label" class="chip-set-label" data-id="base-case-label" data-i18n="textContent"></label>
+                      <div id="base-case-chip-set" class="mdc-chip-set mdc-chip-set--choice" role="grid">
+                        <div id="base-case-lowercase-chip" class="mdc-chip" role="row" data-value="lowercase">
+                          <div class="mdc-chip__ripple"></div>
+                          <svg class="mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
+                          <span role="gridcell">
+                            <span role="button" tabindex="0" class="mdc-chip__primary-action">
+                              <span data-id="base-case-lowercase-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                            </span>
+                          </span>
                         </div>
-                        <div class="mdc-radio__ripple"></div>
-                      </div>
-                      <label for="base-case-lowercase-input" id="base-case-lowercase-label" data-i18n="textContent"></label>
-                    </div>
-                    <div class="mdc-form-field">
-                      <div class="mdc-radio">
-                        <input class="mdc-radio__native-control" type="radio" id="base-case-uppercase-input" name="base-case" value="uppercase">
-                        <div class="mdc-radio__background">
-                          <div class="mdc-radio__outer-circle"></div>
-                          <div class="mdc-radio__inner-circle"></div>
+                        <div id="base-case-uppercase-chip" class="mdc-chip" role="row" data-value="uppercase">
+                          <div class="mdc-chip__ripple"></div>
+                          <svg class="mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
+                          <span role="gridcell">
+                            <span role="button" tabindex="0" class="mdc-chip__primary-action">
+                              <span data-id="base-case-uppercase-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                            </span>
+                          </span>
                         </div>
-                        <div class="mdc-radio__ripple"></div>
                       </div>
-                      <label for="base-case-uppercase-input" id="base-case-uppercase-label" data-i18n="textContent"></label>
                     </div>
                   </div>
                   <div id="base-date" class="display-none">
@@ -464,38 +465,37 @@
                     </div>
                   </div>
                   <div id="base-roman" class="display-none">
-                    <div class="mdc-form-field">
-                      <div class="mdc-radio">
-                        <input class="mdc-radio__native-control" type="radio" id="base-roman-latin-input" name="base-roman" value="latin">
-                        <div class="mdc-radio__background">
-                          <div class="mdc-radio__outer-circle"></div>
-                          <div class="mdc-radio__inner-circle"></div>
+                    <div class="chip-set">
+                      <label id="base-roman-chip-set-label" class="chip-set-label" data-id="base-roman-label" data-i18n="textContent"></label>
+                      <div id="base-roman-chip-set" class="mdc-chip-set mdc-chip-set--choice" role="grid">
+                        <div id="base-roman-latin-chip" class="mdc-chip tooltip-without-underline" role="row" data-value="latin" aria-describedby="tooltip" aria-label="base-roman-latin-tooltip" data-balloon-pos="up">
+                          <div class="mdc-chip__ripple"></div>
+                          <svg class="mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
+                          <span role="gridcell">
+                            <span role="button" tabindex="0" class="mdc-chip__primary-action">
+                              <span data-id="base-roman-latin-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                            </span>
+                          </span>
                         </div>
-                        <div class="mdc-radio__ripple"></div>
-                      </div>
-                      <label for="base-roman-latin-input" id="base-roman-latin-label" data-i18n="textContent" aria-describedby="tooltip" aria-label="base-roman-latin-tooltip" data-balloon-pos="up" class="tooltip-without-underline"></label>
-                    </div>
-                    <div class="mdc-form-field">
-                      <div class="mdc-radio">
-                        <input class="mdc-radio__native-control" type="radio" id="base-roman-u216x-input" name="base-roman" value="u216x">
-                        <div class="mdc-radio__background">
-                          <div class="mdc-radio__outer-circle"></div>
-                          <div class="mdc-radio__inner-circle"></div>
+                        <div id="base-roman-u216x-chip" class="mdc-chip tooltip-without-underline" role="row" data-value="u216x" aria-describedby="tooltip" aria-label="base-roman-u216x-tooltip" data-balloon-pos="up">
+                          <div class="mdc-chip__ripple"></div>
+                          <svg class="mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
+                          <span role="gridcell">
+                            <span role="button" tabindex="0" class="mdc-chip__primary-action">
+                              <span data-id="base-roman-u216x-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                            </span>
+                          </span>
                         </div>
-                        <div class="mdc-radio__ripple"></div>
-                      </div>
-                      <label for="base-roman-u216x-input" id="base-roman-u216x-label" data-i18n="textContent" aria-describedby="tooltip" aria-label="base-roman-u216x-tooltip" data-balloon-pos="up" class="tooltip-without-underline"></label>
-                    </div>
-                    <div class="mdc-form-field">
-                      <div class="mdc-radio">
-                        <input class="mdc-radio__native-control" type="radio" id="base-roman-u217x-input" name="base-roman" value="u217x">
-                        <div class="mdc-radio__background">
-                          <div class="mdc-radio__outer-circle"></div>
-                          <div class="mdc-radio__inner-circle"></div>
+                        <div id="base-roman-u217x-chip" class="mdc-chip tooltip-without-underline" role="row" data-value="u217x" aria-describedby="tooltip" aria-label="base-roman-u217x-tooltip" data-balloon-pos="up">
+                          <div class="mdc-chip__ripple"></div>
+                          <svg class="mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
+                          <span role="gridcell">
+                              <span role="button" tabindex="0" class="mdc-chip__primary-action">
+                                <span data-id="base-roman-u217x-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                              </span>
+                            </span>
                         </div>
-                        <div class="mdc-radio__ripple"></div>
                       </div>
-                      <label for="base-roman-u217x-input" id="base-roman-u217x-label" data-i18n="textContent" aria-describedby="tooltip" aria-label="base-roman-u217x-tooltip" data-balloon-pos="up" class="tooltip-without-underline"></label>
                     </div>
                   </div>
                   <div id="base-custom" class="display-none">
@@ -512,7 +512,7 @@
                   </div>
                 </div>
               </section>
-              <section id="button">
+              <section id="click">
                 <header id="button-result" class="async-result">
                   <div id="button-result-loading" class="result-loading">
                     <span data-id="loading-message" data-i18n="textContent"></span>
@@ -540,7 +540,7 @@
                     <span id="button-result-details-error" class="error-details" aria-describedby="tooltip" aria-label="placeholder" data-balloon-pos="down" data-balloon-length="medium"></span>
                   </div>
                 </header>
-                <div id="button-section" class="section">
+                <div id="button-path" class="section">
                   <div id="button-path-text-field-container" class="text-field-container display-inline-block">
                     <div id="button-path-text-field" class="mdc-text-field mdc-text-field--textarea path">
                       <textarea id="button-path-textarea" class="mdc-text-field__input" spellcheck="false"></textarea>
@@ -553,33 +553,14 @@
                       </div>
                     </div>
                   </div>
-
-                  <div id="element-picker-button-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="left">
+                  <div id="button-type-label" class="type-label"></div>
+                  <div id="element-picker-button-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                     <label class="hvr-grow-2x">
                       <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
                     </label>
                   </div>
                 </div>
-                <div class="flex-row section">
-                  <div id="button-detection-select" class="mdc-select mdc-select--outlined mdc-select--no-label display-inline">
-                    <div class="mdc-select__anchor">
-                      <input id="button-detection-selected-text" class="mdc-select__selected-text" type="text" disabled readonly>
-                      <i class="mdc-select__dropdown-icon"></i>
-                      <span class="mdc-notched-outline">
-                        <span class="mdc-notched-outline__leading"></span>
-                        <span class="mdc-notched-outline__notch">
-                        <span data-id="button-detection-label" class="mdc-floating-label mdc-floating-label--float-above" data-i18n="textContent"></span>
-                      </span>
-                        <span class="mdc-notched-outline__trailing"></span>
-                      </span>
-                    </div>
-                    <div class="mdc-select__menu mdc-menu mdc-menu-surface">
-                      <ul class="mdc-list" id="button-detection-list">
-                        <li class="mdc-list-item" data-id="button-detection-auto-label" data-value="auto" data-i18n="textContent"></li>
-                        <li class="mdc-list-item" data-id="button-detection-manual-label" data-value="manual" data-i18n="textContent"></li>
-                      </ul>
-                    </div>
-                  </div>
+                <div id="button-options" class="flex-row position-relative">
                   <div id="button-position">
                     <div id="button-position-text-field" class="mdc-text-field mdc-text-field--outlined">
                       <input id="button-position-input" class="mdc-text-field__input" type="number" min="0" max="10000" step="100">
@@ -594,8 +575,33 @@
                     &nbsp;
                     <span data-id="scroll-append-threshold-pixels-bottom-label" data-i18n="textContent"></span>
                   </div>
+                  <div id="button-detection" class="chip-set chip-set-absolute">
+                    <label class="chip-set-label" data-id="button-detection-label" data-i18n="textContent"></label>
+                    <div id="button-detection-chip-set" class="mdc-chip-set mdc-chip-set--choice" role="grid">
+                      <div id="button-detection-manual-chip" class="mdc-chip" role="row" data-value="manual">
+                        <div class="mdc-chip__ripple"></div>
+                        <svg class="mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
+                        <span role="gridcell">
+                          <span role="button" tabindex="0" class="mdc-chip__primary-action">
+                            <span data-id="button-detection-manual-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                          </span>
+                        </span>
+                      </div>
+                      <div id="button-detection-auto-chip" class="mdc-chip" role="row" data-value="auto">
+                        <div class="mdc-chip__ripple"></div>
+                        <svg class="mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
+                        <span role="gridcell">
+                          <span role="button" tabindex="0" class="mdc-chip__primary-action">
+                            <span data-id="button-detection-auto-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p id="button-details" data-i18n="textContent"></p>
+                <div class="flex-row">
+                  <p id="button-details" data-i18n="textContent"></p>
+                </div>
               </section>
               <section id="list">
                 <header id="list-header" class="async-result">
@@ -702,7 +708,7 @@
                       <span id="page-element-result-message-error" data-i18n="textContent"></span>
                       <span id="page-element-result-details-error" class="error-details" aria-describedby="tooltip" aria-label="placeholder" data-balloon-pos="up" data-balloon-length="medium"></span>
                     </div>
-                    <div id="auto-detect-element-button" class="icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="auto-detect-element-button" data-balloon-pos="up">
+                    <div id="auto-detect-page-element-button" class="icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="auto-detect-page-element-button" data-balloon-pos="up">
                       <label class="hvr-grow-2x">
                         <svg><use href="../lib/fontawesome/solid.svg#magnifying-glass"></use></svg>
                       </label>
@@ -724,7 +730,8 @@
                       </div>
                     </div>
                   </div>
-                  <div id="element-picker-element-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="left">
+                  <div id="page-element-type-label" class="type-label"></div>
+                  <div id="element-picker-element-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                     <label class="hvr-grow-2x">
                       <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
                     </label>
@@ -742,7 +749,7 @@
                     </div>
                   </div>
                 </div>
-                <div id="page-element-iframe" class="flex-row align-start">
+                <div id="page-element-iframe" class="flex-row align-start position-relative">
                   <div id="page-element-iframe-form-field" class="mdc-form-field tooltip-without-underline" aria-describedby="tooltip" aria-label="page-element-iframe-tooltip" data-balloon-pos="up" data-balloon-length="large">
                     <div class="mdc-checkbox">
                       <input id="page-element-iframe-input" type="checkbox" class="mdc-checkbox__native-control"/>
@@ -755,26 +762,26 @@
                     </div>
                     <label id="page-element-iframe-label" for="page-element-iframe-input" data-i18n="textContent"></label>
                   </div>
-                  <div id="page-element-iframe-mode">
-                    <label id="page-element-iframe-mode-chip-set-label" data-i18n="textContent"></label>
+                  <div id="page-element-iframe-mode" class="chip-set chip-set-absolute">
+                    <label data-id="page-element-iframe-mode-chip-set-label" class="chip-set-label" data-i18n="textContent"></label>
                     <div id="page-element-iframe-mode-chip-set" class="mdc-chip-set mdc-chip-set--choice" role="grid">
-                      <div id="page-element-iframe-mode-trim-chip" class="mdc-chip tooltip-without-underline" role="row" data-value="trim" aria-describedby="tooltip" aria-label="page-element-iframe-mode-trim-tooltip" data-balloon-pos="up" data-balloon-length="medium">
+                      <div id="page-element-iframe-mode-trim-chip" class="mdc-chip tooltip-without-underline" role="row" data-value="trim" aria-describedby="tooltip" aria-label="page-element-iframe-mode-trim-tooltip" data-balloon-pos="up" data-balloon-length="large">
                         <div class="mdc-chip__ripple"></div>
                         <svg class="mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
                         <span role="gridcell">
-                      <span role="button" tabindex="0" class="mdc-chip__primary-action">
-                        <span data-id="page-element-iframe-mode-trim-label" data-i18n="textContent" class="mdc-chip__text"></span>
-                      </span>
-                    </span>
+                          <span role="button" tabindex="0" class="mdc-chip__primary-action">
+                            <span data-id="page-element-iframe-mode-trim-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                          </span>
+                        </span>
                       </div>
-                      <div id="page-element-iframe-mode-import-chip" class="mdc-chip tooltip-without-underline" role="row" data-value="import" aria-describedby="tooltip" aria-label="page-element-iframe-mode-import-tooltip" data-balloon-pos="left" data-balloon-length="medium">
+                      <div id="page-element-iframe-mode-import-chip" class="mdc-chip tooltip-without-underline" role="row" data-value="import" aria-describedby="tooltip" aria-label="page-element-iframe-mode-import-tooltip" data-balloon-pos="up" data-balloon-length="medium" data-balloon-mod="100">
                         <div class="mdc-chip__ripple"></div>
                         <svg class="material-icons mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
                         <span role="gridcell">
-                      <span role="button" tabindex="0" class="mdc-chip__primary-action">
-                        <span data-id="page-element-iframe-mode-import-label" data-i18n="textContent" class="mdc-chip__text"></span>
-                      </span>
-                    </span>
+                          <span role="button" tabindex="0" class="mdc-chip__primary-action">
+                            <span data-id="page-element-iframe-mode-import-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                          </span>
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -786,24 +793,36 @@
                   <span data-id="media-header" data-i18n="textContent"></span>
                 </header>
                 <p id="media-description" data-i18n="textContent"></p>
-                <div id="media-type-select" class="mdc-select mdc-select--outlined mdc-select--no-label">
-                  <div class="mdc-select__anchor">
-                    <input id="media-type-selected-text" class="mdc-select__selected-text" type="text" disabled readonly>
-                    <i class="mdc-select__dropdown-icon"></i>
-                    <span class="mdc-notched-outline">
-                    <span class="mdc-notched-outline__leading"></span>
-                    <span class="mdc-notched-outline__notch">
-                      <span id="media-type-label" class="mdc-floating-label mdc-floating-label--float-above" data-i18n="textContent"></span>
+                <div id="media-type" class="chip-set">
+                  <label id="media-type-chip-set-label" class="chip-set-label" data-id="media-type-label" data-i18n="textContent"></label>
+                  <div id="media-type-chip-set" class="mdc-chip-set mdc-chip-set--choice" role="grid">
+                    <div id="media-type-image-chip" class="mdc-chip" role="row" data-value="image">
+                      <div class="mdc-chip__ripple"></div>
+                      <svg class="mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
+                      <span role="gridcell">
+                      <span role="button" tabindex="0" class="mdc-chip__primary-action">
+                        <span data-id="media-type-image-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                      </span>
                     </span>
-                    <span class="mdc-notched-outline__trailing"></span>
-                  </span>
-                  </div>
-                  <div class="mdc-select__menu mdc-menu mdc-menu-surface">
-                    <ul class="mdc-list" id="media-type-list">
-                      <li class="mdc-list-item" id="media-type-option-image" data-value="image" data-i18n="textContent"></li>
-                      <li class="mdc-list-item" id="media-type-option-video" data-value="video" data-i18n="textContent"></li>
-                      <li class="mdc-list-item" id="media-type-option-audio" data-value="audio" data-i18n="textContent"></li>
-                    </ul>
+                    </div>
+                    <div id="media-type-video-chip" class="mdc-chip" role="row" data-value="video">
+                      <div class="mdc-chip__ripple"></div>
+                      <svg class="mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
+                      <span role="gridcell">
+                      <span role="button" tabindex="0" class="mdc-chip__primary-action">
+                        <span data-id="media-type-video-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                      </span>
+                    </span>
+                    </div>
+                    <div id="media-type-audio-chip" class="mdc-chip" role="row" data-value="audio">
+                      <div class="mdc-chip__ripple"></div>
+                      <svg class="mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
+                      <span role="gridcell">
+                      <span role="button" tabindex="0" class="mdc-chip__primary-action">
+                        <span data-id="media-type-audio-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                      </span>
+                    </span>
+                    </div>
                   </div>
                 </div>
               </section>
@@ -815,67 +834,73 @@
                 <p id="none-description" data-i18n="textContent"></p>
               </section>
               <section id="ajax">
-                <div id="remove-element-path-text-field-container" class="text-field-container display-inline-block">
-                  <div id="remove-element-path-text-field" class="mdc-text-field mdc-text-field--textarea path">
-                    <textarea id="remove-element-path-textarea" class="mdc-text-field__input" spellcheck="false"></textarea>
-                    <div class="mdc-notched-outline mdc-notched-outline--upgraded mdc-notched-outline--notched">
-                      <div class="mdc-notched-outline__leading"></div>
-                      <div class="mdc-notched-outline__notch">
-                        <label class="mdc-floating-label mdc-floating-label--float-above" for="remove-element-path-textarea" id="remove-element-path-label" data-i18n="textContent"></label>
-                      </div>
-                      <div class="mdc-notched-outline__trailing"></div>
-                    </div>
-                  </div>
-                </div>
-                <div id="element-picker-remove-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="left">
-                  <label class="hvr-grow-2x">
-                    <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
-                  </label>
-                </div>
-                <div id="ajax-unused">
-                  <div id="remove-element-delay">
-                    <div id="remove-element-delay-text-field" class="mdc-text-field mdc-text-field--outlined tooltip-without-underline" aria-describedby="tooltip" aria-label="remove-element-delay-tooltip" data-balloon-pos="up" data-balloon-length="medium">
-                      <input id="remove-element-delay-input" class="mdc-text-field__input" type="number" min="0" max="10000" step="100">
-                      <div class="mdc-notched-outline">
-                        <div class="mdc-notched-outline__leading"></div>
-                        <div class="mdc-notched-outline__notch">
-                          <label id="remove-element-delay-label" for="remove-element-delay-input" class="mdc-floating-label mdc-floating-label--float-above" data-i18n="textContent"></label>
+                <div class="flex-row position-relative">
+                  <div id="ajax-native">
+                    <div id="remove-element-path">
+                      <div id="remove-element-path-text-field-container" class="text-field-container display-inline-block">
+                        <div id="remove-element-path-text-field" class="mdc-text-field mdc-text-field--textarea path">
+                          <textarea id="remove-element-path-textarea" class="mdc-text-field__input" spellcheck="false"></textarea>
+                          <div class="mdc-notched-outline mdc-notched-outline--upgraded mdc-notched-outline--notched">
+                            <div class="mdc-notched-outline__leading"></div>
+                            <div class="mdc-notched-outline__notch">
+                              <label class="mdc-floating-label mdc-floating-label--float-above" for="remove-element-path-textarea" id="remove-element-path-label" data-i18n="textContent"></label>
+                            </div>
+                            <div class="mdc-notched-outline__trailing"></div>
+                          </div>
                         </div>
-                        <div class="mdc-notched-outline__trailing"></div>
+                      </div>
+                      <div id="remove-element-type-label" class="type-label"></div>
+                      <div id="element-picker-remove-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
+                        <label class="hvr-grow-2x">
+                          <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
+                        </label>
                       </div>
                     </div>
-                    &nbsp;
-                    <span data-id="ms-label" data-i18n="textContent"></span>
                   </div>
-                  <div id="disable-scroll-element-text-field" class="mdc-text-field mdc-text-field--outlined tooltip-without-underline" aria-describedby="tooltip" aria-label="disable-scroll-element-tooltip" data-balloon-pos="up" data-balloon-length="medium">
-                    <input class="mdc-text-field__input" id="disable-scroll-element-input" spellcheck="false">
-                    <div class="mdc-notched-outline">
-                      <div class="mdc-notched-outline__leading"></div>
-                      <div class="mdc-notched-outline__notch">
-                        <label id="disable-scroll-element-label" for="disable-scroll-element-input" class="mdc-floating-label mdc-floating-label--float-above" data-i18n="textContent"></label>
+                  <div id="ajax-iframe">
+                    <div id="load-element-path">
+                      <div id="load-element-path-text-field-container" class="text-field-container display-inline-block">
+                        <div id="load-element-path-text-field" class="mdc-text-field mdc-text-field--textarea path">
+                          <textarea id="load-element-path-textarea" class="mdc-text-field__input" spellcheck="false"></textarea>
+                          <div class="mdc-notched-outline mdc-notched-outline--upgraded mdc-notched-outline--notched">
+                            <div class="mdc-notched-outline__leading"></div>
+                            <div class="mdc-notched-outline__notch">
+                              <label class="mdc-floating-label mdc-floating-label--float-above" for="load-element-path-textarea" id="load-element-path-label" data-i18n="textContent"></label>
+                            </div>
+                            <div class="mdc-notched-outline__trailing"></div>
+                          </div>
+                        </div>
                       </div>
-                      <div class="mdc-notched-outline__trailing"></div>
+                      <div id="load-element-type-label" class="type-label"></div>
+                      <div id="element-picker-load-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
+                        <label class="hvr-grow-2x">
+                          <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
+                        </label>
+                      </div>
                     </div>
                   </div>
-                  <div id="element-picker-disables-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
-                    <label class="hvr-grow-2x">
-                      <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
-                    </label>
-                  </div>
-                  <div id="disable-remove-element-text-field" class="mdc-text-field mdc-text-field--outlined tooltip-without-underline" aria-describedby="tooltip" aria-label="disable-remove-element-tooltip" data-balloon-pos="up" data-balloon-length="medium">
-                    <input class="mdc-text-field__input" id="disable-remove-element-input" spellcheck="false">
-                    <div class="mdc-notched-outline">
-                      <div class="mdc-notched-outline__leading"></div>
-                      <div class="mdc-notched-outline__notch">
-                        <label id="disable-remove-element-label" for="disable-remove-element-input" class="mdc-floating-label mdc-floating-label--float-above" data-i18n="textContent"></label>
+                  <div id="ajax-mode" class="chip-set chip-set-absolute">
+                    <label class="chip-set-label" data-id="ajax-mode-label" data-i18n="textContent"></label>
+                    <div id="ajax-mode-chip-set" class="mdc-chip-set mdc-chip-set--choice" role="grid">
+                      <div id="ajax-mode-native-chip" class="mdc-chip tooltip-without-underline" role="row" data-value="native" aria-describedby="tooltip" aria-label="ajax-mode-native-tooltip" data-balloon-pos="up" data-balloon-length="large">
+                        <div class="mdc-chip__ripple"></div>
+                        <svg class="mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
+                        <span role="gridcell">
+                          <span role="button" tabindex="0" class="mdc-chip__primary-action">
+                            <span data-id="ajax-mode-native-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                          </span>
+                        </span>
                       </div>
-                      <div class="mdc-notched-outline__trailing"></div>
+                      <div id="ajax-mode-iframe-chip" class="mdc-chip tooltip-without-underline" role="row" data-value="iframe" aria-describedby="tooltip" aria-label="ajax-mode-iframe-tooltip" data-balloon-pos="up" data-balloon-length="medium" data-balloon-mod="100">
+                        <div class="mdc-chip__ripple"></div>
+                        <svg class="mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
+                        <span role="gridcell">
+                          <span role="button" tabindex="0" class="mdc-chip__primary-action">
+                            <span data-id="ajax-mode-iframe-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                          </span>
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <div id="element-picker-disabler-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
-                    <label class="hvr-grow-2x">
-                      <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
-                    </label>
                   </div>
                 </div>
               </section>
@@ -886,7 +911,7 @@
                   <svg id="auto-clock-icon"><use href="../lib/fontawesome/regular.svg#clock"></use></svg>
                   <span data-id="auto-header" data-i18n="textContent"></span>
                   <span id="auto-eta">(<span data-id="eta-label" data-i18n="textContent"></span><span id="auto-eta-value"></span>)</span>
-                  <div id="auto-slideshow-form-field" class="mdc-form-field tooltip-without-underline" aria-describedby="tooltip" aria-label="auto-slideshow-tooltip" data-balloon-pos="left" data-balloon-length="medium">
+                  <div id="auto-slideshow-form-field" class="mdc-form-field tooltip-without-underline" aria-describedby="tooltip" aria-label="auto-slideshow-tooltip" data-balloon-pos="up" data-balloon-length="medium" data-balloon-mod="125">
                     <div class="mdc-checkbox">
                       <input id="auto-slideshow-input" type="checkbox" class="mdc-checkbox__native-control"/>
                       <div class="mdc-checkbox__background">
@@ -933,7 +958,7 @@
                     </div>
                     <label id="auto-badge-label" for="auto-badge-input" data-i18n="textContent"></label>
                   </div>
-                  <div id="auto-behavior-form-field" class="mdc-form-field tooltip-without-underline" aria-describedby="tooltip" aria-label="auto-behavior-tooltip" data-balloon-pos="left" data-balloon-length="medium">
+                  <div id="auto-behavior-form-field" class="mdc-form-field tooltip-without-underline" aria-describedby="tooltip" aria-label="auto-behavior-tooltip" data-balloon-pos="up" data-balloon-length="medium" data-balloon-mod="125">
                     <div class="mdc-checkbox">
                       <input id="auto-behavior-input" type="checkbox" class="mdc-checkbox__native-control"/>
                       <div class="mdc-checkbox__background">
@@ -986,9 +1011,9 @@
                 </label>
               </div>
               <div id="help-button" class="icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="help-button" data-balloon-pos="up">
-                <a href="https://github.com/sixcious/infy-scroll/wiki" target="_blank" class="hvr-grow-2x">
+                <label class="hvr-grow-2x">
                   <svg><use href="../lib/fontawesome/alt.svg#solid-question"></use></svg>
-                </a>
+                </label>
               </div>
             </div>
           </footer>
@@ -1012,14 +1037,14 @@
           <div class="mdc-dialog__surface">
             <h2 class="mdc-dialog__title" id="save-dialog-title" data-i18n="textContent"></h2>
             <div class="mdc-dialog__content" id="save-dialog-content">
-              <p id="save-instructions" data-i18n="textContent"></p>
-              <div id="save-title-text-field-container" class="text-field-container">
-                <div id="save-title-text-field" class="mdc-text-field mdc-text-field--fullwidth mdc-text-field--textarea overflow-hidden">
-                  <textarea id="save-title-textarea" class="mdc-text-field__input" spellcheck="false"></textarea>
+              <p id="save-dialog-description" data-i18n="textContent"></p>
+              <div id="save-name-text-field-container" class="text-field-container">
+                <div id="save-name-text-field" class="mdc-text-field mdc-text-field--fullwidth mdc-text-field--textarea overflow-hidden path">
+                  <textarea id="save-name-textarea" class="mdc-text-field__input" spellcheck="false"></textarea>
                   <div class="mdc-notched-outline mdc-notched-outline--upgraded mdc-notched-outline--notched">
                     <div class="mdc-notched-outline__leading"></div>
                     <div class="mdc-notched-outline__notch">
-                      <label class="mdc-floating-label mdc-floating-label--float-above" for="save-title-textarea" id="save-title-label" data-i18n="textContent"></label>
+                      <label class="mdc-floating-label mdc-floating-label--float-above" for="save-name-textarea" id="save-name-label" data-i18n="textContent"></label>
                     </div>
                     <div class="mdc-notched-outline__trailing"></div>
                   </div>
@@ -1105,7 +1130,7 @@
                   <p id="save-help-content" data-i18n="textContent"></p>
                   <div id="save-example-title" class="help-title" data-i18n="textContent"></div>
                   <p id="save-example-content" data-i18n="textContent"></p>
-                  <div id="save-dialog-notice" data-i18n="textContent" class="dialog-notice"></div>
+                  <div id="save-dialog-notice" data-i18n="textContent" class="dialog-warning"></div>
                 </div>
               </div>
             </div>
@@ -1126,7 +1151,7 @@
           <div class="mdc-dialog__surface">
             <h2 class="mdc-dialog__title" id="shuffle-dialog-title" data-i18n="textContent"></h2>
             <div class="mdc-dialog__content" id="shuffle-dialog-content">
-              <p id="shuffle-dialog-instructions" data-i18n="textContent"></p>
+              <p id="shuffle-dialog-description" data-i18n="textContent"></p>
               <div class="flex-row">
                 <div id="shuffle-urls-text-field" class="mdc-text-field mdc-text-field--outlined tooltip-without-underline" aria-describedby="tooltip" aria-label="shuffle-amount-tooltip" data-balloon-pos="right" data-balloon-length="xlarge">
                   <input class="mdc-text-field__input" type="number" id="shuffle-urls-input" min="1" max="10000">
@@ -1212,87 +1237,166 @@
           <div class="mdc-dialog__surface">
             <h2 class="mdc-dialog__title" id="scripts-dialog-title" data-i18n="textContent"></h2>
             <div class="mdc-dialog__content" id="scripts-dialog-content">
-              <p id="scripts-dialog-instructions" data-i18n="textContent"></p>
-              <div id="lazy-load-form-field" class="mdc-form-field">
-                <div class="mdc-checkbox">
-                  <input id="lazy-load-input" type="checkbox" class="mdc-checkbox__native-control"/>
-                  <div class="mdc-checkbox__background">
-                    <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
-                      <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
-                    </svg>
-                  </div>
-                  <div class="mdc-checkbox__ripple"></div>
-                </div>
-                <label id="lazy-load-label" for="lazy-load-input" data-i18n="textContent"></label>
-              </div>
+              <p id="scripts-dialog-description" data-i18n="textContent"></p>
               <div id="lazy-load">
-                <div id="lazy-load-mode" class="mdc-form-field">
-                  <div class="mdc-radio">
-                    <input class="mdc-radio__native-control" type="radio" id="lazy-load-mode-auto" name="lazy-load-mode" value="auto">
-                    <div class="mdc-radio__background">
-                      <div class="mdc-radio__outer-circle"></div>
-                      <div class="mdc-radio__inner-circle"></div>
+                <div id="lazy-load-form-field" class="mdc-form-field">
+                  <div class="mdc-checkbox">
+                    <input id="lazy-load-input" type="checkbox" class="mdc-checkbox__native-control"/>
+                    <div class="mdc-checkbox__background">
+                      <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                        <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                      </svg>
                     </div>
-                    <div class="mdc-radio__ripple"></div>
+                    <div class="mdc-checkbox__ripple"></div>
                   </div>
-                  <label for="lazy-load-mode-auto" id="lazy-load-mode-auto-label" data-i18n="textContent"></label>
-                  <div class="mdc-radio">
-                    <input class="mdc-radio__native-control" type="radio" id="lazy-load-mode-manual" name="lazy-load-mode" value="manual">
-                    <div class="mdc-radio__background">
-                      <div class="mdc-radio__outer-circle"></div>
-                      <div class="mdc-radio__inner-circle"></div>
-                    </div>
-                    <div class="mdc-radio__ripple"></div>
-                  </div>
-                  <label for="lazy-load-mode-manual" id="lazy-load-mode-manual-label" data-i18n="textContent"></label>
+                  <label id="lazy-load-label" for="lazy-load-input" data-i18n="textContent"></label>
                 </div>
-                <br>
-                <div id="lazy-load-attribute">
-                  <div id="lazy-load-source-text-field" class="mdc-text-field mdc-text-field--outlined tooltip-without-underline" aria-describedby="tooltip" aria-label="lazy-load-source-tooltip" data-balloon-pos="up" data-balloon-length="medium">
-                    <input class="mdc-text-field__input" id="lazy-load-source-input" spellcheck="false">
-                    <div class="mdc-notched-outline">
-                      <div class="mdc-notched-outline__leading"></div>
-                      <div class="mdc-notched-outline__notch">
-                        <label class="mdc-floating-label mdc-floating-label--float-above" id="lazy-load-source-label" for="lazy-load-source-input" data-i18n="textContent"></label>
+                <div id="lazy-load-settings">
+                  <div id="lazy-load-mode" class="mdc-form-field">
+                    <div class="mdc-radio">
+                      <input class="mdc-radio__native-control" type="radio" id="lazy-load-mode-auto" name="lazy-load-mode" value="auto">
+                      <div class="mdc-radio__background">
+                        <div class="mdc-radio__outer-circle"></div>
+                        <div class="mdc-radio__inner-circle"></div>
                       </div>
-                      <div class="mdc-notched-outline__trailing"></div>
+                      <div class="mdc-radio__ripple"></div>
                     </div>
-                  </div>
-                  <svg class="separator-icon"><use href="../lib/fontawesome/solid.svg#circle-right"></use></svg>
-                  <div id="lazy-load-destination-text-field" class="mdc-text-field mdc-text-field--outlined tooltip-without-underline" aria-describedby="tooltip" aria-label="lazy-load-destination-tooltip" data-balloon-pos="up" data-balloon-length="large">
-                    <input class="mdc-text-field__input" id="lazy-load-destination-input" spellcheck="false">
-                    <div class="mdc-notched-outline">
-                      <div class="mdc-notched-outline__leading"></div>
-                      <div class="mdc-notched-outline__notch">
-                        <label class="mdc-floating-label mdc-floating-label--float-above" id="lazy-load-destination-label" for="lazy-load-destination-input" data-i18n="textContent"></label>
+                    <label for="lazy-load-mode-auto" id="lazy-load-mode-auto-label" data-i18n="textContent"></label>
+                    <div class="mdc-radio">
+                      <input class="mdc-radio__native-control" type="radio" id="lazy-load-mode-manual" name="lazy-load-mode" value="manual">
+                      <div class="mdc-radio__background">
+                        <div class="mdc-radio__outer-circle"></div>
+                        <div class="mdc-radio__inner-circle"></div>
                       </div>
-                      <div class="mdc-notched-outline__trailing"></div>
+                      <div class="mdc-radio__ripple"></div>
+                    </div>
+                    <label for="lazy-load-mode-manual" id="lazy-load-mode-manual-label" data-i18n="textContent"></label>
+                  </div>
+                  <br>
+                  <div id="lazy-load-attribute">
+                    <div id="lazy-load-source-text-field" class="mdc-text-field mdc-text-field--outlined tooltip-without-underline" aria-describedby="tooltip" aria-label="lazy-load-source-tooltip" data-balloon-pos="up" data-balloon-length="medium">
+                      <input class="mdc-text-field__input" id="lazy-load-source-input" spellcheck="false">
+                      <div class="mdc-notched-outline">
+                        <div class="mdc-notched-outline__leading"></div>
+                        <div class="mdc-notched-outline__notch">
+                          <label class="mdc-floating-label mdc-floating-label--float-above" id="lazy-load-source-label" for="lazy-load-source-input" data-i18n="textContent"></label>
+                        </div>
+                        <div class="mdc-notched-outline__trailing"></div>
+                      </div>
+                    </div>
+                    <svg class="separator-icon"><use href="../lib/fontawesome/solid.svg#circle-right"></use></svg>
+                    <div id="lazy-load-destination-text-field" class="mdc-text-field mdc-text-field--outlined tooltip-without-underline" aria-describedby="tooltip" aria-label="lazy-load-destination-tooltip" data-balloon-pos="up" data-balloon-length="large">
+                      <input class="mdc-text-field__input" id="lazy-load-destination-input" spellcheck="false">
+                      <div class="mdc-notched-outline">
+                        <div class="mdc-notched-outline__leading"></div>
+                        <div class="mdc-notched-outline__notch">
+                          <label class="mdc-floating-label mdc-floating-label--float-above" id="lazy-load-destination-label" for="lazy-load-destination-input" data-i18n="textContent"></label>
+                        </div>
+                        <div class="mdc-notched-outline__trailing"></div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div id="spa-form-field" class="mdc-form-field tooltip-without-underline" aria-describedby="tooltip" aria-label="spa-tooltip" data-balloon-pos="up" data-balloon-length="xlarge">
-                <div class="mdc-checkbox">
-                  <input id="spa-input" type="checkbox" class="mdc-checkbox__native-control"/>
-                  <div class="mdc-checkbox__background">
-                    <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
-                      <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
-                    </svg>
+              <div id="mirror-page">
+                <div id="mirror-page-form-field" class="mdc-form-field tooltip-without-underline" aria-describedby="tooltip" aria-label="mirror-page-tooltip" data-balloon-pos="up" data-balloon-length="large">
+                  <div class="mdc-checkbox">
+                    <input id="mirror-page-input" type="checkbox" class="mdc-checkbox__native-control"/>
+                    <div class="mdc-checkbox__background">
+                      <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                        <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                      </svg>
+                    </div>
+                    <div class="mdc-checkbox__ripple"></div>
                   </div>
-                  <div class="mdc-checkbox__ripple"></div>
+                  <label id="mirror-page-label" for="mirror-page-input" data-i18n="textContent"></label>
                 </div>
-                <label id="spa-label" for="spa-input" data-i18n="textContent"></label>
+                <div id="mirror-page-settings">
+                  <div id="mirror-page-mode" class="mdc-form-field">
+                    <div class="mdc-form-field tooltip-without-underline" aria-describedby="tooltip" aria-label="mirror-page-mode-import-tooltip" data-balloon-pos="up" data-balloon-length="medium">
+                      <div class="mdc-radio">
+                        <input class="mdc-radio__native-control" type="radio" id="mirror-page-mode-import" name="mirror-page-mode" value="import">
+                        <div class="mdc-radio__background">
+                          <div class="mdc-radio__outer-circle"></div>
+                          <div class="mdc-radio__inner-circle"></div>
+                        </div>
+                        <div class="mdc-radio__ripple"></div>
+                      </div>
+                      <label for="mirror-page-mode-import" id="mirror-page-mode-import-label" data-i18n="textContent"></label>
+                    </div>
+                    <div class="mdc-form-field tooltip-without-underline" aria-describedby="tooltip" aria-label="mirror-page-mode-adopt-tooltip" data-balloon-pos="up" data-balloon-length="medium">
+                      <div class="mdc-radio">
+                        <input class="mdc-radio__native-control" type="radio" id="mirror-page-mode-adopt" name="mirror-page-mode" value="adopt">
+                        <div class="mdc-radio__background">
+                          <div class="mdc-radio__outer-circle"></div>
+                          <div class="mdc-radio__inner-circle"></div>
+                        </div>
+                        <div class="mdc-radio__ripple"></div>
+                      </div>
+                      <label for="mirror-page-mode-adopt" id="mirror-page-mode-adopt-label" data-i18n="textContent"></label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="spa">
+                <div id="spa-form-field" class="mdc-form-field tooltip-without-underline" aria-describedby="tooltip" aria-label="spa-tooltip" data-balloon-pos="up" data-balloon-length="xlarge">
+                  <div class="mdc-checkbox">
+                    <input id="spa-input" type="checkbox" class="mdc-checkbox__native-control"/>
+                    <div class="mdc-checkbox__background">
+                      <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                        <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                      </svg>
+                    </div>
+                    <div class="mdc-checkbox__ripple"></div>
+                  </div>
+                  <label id="spa-label" for="spa-input" data-i18n="textContent"></label>
+                </div>
               </div>
               <div class="mdc-text-field-helper-line">
                 <div class="mdc-text-field-helper-text mdc-text-field-helper-text--persistent">
-                  <div id="scripts-dialog-notice" class="dialog-notice" data-i18n="textContent"></div>
+                  <div id="scripts-dialog-notice" class="dialog-warning" data-i18n="textContent"></div>
                 </div>
               </div>
             </div>
             <footer class="mdc-dialog__actions">
-              <a id="scripts-dialog-scripts-and-styles" type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-initial-focus href="https://github.com/sixcious/infy-scroll#faq" target="_blank">
+              <a id="scripts-dialog-scripts-and-styles" type="button" class="mdc-button mdc-dialog__button" href="https://github.com/sixcious/infy-scroll#faq" target="_blank">
                 <span class="mdc-button__label" data-id="scripts-dialog-scripts-and-styles" data-i18n="textContent"></span>
               </a>
+              <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="ok" data-mdc-dialog-initial-focus>
+                <span class="mdc-button__label" data-id="mdc-button-ok" data-i18n="textContent"></span>
+              </button>
+            </footer>
+          </div>
+        </div>
+        <div class="mdc-dialog__scrim"></div>
+      </div>
+      <div id="help-dialog" class="mdc-dialog" role="alertdialog" aria-modal="true" aria-labelledby="help-dialog-title" aria-describedby="help-dialog-content">
+        <div class="mdc-dialog__container">
+          <div class="mdc-dialog__surface">
+            <h2 class="mdc-dialog__title" id="help-dialog-title" data-i18n="textContent"></h2>
+            <div class="mdc-dialog__content" id="help-dialog-content">
+              <p id="help-dialog-description" data-i18n="textContent"></p>
+              <div class="button-group">
+                <a href="https://github.com/sixcious/infy-scroll/wiki" target="_blank" class="mdc-button mdc-button--raised mdc-ripple-upgraded">
+                  <span class="mdc-button__ripple"></span>
+                  <span class="mdc-button__label" id="help-guide-label" data-i18n="textContent">Help Guide</span>
+                </a>
+                <a href="https://github.com/sixcious/infy-scroll/issues" target="_blank" class="mdc-button mdc-button--outlined mdc-ripple-upgraded">
+                  <span class="mdc-button__ripple"></span>
+                  <span class="mdc-button__label" id="report-problem-label" data-i18n="textContent">Report a Problem</span>
+                </a>
+                <button id="debug-copy-button" class="mdc-button mdc-button--raised mdc-ripple-upgraded">
+                  <span class="mdc-button__ripple"></span>
+                  <span id="debug-copy-button-label" class="mdc-button__label" data-i18n="textContent"></span>
+                </button>
+              </div>
+              <div class="mdc-text-field-helper-line">
+                <div class="mdc-text-field-helper-text mdc-text-field-helper-text--persistent">
+                  <div id="help-dialog-notice" class="dialog-warning" data-i18n="textContent"></div>
+                </div>
+              </div>
+            </div>
+            <footer class="mdc-dialog__actions">
               <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="ok" data-mdc-dialog-initial-focus>
                 <span class="mdc-button__label" data-id="mdc-button-ok" data-i18n="textContent"></span>
               </button>
@@ -1323,15 +1427,15 @@
                       <span data-id="version-dialog-list-3" data-i18n="textContent"></span>
                     </li>
                     <li>
-                      <svg><use href="../lib/fontawesome/regular.svg#rectangle-list"></use></svg>
+                      <svg><use href="../lib/fontawesome/regular.svg#heart"></use></svg>
                       <span data-id="version-dialog-list-4" data-i18n="textContent"></span>
                     </li>
                     <li>
-                      <svg><use href="../lib/fontawesome/regular.svg#heart"></use></svg>
+                      <svg><use href="../lib/fontawesome/solid.svg#database"></use></svg>
                       <span data-id="version-dialog-list-5" data-i18n="textContent"></span>
                     </li>
                     <li>
-                      <svg><use href="../lib/fontawesome/solid.svg#database"></use></svg>
+                      <svg><use href="../lib/fontawesome/solid.svg#ranking-star"></use></svg>
                       <span data-id="version-dialog-list-6" data-i18n="textContent"></span>
                     </li>
                     <li>
@@ -1340,7 +1444,8 @@
                     </li>
                     <li>
                       <svg><use href="../lib/fontawesome/regular.svg#circle-check"></use></svg>
-                      <a href="https://github.com/sixcious/infy-scroll/wiki/Version-History" target="_blank"><span data-id="version-dialog-list-8" data-i18n="textContent"></span></a>
+                      <span data-id="version-dialog-list-8" data-i18n="textContent"></span>
+                      <a href="https://github.com/sixcious/infy-scroll/wiki/Version-History" target="_blank"><span data-id="release-notes" data-i18n="textContent"></span></a>
                     </li>
                   </ol>
                   <div id="version-dialog-footer">
@@ -1362,17 +1467,6 @@
           </div>
         </div>
         <div class="mdc-dialog__scrim"></div>
-      </div>
-      <div id="mdc-snackbar" class="mdc-snackbar">
-        <div class="mdc-snackbar__surface">
-          <div id="mdc-snackbar-label" class="mdc-snackbar__label" role="status" aria-live="polite">&nbsp;</div>
-          <div class="mdc-snackbar__actions">
-            <button type="button" class="mdc-button mdc-snackbar__action">
-              <div class="mdc-button__ripple"></div>
-              <span class="mdc-button__label" data-id="mdc-button-ok" data-i18n="textContent"></span>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
     <div id="messages" class="display-none">
@@ -1396,9 +1490,25 @@
             <svg class="mdc-button__icon smaller-icon"><use href="../lib/fontawesome/alt.svg#solid-question"></use></svg>
             <span id="help-button-label" class="mdc-button__label">Help</span>
           </a>
+          <button id="manage-button" class="mdc-button mdc-button--raised mdc-ripple-upgraded">
+            <span class="mdc-button__ripple"></span>
+            <svg class="mdc-button__icon smaller-icon"><use href="../lib/fontawesome/solid.svg#puzzle-piece"></use></svg>
+            <span class="mdc-button__label" id="extension-settings-button-label">Manage Settings</span>
+          </button>
         </div>
         <div id="popup-error-help" data-i18n="textContent">
           Help is right around the corner! Click Help to report this issue and get personal assistance.
+        </div>
+      </div>
+    </div>
+    <div id="mdc-snackbar" class="mdc-snackbar">
+      <div class="mdc-snackbar__surface">
+        <div id="mdc-snackbar-label" class="mdc-snackbar__label" role="status" aria-live="polite">&nbsp;</div>
+        <div class="mdc-snackbar__actions">
+          <button type="button" class="mdc-button mdc-snackbar__action">
+            <div class="mdc-button__ripple"></div>
+            <span class="mdc-button__label" data-id="mdc-button-ok" data-i18n="textContent"></span>
+          </button>
         </div>
       </div>
     </div>

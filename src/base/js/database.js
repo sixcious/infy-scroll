@@ -15,8 +15,8 @@ const Database = (() => {
   /**
    * Variables
    *
-   * @oaram {*} URLS the immutable object that contains the database URLs in a fixed order
-   * @param {*} urls the mutable object that is cloned from the URLS object, but with an order based on downloadLocation
+   * @oaram {Object} URLS the immutable object that contains the database URLs in a fixed order
+   * @param {Object} urls the mutable object that is cloned from the URLS object, but with an order based on downloadLocation
    */
   const URLS = {
     AP: [
@@ -44,10 +44,10 @@ const Database = (() => {
    * Note: This function is in the Background because both the Content Script and Options  need the ability to download
    * the database. If it weren't in the Background, we would need to duplicate this function in both places.
    *
-   * @param downloadAP {boolean} whether to download the AP database or not
-   * @param downloadIS {boolean} whether to download the IS database or not
-   * @param downloadLocation {string} the preferred location to download the database from
-   * @returns {Promise<{url: string, error: *, downloaded: boolean}>}
+   * @param {boolean} downloadAP - whether to download the AP database or not
+   * @param {boolean} downloadIS - whether to download the IS database or not
+   * @param {string} downloadLocation - the preferred location to download the database from
+   * @returns {Promise<{url: string, error: *, downloaded: boolean}>} the result (true if successful and any error message)
    * @public
    */
   async function download(downloadAP = true, downloadIS = true, downloadLocation) {
@@ -78,9 +78,9 @@ const Database = (() => {
   /**
    * Downloads the named database.
    *
-   * @param databaseName the name of the database to download, "AP" (AutoPagerize) or "IS" (InfyScroll)
-   * @param index        the current index in the urls array to use (also the current download attempt)
-   * @returns {Promise<{location: string, error: *, downloaded: boolean}>}
+   * @param {string} databaseName - the name of the database to download, "AP" (AutoPagerize) or "IS" (InfyScroll)
+   * @param {number} index - the current index in the urls array to use (also the current download attempt)
+   * @returns {Promise<{location: string, error: *, downloaded: boolean}>} the result (true if successful and any error message)
    * @private
    */
   async function downloadDatabase(databaseName, index = 0) {
@@ -92,7 +92,7 @@ const Database = (() => {
       const location = databaseURLs[index].location;
       // Add a timestamp to make this URL request unique and not cachable by the browser
       // Note: Date.now() will always return a number less than Number.MAX_SAFE_INTEGER (and is good for the next 200,000 years)
-      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date#the_ecmascript_epoch_and_timestamps
+      // https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Date#the_ecmascript_epoch_and_timestamps
       const timestamp = "?ts=" + Date.now();
       result.location = location;
       console.log("downloadDatabase() - downloading database from: " + url);
@@ -110,13 +110,16 @@ const Database = (() => {
       // Sort the database with the longest URLs first to find the most exact URL match first
       database.sort((a, b) => (a.url.length < b.url.length) ? 1 : -1);
       if (Array.isArray(database) && database.length > 0) {
-        // Note: The microformat is the rule that websites use to make themselves compatible with AutoPagerize
+        // Note: The microformat is the item that websites use to make themselves compatible with AutoPagerize
         if (databaseName === "AP") {
           const microformat = {
+            name:         "Microformat",
+            created_by:   "swdyh",
+            updated_at:   "2008-01-01T00:00:00.000Z",
             url:          ".*",
             nextLink:     "//a[@rel='next'] | //link[@rel='next']",
             pageElement:  "//*[contains(@class, 'autopagerize_page_element')]",
-            insertBefore: "//*[contains(@class, 'autopagerize_insert_before')]"
+            insertBefore: "//*[contains(@class, 'autopagerize_insert_before')]",
           };
           database.push(microformat);
         }

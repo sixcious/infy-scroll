@@ -5,7 +5,7 @@
  */
 
 /**
- * Util contains common utility functions that are useful for multiple parts of the extension.
+ * Util provides common utility functions that don't fit in anywhere else.
  */
 const Util = (() => {
 
@@ -14,11 +14,11 @@ const Util = (() => {
    * Note: This function is derived from code written by robertmirro @ github.com.
    * TODO: Investigate using rIC (requestIdleCallback) and rAF (requestAnimationFrame) for appending to the DOM.
    *
-   * @param fn   the callback function to throttle
-   * @param wait the time in ms to wait (throttle)
+   * @param {function} fn - the callback function to throttle
+   * @param {number} wait - the time in ms to wait (throttle)
    * @returns {function (): void} the invoked function
    * @see https://gist.github.com/beaucharman/e46b8e4d03ef30480d7f4db5a78498ca#gistcomment-3015837
-   * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/scroll_event#scroll_event_throttling
+   * @see https://developer.mozilla.org/docs/Web/API/Document/scroll_event#scroll_event_throttling
    * @public
    */
   function throttle(fn, wait) {
@@ -39,20 +39,36 @@ const Util = (() => {
   }
 
   /**
-   * Clones an object via structuredClone (Chrome 98+), or falls back to the older JSON.parse(JSON.stringify()) method.
+   * Clones an object via various methods:
+   * 1. structuredClone (Chrome 98+)
+   * 2. JSON.parse(JSON.stringify())
    *
-   * @param object the object to clone
-   * @returns {*} the cloned object
+   * @param {Object} object - the object to clone
+   * @param {string} method - the cloning method to use
+   * @param {boolean} fallback - true if the method should try and fallback to using other methods, false if not
+   * @returns {Object} the cloned object
    * @public
    */
-  function clone(object) {
+  function clone(object, method = "structuredClone", fallback = true) {
+    console.log("clone() - method=" + method + ", fallback=" + fallback);
     let clonedObject;
     try {
-      clonedObject = structuredClone(object);
+      switch (method) {
+        case "json":
+          clonedObject = JSON.parse(JSON.stringify(object));
+          break;
+        // case "structuredClone":
+        default:
+          clonedObject = structuredClone(object);
+          break;
+      }
     } catch (e) {
-      console.log("clone() - Error cloning using structuredClone, falling back to JSON.parse(JSON.stringify()). Error:");
+      const alternateMethod = method === "structuredClone" ? "json" : "structuredClone";
+      console.log("clone() - Error cloning via " + method + ", falling back to " + alternateMethod + ". Error:");
       console.log(e);
-      clonedObject = JSON.parse(JSON.stringify(object));
+      if (fallback) {
+        return clone(object, alternateMethod, false);
+      }
     }
     return clonedObject;
   }
@@ -60,9 +76,9 @@ const Util = (() => {
   /**
    * Determines if a potential URL is a valid URL based on the specific logic to use.
    *
-   * @param url     the URL to parse
-   * @param logic   the logic to use (e.g. next-prev or just default)
-   * @param details the details object that stores details about this action, such as error messages that were caught
+   * @param {string} url - the URL to parse
+   * @param {string} logic - the logic to use (e.g. "next-prev" or "default")
+   * @param {Object} details - the details object that stores details about this action, such as error messages that were caught
    * @returns {boolean} true if the URL is a valid URL, false otherwise
    * @public
    */
@@ -105,9 +121,9 @@ const Util = (() => {
   /**
    * Checks if this URL has a valid file extension.
    *
-   * @param url     the URL whose file extension to check
-   * @param logic   the logic to use (e.g. next-prev or just default)
-   * @param details the details object that stores details about this action, such as error messages that were caught
+   * @param {string} url - the URL whose file extension to check
+   * @param {string} logic - the logic to use (e.g. "next-prev" or "default")
+   * @param {Object} details - the details object that stores details about this action, such as error messages that were caught
    * @returns {boolean} true if the URL has a valid file extension, false otherwise
    * @public
    */
@@ -123,14 +139,14 @@ const Util = (() => {
     // Texts
     // Because the next prev link algorithm is aggressive, we ought to relax it and ignore common text extension
     // filenames like ".css" and ".js" that we know can't possibly be the next link. Note that we only enforce
-    // this when checking keywords just in case the user actually WANTS to find css and js next links as a rule
+    // this when checking keywords just in case the user actually WANTS to find css and js next links as a path
     // TODO: Should we also ban html, php, jsp? Probably not...
     const texts = ["css", "ico", "js", "json", "txt", "xml"];
     try {
       switch (logic) {
         case "next-prev":
           valid = !(texts.concat(images).concat(fonts)).includes(extension);
-          // TODO: This shouldn't be reported to the user instead if the rule fails to find a link, should it?
+          // TODO: This shouldn't be reported to the user instead if the path fails to find a link, should it?
           // details.error = "invalid extension:" + extension;
           break;
         case "list":
@@ -158,7 +174,7 @@ const Util = (() => {
   /**
    * Finds the filename joined together with its extension from a URL.
    *
-   * @param url the URL to parse
+   * @param {string} url - the URL to parse
    * @returns {string} the filename and extension joined together
    * @public
    */
@@ -173,7 +189,7 @@ const Util = (() => {
   /**
    * Finds the filename from a string containing a filename and extension joined together.
    *
-   * @param filenameAndExtension the filename and extension (joined together) to parse
+   * @param {string} filenameAndExtension - the filename and extension (joined together) to parse
    * @returns {string} the filename (if found)
    * @public
    */
@@ -188,7 +204,7 @@ const Util = (() => {
   /**
    * Finds the extension from a string containing a filename and extension joined together.
    *
-   * @param filenameAndExtension the filename and extension (joined together) to parse
+   * @param {string} filenameAndExtension - the filename and extension (joined together) to parse
    * @returns {string} the extension (if found)
    * @public
    */
@@ -210,8 +226,8 @@ const Util = (() => {
    * 1. protocol: Converts a URL's protocol from https to http (or vice versa) if the location's protocol is different
    * 2. hostname: Converts a URL's hostname from www to no wwww (or vice versa) if the location's hostname is different
    *
-   * @param url the url link
-   * @returns {*} the fixed url
+   * @param {string} url - the url
+   * @returns {string} the fixed url
    * @see https://stackoverflow.com/questions/5491196/rewriting-http-url-to-https-using-regular-expression-and-javascript/5491311
    * @public
    */
@@ -222,16 +238,16 @@ const Util = (() => {
       if ((urlo.protocol === "http:" && window.location.protocol === "https:") ||
           (window.location.protocol === "http:" && urlo.protocol === "https:")) {
         url = url.replace(urlo.protocol, window.location.protocol);
-        console.log("fixLink() - fixed protocol https/http, url after=" + url);
+        console.log("fixURL() - fixed protocol https/http, url after=" + url);
       }
       // Second fix: hostname (www or no www)
       if ((urlo.hostname.startsWith("www.") && (urlo.hostname.replace("www.", "") === window.location.hostname)) ||
           (window.location.hostname.startsWith("www.") && (window.location.hostname.replace("www.", "") === urlo.hostname))) {
         url = url.replace(urlo.hostname, window.location.hostname);
-        console.log("fixLink() - fixed hostname www/no www, url after=" + url);
+        console.log("fixURL() - fixed hostname www/no www, url after=" + url);
       }
     } catch (e) {
-      console.log("fixLink() - Error:");
+      console.log("fixURL() - Error:");
       console.log(e);
     }
     return url;
@@ -243,7 +259,7 @@ const Util = (() => {
    * This lets us provide an "easy" regular expression option for users who don't want to deal with the complexities of
    * the full regex syntax.
    *
-   * @param wildcard the wildcard string
+   * @param {string} wildcard - the wildcard string
    * @returns {RegExp} the converted regular expression object
    * @see https://gist.github.com/donmccurdy/6d073ce2c6f3951312dfa45da14a420f
    * @public
@@ -256,16 +272,16 @@ const Util = (() => {
    * Escapes reserved characters in a regular expression string input so that it can be compiled into a regular
    * expression object.
    *
-   * @param string the regular expression string to escape
-   * @returns {*} the escaped regular expression string
-   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions
-   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_string_as_a_parameter
+   * @param {string} regex - the regular expression string to escape
+   * @returns {string} the escaped regular expression string
+   * @see https://developer.mozilla.org/docs/Web/JavaScript/Guide/Regular_Expressions
+   * @see https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_string_as_a_parameter
    * @public
    */
-  function escapeRegularExpression(string) {
+  function escapeRegularExpression(regex) {
     // Escapes the following reserved regex characters: . * + $ ? | \ { } ( ) [ ]
     // Note: "$&" Inserts the matched substring (meaning to match the whole string)
-    return string.replace(/[.*+^$?|\\{}()[\]]/g, "\\$&");
+    return regex.replace(/[.*+^$?|\\{}()[\]]/g, "\\$&");
   }
 
   // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)

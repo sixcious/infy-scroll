@@ -1,17 +1,19 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "__MSG_name__",
   "short_name": "__MSG_short_name__",
   "description": "__MSG_description__",
   "version": "0.8",
   "default_locale": "en",
   "icons": { "16": "img/icon.png", "48": "img/icon.png", "128": "img/icon.png" },
-  "browser_action": { "default_title": "__MSG_title__", "default_icon": { "16": "img/icon.png", "24": "img/icon.png", "32": "img/icon.png" }, "default_popup": "html/popup.html" },
-  "options_ui": {"page": "html/options.html", "browser_style": false, "open_in_tab": true },
-  "background": { "scripts": ["js/promisify.js", "js/util.js", "js/database.js", "js/storage.js", "js/background.js"], "persistent": false },
+  "action": { "default_title": "__MSG_title__", "default_icon": { "16": "img/icon.png", "24": "img/icon.png", "32": "img/icon.png" }, "default_popup": "html/popup.html" },
+  "options_page": "html/options.html",
+  "background": { "scripts": ["js/promisify.js", "js/util.js", "js/database.js", "js/storage.js", "js/background.js"] },
   "commands": { "down": { "description": "Down one page"}, "up": { "description": "Up one page" }, "power": { "description": "Turn on or off" }, "blacklist": { "description":  "Blacklist or whitelist a URL" }, "auto": { "description": "Pause or resume Auto" }},
-  "permissions": ["activeTab", "storage", "*://*.jsdelivr.net/*", "*://*.statically.io/*", "*://*.github.io/*", "*://wedata.net/*"],
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["*://*.jsdelivr.net/*", "*://*.statically.io/*", "*://*.github.io/*", "*://wedata.net/*"],
   "content_scripts": [ { "matches": ["<all_urls>"], "run_at": "document_idle", "js": ["js/promisify.js", "js/requestify.js", "js/util.js", "js/saves.js", "js/next.js", "js/increment.js", "js/click.js", "js/list.js", "js/elementify.js", "js/iframe.js", "js/auto.js", "js/action.js", "js/workflow.js", "js/scripts.js", "js/cryptography.js", "js/instance.js", "js/scroll.js", "lib/domnode/domnode.js", "lib/dompath/dompath.js", "lib/iframe-resizer/iframeResizer.js"] } ],
-  "web_accessible_resources": ["/html/picker-ui.html", "js/ajax.js", "/lib/iframe-resizer/iframeResizer.contentWindow.js"],
-  "browser_specific_settings": { "gecko": { "id": "infy-scroll@webextensions", "strict_min_version": "102.0" } }
+  "web_accessible_resources": [{ "matches": ["<all_urls>"], "resources": ["/html/picker-ui.html", "js/ajax.js", "/lib/iframe-resizer/iframeResizer.contentWindow.js"]}],
+  "minimum_chrome_version": "102",
+  "options_ui": {"page": "html/options.html", "browser_style": false, "open_in_tab": true }
 }

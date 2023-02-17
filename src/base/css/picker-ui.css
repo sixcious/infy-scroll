@@ -135,6 +135,8 @@ nav {
   width: 370px;
 }
 
+/* Main */
+
 /* margin-top due to the position absolute of the header and nav */
 main {
   max-width: 500px;
@@ -169,7 +171,27 @@ main {
 }
 
 #data {
-  margin-top: 1rem;
+  margin-top: 0.4rem;
+}
+
+#data-label {
+  vertical-align: middle;
+}
+
+#data-copy {
+  margin-left: -4px;
+}
+
+/* The height is needed for the scrollbar to show up fully on hover */
+#data-value {
+  white-space: normal;
+  margin-top: -8px;
+  height: 80px;
+  overflow: hidden;
+}
+
+#data-value:hover {
+  overflow-y: auto;
 }
 
 footer {
@@ -212,8 +234,13 @@ footer {
   height: 80px;
 }
 
-#minimize #type-chip-set, #minimize #options-button, #minimize #tips, #minimize #element-list, #minimize #data, #minimize footer {
+/* Commented out these so we can show them in minimized view and because they won't be in the view normally: #minimize #element-list, #minimize #data */
+#minimize #type-chip-set, #minimize #options-button, #minimize #tips-maximized, #tips-minimized, #minimize footer, #minimize #element-list span {
   display: none;
+}
+
+#minimize #tips-minimized {
+  display: block;
 }
 
 #minimize .grid-row-2c {
@@ -224,6 +251,27 @@ footer {
 #minimize #element-current {
   height: 17px;
   overflow: hidden;
+}
+
+#minimize #data-copy {
+  position: absolute;
+  top: 50px;
+  left: 60px;
+}
+
+#minimize #element-list {
+  position: absolute;
+  top: 50px;
+  left: 128px;
+}
+
+#minimize #element-list li {
+  display: inline;
+}
+
+/* Hides the tooltips */
+#minimize #data-copy:before, #minimize #data-copy:after, #minimize #element-list li div:before, #minimize #element-list li div:after {
+  display: none;
 }
 
 /* miscellaneous */
@@ -245,6 +293,10 @@ footer {
 
 #element-current-div, #element-list > li > span {
   overflow: hidden;
+}
+
+[data-type="empty"] svg {
+  fill: var(--mdc-theme-error);
 }
 
 /* Firefox - The icons look clipped due to the hvr-grow effect for some reason. Adding height seems to resolve this */
