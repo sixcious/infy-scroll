@@ -34,7 +34,7 @@ Infy Scroll is an extension in beta that can auto-load the next page and let you
 - No Ads, No Tracking, No Bloat
 
 ## Introducing AJAX
-Since releasing Infy Scroll in August 2020, if you were to ask me what is the one feature I was working my hardest to implement — it's always been an append mode for [AJAX websites](https://developer.mozilla.org/docs/Glossary/AJAX). After two years of on and off development, I'm really proud to offer this completely new and innovative append mode in Version 0.8, The Eightfinity Edition. AJAX is mostly in the proof of concept stage right now, but does work on many sites, including Pixiv.
+Since releasing Infy Scroll in August 2020, if you were to ask me what is the one feature I was working my hardest to implement — it's always been an append mode for [AJAX websites](https://developer.mozilla.org/docs/Glossary/AJAX). After two years of on and off development, I'm really proud to offer this completely new and innovative append mode in Version 0.8, The Eightfinity Edition. AJAX comes in two flavors: Iframe and Native. AJAX is mostly in the proof of concept stage right now, but does work on many sites, including Pixiv.
 
 #### AJAX Demo (Pixiv)
 <img src="https://raw.githubusercontent.com/sixcious/infy-scroll/main/assets/ajax.gif">
@@ -42,19 +42,19 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
 ##### Settings Used (Version 0.8):
 ````
 {
-  "action": "button",
+  "action": "click",
   "append": "ajax",
   "button": "//nav/button[@aria-current='true']/following-sibling::a[not(@hidden)]",
   "loadElement": "//ul[@class='sc-l7cibp-1 krFoBL']//figure",
   "pageElement": "//ul[@class='sc-l7cibp-1 krFoBL']/*",
-  "spa": "^https://www\\.pixiv\\.net",
+  "spaf": "^https://www\\.pixiv\\.net",
   "url": "^https://www\\.pixiv\\.net/"
 }
 ````
 *You can copy and paste these settings using the Add Save feature in the Options. (Tested on December 22, 2022.)*
 
 ## SPA Support
-[SPAs (Single-page Applications)](https://developer.mozilla.org/docs/Glossary/SPA) are tricky to deal with because they update their page content dynamically, and sometimes don't even update the address bar. However, Infy can now watch for changes on the page and auto-activate and auto-deactivate itself if the website changes its content dynamically. It even works here on GitHub and on Pixiv. Just check the setting in the Scripts dialog in the UI Window (Version 0.8) and save it. No more refreshing the page!
+[SPAs (Single-page Applications)](https://developer.mozilla.org/docs/Glossary/SPA) are tricky to deal with because they update their page content dynamically, and sometimes don't even update the address bar. However, Infy now supports the [Navigation](https://developer.mozilla.org/docs/Web/API/Navigation) API (Chrome/Edge 102+ Only) to detect browser navigations and it can also watch for changes on the page and auto-activate and auto-deactivate itself if the website changes its content dynamically. It even works here on GitHub and on Pixiv. Just check the setting in the UI Window (Version 0.8) and save it. No more refreshing the page!
 
 ## Installation
 Installing from GitHub is simple. First, [download the zip](https://github.com/sixcious/infy-scroll/archive/refs/heads/main.zip) and unzip it. Then:
