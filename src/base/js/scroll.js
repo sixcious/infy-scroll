@@ -328,7 +328,8 @@ const Scroll = (() => {
       if (instance.enabled || instance.pickerEnabled) {
         check = false;
         for (const page of pages) {
-          if (!document.contains(page.element)) {
+          // A page must be active for it to check if page.element is still in the document (e.g. the page wasn't removed in removePages())
+          if (page.active && !document.contains(page.element)) {
             console.log("spaObserverCallback() - stopping!");
             check = true;
             await stop("spaObserverCallback");
@@ -993,12 +994,12 @@ const Scroll = (() => {
       "number": pages.length + 1,
       "url": instance.url,
       "title": currentDocument?.title,
-      // "element": pages.length > 0 && typeof divider?.scrollIntoView === "function" && document?.contains(divider) ? divider : typeof observableElement?.scrollIntoView === "function" ? observableElement : undefined,
       "element": typeof divider?.scrollIntoView === "function" && document?.contains(divider) ? divider : typeof observableElement?.scrollIntoView === "function" ? observableElement : undefined,
-      "el": observableElement,
+      "observableElement": observableElement,
       "divider": divider,
       "append": instance.append,
-      "mode": instance.pageElementIframe
+      "mode": instance.pageElementIframe,
+      "active": true
       //, "bottomElements": [observableElement]
       //, "isIntersecting": true
     };
@@ -1660,7 +1661,7 @@ const Scroll = (() => {
         //   continue;
         // }
         // We do not want to remove the page if any of its elements are still on the screen
-        const elements = (page.pageElements || []).concat([page.element, page.el, page.iframe, page.divider]).filter(e => e?.nodeType === Node.ELEMENT_NODE && typeof e.remove === "function");
+        const elements = (page.pageElements || []).concat([page.element, page.observableElement, page.iframe, page.divider]).filter(e => e?.nodeType === Node.ELEMENT_NODE && typeof e.remove === "function");
         const isInView = elements.some(element => isScrolledIntoView(element));
         console.log("removePages() - isInView=" + isInView + ", elements=");
         console.log(elements);
