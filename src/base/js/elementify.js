@@ -186,6 +186,8 @@ const AutoDetectPageElement = (() => {
       if (!elements || elements.size <= 0) {
         throw new Error("The elements map is empty or undefined!");
       }
+      console.log("autoDetectPageElement() - elements=");
+      console.log(elements);
       el = elements.entries().next().value[0];
       path = DOMPath.generatePath(el, type, algorithm, quote, optimized).path + (type === "xpath" ? "/*" : " > *");
       console.log("autoDetectPageElement() - path=" + path);
@@ -218,7 +220,7 @@ const AutoDetectPageElement = (() => {
     // Iffy on: "top"
     const BANNED_ATTRIBUTES = ["ads", "aside", "carousel", "dropdown", "footer", "header", "jumpbox", "menu", "menubar", "menu-bar", "nav", "navbar", "navigation", "navigation-list", "nav-bar", "paginate", "pagination", "paginator", "sidebar", "side-bar", "tooltips"];
     // Note: We shouldn't ban attributes that merely "include" any of the banned words in them. For example, consider a page that uses an outer div with the class "sidebar-content" that encapsulates both "sidebar" and "content"
-    one:for (let child of element.children) {
+    first:for (let child of element.children) {
       try {
         if (!child) {
           continue;
@@ -248,7 +250,7 @@ const AutoDetectPageElement = (() => {
             clazz = (!!clazz && typeof clazz.toLowerCase === "function" ? clazz.toLowerCase() : "").trim();
             if (clazz && BANNED_ATTRIBUTES.includes(clazz)) {
               console.log("checkChildren() - continuing because banned class encountered: " + clazz);
-              continue one;
+              continue first;
             }
           }
         }
@@ -301,19 +303,24 @@ const AutoDetectPageElement = (() => {
     // If we don't do this then we will have the ones with no children return -Infinity when we sort, but they'll still be at the bottom, so it's not necessary maybe?
     elements = new Map(
       [...elements].filter(function ([k,v]) {
-        let rect;
+        // Important: We must be using the top-level document in order to use functions like getBoundingClientRect
+        const position = DOMNode.getElementPosition(k);
+        const rect = position?.rect;
+        // TODO: Check element (k).children's positions and get the topmost and bottommost to determine the height of the content instead of rect.height?
         // TODO: Decide on overflowing as a potential ban, e.g. Google Search Results Page 1 sidebar content
         // let overflowing = false;
-        try {
-          // Important: We must be using the top-level document in order to use functions like getBoundingClientRect
-          if (k && typeof k.getBoundingClientRect === "function") {
-            rect = k.getBoundingClientRect();
-          }
-          // overflowing = getTotalWidth(document) < rect.right;
-        } catch (e) {
-          console.log("parseMap() - error calling getBoundingClientRect()");
-        }
+        // try {
+        //   // Important: We must be using the top-level document in order to use functions like getBoundingClientRect
+        //   if (k && typeof k.getBoundingClientRect === "function") {
+        //     rect = k.getBoundingClientRect();
+        //     const position = DOMNode.getElementPosition(k);
+        //   }
+        //   // overflowing = getTotalWidth(document) < rect.right;
+        // } catch (e) {
+        //   console.log("parseMap() - error calling getBoundingClientRect()");
+        // }
         return v.nodeNames.size > 0 && (rect && typeof rect.height === "number" && typeof rect.width === "number" ? rect.height > 500 || rect.width > 500 : true);
+        // return v.nodeNames.size > 0 && (height > 500 || height === 0);
         // return v.nodeNames.size > 0 && (rect && typeof rect.height === "number" && rect.height > 0 ? rect.height > 500 : typeof rect.width === "number" && rect.width > 0 ? rect.width > 500 : true);
         // return v.nodeNames.size > 0 && (rect && typeof rect.right === "number" ? !overflowing : true) && (rect && typeof rect.height === "number" && typeof rect.width === "number" ? rect.height > 500 || rect.width > 500 : true);
       })
@@ -324,7 +331,7 @@ const AutoDetectPageElement = (() => {
     // } else {
     //   elements = new Map([...elements].filter(function ([k,v]) { return v.nodeNames.size > 0; }));
     // }
-    // Wanted to use 10, but Google Search seems to top out at 9 for id rso search results...
+    // Wanted to use 10, but Google Search seems to top out at 9 for id rso search results
     const similarityThreshold = 9;
     // Compare the maps. If there is an element that has at least 10 children with the same className, use that element.
     // 1st Choice: Use the element with the most children that have the same exact className

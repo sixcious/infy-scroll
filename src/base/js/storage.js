@@ -131,10 +131,8 @@ const Storage = (() => {
     _.linksNewTabEnabled = true;
     _.customEventsEnabled = false;
     _.debugEnabled = false;
+    _.navigationBlacklist = [];
     _.stats = { actions: [0,0,0,0], appends: [0,0,0,0,0,0], elements: [0,0,0,0,0,0] };
-    // _.statsActions = [0,0,0,0];
-    // _.statsAppends = [0,0,0,0,0,0];
-    // _.statsElements = [0,0,0,0,0,0];
     _.statsEnabled = false;
     return _;
   }
@@ -177,6 +175,23 @@ const Storage = (() => {
     const platformName = /Android|iPad|iPhone|iPod|Kindle|Opera Mini|webOS|Windows Phone/i.test(UA) ? "mobile" : "desktop";
     console.log("getPlatformName() - platformName=" + platformName);
     return platformName;
+  }
+
+  /**
+   * Performs one-time-only installation work, installing the default storage and then opening the options page.
+   *
+   * @public
+   */
+  async function install() {
+    console.log("install()");
+    const SDV = getStorageDefaultValues();
+    SDV.firstRun = true;
+    await Promisify.storageClear();
+    await Promisify.storageSet(SDV);
+    // Note: When the extension is first installed, we await at least 2 seconds for the Options page to load and set the preferred color before startupListener executes
+    await Promisify.runtimeOpenOptionsPage();
+    await Promise.all([Database.download(true, true), Promisify.sleep(2000)]);
+    await Promisify.runtimeSendMessage({receiver: "options", greeting: "databaseDownloaded"});
   }
 
   /**
@@ -702,6 +717,7 @@ const Storage = (() => {
     }
     await Promisify.storageSet({"prevLinkKeywords": prevLinkKeywords});
     // Saves (Too many changes to list)
+    // Note: We are keeping the types (nextLinkType, pageElementType, etc.) just to be safe
     const saves = items && items.saves && items.saves.length > 0 ? items.saves : [];
     for (let i = 0; i < saves.length; i++) {
       const save = saves[i];
@@ -724,7 +740,7 @@ const Storage = (() => {
       save.shuffleURLs = save.shuffleURLs ? save.shuffleLimit : undefined;
       save.iframePageOne = save.scrollWrapFirstPage;
       save.pageElement = save.scrollElementRule;
-      // save.pageElementType = save.scrollElementType;
+      save.pageElementType = save.scrollElementType;
       save.pageElementIframe = save.scrollElementIframe ? "trim" : undefined;
       save.insertBefore = save.scrollElementInsertRule;
       save.mediaType = save.scrollMediaType;
@@ -734,13 +750,14 @@ const Storage = (() => {
       save.nextLink = save.nextType === "xpath" ? save.nextXpath : save.nextSelector;
       save.nextLinkProperty = save.nextProperty;
       save.keyword = (save.action === "next" && save.nextKeywordsEnabled) || (save.action === "prev" && save.prevKeywordsEnabled);
-      // save.nextLinkType = save.nextType;
+      save.nextLinkType = save.nextType;
       save.prevLink = save.prevType === "xpath" ? save.prevXpath : save.prevSelector;
       save.prevLinkProperty = save.prevProperty;
-      // save.prevLinkType = save.prevType;
+      save.prevLinkType = save.prevType;
       save.selectionStrategy = save.selectionPriority;
       save.button = save.buttonRule;
       save.buttonPosition = save.buttonScrollPixels;
+      // save.buttonType = save.buttonType;
       save.list = save.listArray;
       if (save.action === "button") {
         save.action = "click";
@@ -950,10 +967,10 @@ const Storage = (() => {
       }
     }
     // Sort the saves only by URL length now (we used to sort them by their type/order)
-    saves.sort((a, b) => (a.url && b.url && a.url.length < b.url.length) ? 1 : -1);
+    saves.sort((a, b) => b.url?.length - a.url?.length || a.id - b.id);
     await Promisify.storageSet({"saves": saves});
     // Check the saves if any of them contain the extra inputs before setting this setting
-    await Promisify.storageSet({"extraInputs": saves && saves.length > 0 && Array.isArray(saves) && saves.some(save => { return save.insertBefore || save.nextLinkProperty || save.prevLinkProperty} )});
+    await Promisify.storageSet({"extraInputs": Array.isArray(saves) && saves.length > 0 && saves.some(save => { return save.insertBefore || save.nextLinkProperty || save.prevLinkProperty} )});
     // Download new IS database and re-download AP database to new databaseAP key (just to be safe in case rename didn't work). Note that we only download the database if this is an update via the old storage items databaseEnabled (not json)
     if (databaseEnabled) {
       await Database.download(true, true, "");
@@ -1000,6 +1017,7 @@ const Storage = (() => {
   // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
   return {
     getStorageDefaultValues,
+    install,
     update
   };
 

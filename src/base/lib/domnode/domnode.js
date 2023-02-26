@@ -306,7 +306,7 @@ var DOMNode = (() => {
     if (contexts) {
       for (let i = 0; i < contexts.length; i++) {
         // console.log("getElementsFromContextPath() - i=" + i + ", context=" + contexts[i] + ", path=" + paths[i]);
-        context = contexts[i] === "contentDocument" ? context.querySelector(paths[i]).contentDocument : DOMNode.getShadowRoot(context.querySelector(paths[i]));
+        context = contexts[i] === "contentDocument" ? context.querySelector(paths[i]).contentDocument : getShadowRoot(context.querySelector(paths[i]));
       }
     }
     console.log("getElementsFromContextPath() - paths, contexts, chosen context=");
@@ -343,6 +343,40 @@ var DOMNode = (() => {
       console.log(e);
     }
     return nodes;
+  }
+
+  /**
+   * Gets an element's position relative to the entire document. We use getBoundingClientRect() to find the position.
+   *
+   * @param {Element} element - the element to get the position of
+   * @returns {{top: number, bottom: number, left: number, right: number, rect: Object}}
+   * @see https://plainjs.com/javascript/styles/get-the-position-of-an-element-relative-to-the-document-24/
+   * @see https://stackoverflow.com/a/1461143
+   * @public
+   */
+  function getElementPosition(element) {
+    let position = { top: 0, bottom: 0, left: 0, right: 0, rect: null };
+    try {
+      if (typeof element?.getBoundingClientRect === "function") {
+        // Commented out the left since it's not needed for our purposes (we only care about vertical position)
+        position.rect = element.getBoundingClientRect();
+        // const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
+        position.top = position.rect.top + scrollTop;
+        position.bottom = position.rect.bottom + scrollTop;
+        // position.left = rect + scrollLeft;
+        // In order to calculate the height of what we're removing, we calculate the top-most and bottom-most position of the elements and take the difference
+        // Note that getBoundingClientRect includes the padding and border, but does not include the margin, so we include them in our overall height calculation
+        // const top = Math.min(...(element.children.map(e => { const style = window.getComputedStyle(e); return DOMNode.getElementPosition(e).top - parseFloat(style.marginTop); } )));
+        // const bottom = Math.max(...(element.children.map(e => { const style = window.getComputedStyle(e); return DOMNode.getElementPosition(e).bottom + parseFloat(style.marginBottom); } )));
+        // height = bottom - top;
+      }
+    } catch (e) {
+      console.log("getElementPosition() - Error:");
+      console.log(e);
+    }
+    // console.log("getElementPosition() - position.top=" + position.top + ", position.bottom=" + position.bottom);
+    return position;
   }
 
   /**
@@ -444,6 +478,7 @@ var DOMNode = (() => {
     getParentIframe,
     getAncestorContexts,
     getNodesByTreeWalker,
+    getElementPosition,
     insertBefore,
     transferNode
   };

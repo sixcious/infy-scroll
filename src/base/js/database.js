@@ -41,8 +41,9 @@ const Database = (() => {
   /**
    * Downloads the databases.
    *
-   * Note: This function is in the Background because both the Content Script and Options  need the ability to download
-   * the database. If it weren't in the Background, we would need to duplicate this function in both places.
+   * Note: This function is here in Database, as part of the Background, because both the Content Script and Options
+   * need the ability to download the database. If it weren't in the Background, we would need to duplicate this
+   * function in both places.
    *
    * @param {boolean} downloadAP - whether to download the AP database or not
    * @param {boolean} downloadIS - whether to download the IS database or not
@@ -103,18 +104,20 @@ const Database = (() => {
       // Map each database record (r) to a flat object with the desired keys
       database = database.map(d => {
         const r = {};
-        for (const k of ["name", "resource_url", "updated_at", "created_by"]) { if (d[k]) { r[k] = d[k]; } }
+        for (const k of ["name", "resource_url", "created_at", "updated_at", "created_by"]) { if (d[k]) { r[k] = d[k]; } }
         for (const k of Object.keys(d.data)) { if (d.data[k]) { r[k] = d.data[k]; } }
         return r;
       });
       // Sort the database with the longest URLs first to find the most exact URL match first
-      database.sort((a, b) => (a.url.length < b.url.length) ? 1 : -1);
+      // database.sort((a, b) => (a.url.length < b.url.length) ? 1 : -1);
+      database.sort((a, b) => b.url?.length - a.url?.length);
       if (Array.isArray(database) && database.length > 0) {
         // Note: The microformat is the item that websites use to make themselves compatible with AutoPagerize
         if (databaseName === "AP") {
           const microformat = {
             name:         "Microformat",
             created_by:   "swdyh",
+            created_at:   "2008-01-01T00:00:00.000Z",
             updated_at:   "2008-01-01T00:00:00.000Z",
             url:          ".*",
             nextLink:     "//a[@rel='next'] | //link[@rel='next']",

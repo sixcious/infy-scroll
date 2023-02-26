@@ -10,7 +10,7 @@
  *
  * The basic workflow:
  * 1. Scroll.shouldAppend() - As the user scrolls, shouldAppend() is called. If true, sets isLoading to true and calls Workflow.execute()
- * 2. Workflow.execute() - Performs the workflow, which is the action and append. There are different workflow types (normal, reverse, control actions)
+ * 2. Workflow.execute() - Executes the workflow, which is comprised of performing the action and append. There are different workflow types (normal, reverse, control actions)
  *
  * The workflow is in reverse or advance order for special append modes like AJAX and Element Iframe (that is, it does the
  * append and then calls the action early for the next page to avoid a delay with loading the iframe by the time the
@@ -22,10 +22,10 @@
  * There is also a special case of the Normal workflow, where we need to prepend an element (e.g. the divider) before
  * the action is performed.
  *
+ * Page 1's Workflow
+ * Workflow does not perform the workflow for the first page. Scroll.start() handles that instead.
  * 1. After the page has loaded, in prepareFirstPage(): create the iframe, perform the action (button click), and start scrolling the iframe
  * 2. When the user reaches the bottom, call append() and import the iframe's elements, then call action() and start scrolling the iframe again
- *
- * Workflow does not perform the workflow for the first page. Scroll.start() handles that instead.
  */
 const Workflow = (() => {
 
@@ -35,7 +35,7 @@ const Workflow = (() => {
    * @param {string[]} MAIN_ACTIONS - the array of all main actions
    * @param {string[]} SUB_ACTIONS - the array of all sub actions
    */
-  const MAIN_ACTIONS = ["next", "prev", "increment", "decrement", "click", "button", "list"];
+  const MAIN_ACTIONS = ["next", "prev", "increment", "decrement", "click", "list"];
   const SUB_ACTIONS = ["down", "up", "auto", "repeat", "return", "blacklist", "whitelist", "power"];
 
   /**
@@ -50,19 +50,19 @@ const Workflow = (() => {
   async function execute(action, caller, extra = {}) {
     console.log("Workflow.execute() - caller=" + caller + ", action=" + action + ", extra=" + extra);
     action = preWorkflow(action, caller);
-    const actionPerformed = await workflow(action, caller, extra);
+    const actionPerformed = await mainWorkflow(action, caller, extra);
     await postWorkflow(action, caller, actionPerformed);
     return actionPerformed;
   }
 
   /**
    * Pre Workflow determines what the final action will be. For example, if the user clicks the "down" button to perform
-   * a down action, but there are no pages below the current page, the action resolves to a primary action. It also
-   * handles Auto initialization.
+   * a down action, but there are no pages below the current page, the action resolves to a primary action in order to
+   * append the next page. It also handles Auto initialization.
    *
    * @param {string} action - the action to perform (e.g. "next")
    * @param {string} caller - the caller who called this function (e.g. "popup")
-   * @return {string} the final resolved action
+   * @return {string} the final (resolved) action
    * @private
    */
   function preWorkflow(action, caller) {
@@ -103,8 +103,8 @@ const Workflow = (() => {
    * @return {boolean} true if the action was successfully performed, false otherwise
    * @private
    */
-  async function workflow(action, caller, extra) {
-    console.log("workflow()");
+  async function mainWorkflow(action, caller, extra) {
+    console.log("mainWorkflow()");
     let actionPerformed;
     let instance = Scroll.get("instance");
     // Workflow 1 - Sub Actions (Just perform the action, these actions do not need to append anything)
@@ -117,8 +117,10 @@ const Workflow = (() => {
       if (!instance.workflowSkipAppend) {
         // We must await this before the action is called so that appendFinally() appends the current page before instance.url is updated
         await Scroll.append(caller);
+        // // This is when we really want to update the popup with the new current page, but we have to await the action below so we call it now instead of in postWorkflow
+        // updatePopup(action, caller);
       }
-      // The reason why we await this is only for the AJAX Iframe Button clicks to give it the one second it needs for the iframe to be updated and to set the new instance.url when we append the divider below
+      // The reason why we await this is mainly due to Scroll.prepareIframe()
       actionPerformed = await Action.perform(action, caller, extra);
       // Should we await this?
       await Scroll.prepareIframe(actionPerformed, caller);
@@ -170,14 +172,40 @@ const Workflow = (() => {
       }
       Promisify.runtimeSendMessage({receiver: "popup", greeting: "updatePopupInstance", caller: caller, action: action, instance: instance});
     }
-    // Sub Actions end their post workflow here and do not a delay imposed on them
+    // // We call this function in two places; in mainWorkflow if workflowReverse and not a sub action
+    // // Otherwise we always call it here in postWorkflow. This if guards against it being called twice if the former condition is true
+    // if (SUB_ACTIONS.includes(action) || !instance.workflowReverse) {
+    //   updatePopup(action, caller);
+    // }
+    // Sub Actions end their post workflow here and do not have a delay imposed on them
     if (SUB_ACTIONS.includes(action)) {
       return;
     }
     // We impose a delay on main actions to prevent them from calling the workflow again quickly
-    // Scroll.delay() checks scrollDetection and this will call the workflow again if needed
+    // Note: Scroll.delay() checks scrollDetection and this will call the workflow again if needed
     await Scroll.delay(caller);
   }
+
+  // /**
+  //  * Updates the popup with the newly updated instance. This is a separate function because we need to call it early in
+  //  * mainWorkflow() if workflowReverse is true so it doesn't await the action and update the popup late.
+  //  *
+  //  * @param {string} action - the action to perform (e.g. "next")
+  //  * @param {string} caller - the caller who called this function (e.g. "popup")
+  //  * @private
+  //  */
+  // function updatePopup(action, caller) {
+  //   console.log("updatePopup()");
+  //   const instance = Scroll.get("instance");
+  //   // Send a message to update the popup if this is a relevant action (this process wakes up the Background, so we don't want to always do it)
+  //   if ((caller === "popupClickActionButton") || ["auto", "power", "blacklist", "whitelist"].includes(action)) {
+  //     // If a new page was appended (action is now a MAIN_ACTION), we need to set current page to total pages in case scrolling is smooth (finishes after sending instance to popup)
+  //     if (MAIN_ACTIONS.includes(action)) {
+  //       instance.currentPage = Scroll.get("pages").length;
+  //     }
+  //     Promisify.runtimeSendMessage({receiver: "popup", greeting: "updatePopupInstance", caller: caller, action: action, instance: instance});
+  //   }
+  // }
 
   // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
   return {

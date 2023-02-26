@@ -166,13 +166,21 @@ const Saves = (() => {
         save[key] = instance["_" + key];
       }
     }
+    // Type (Fixed or Auto, only save if fixed type)
+    for (let type of ["nextLinkType", "prevLinkType", "buttonType", "pageElementType"]) {
+      if (["selector", "xpath", "js"].includes(instance[type + "Mode"])) {
+        save[type] = instance[type];
+      }
+    }
     // Translate the instance back to the source keys
     Instance.translateInstance(save, "instance>source");
     console.log("addSave() - generated save=" + JSON.stringify(save));
     // Unshift adds the save to the beginning of the saves array; then we sort it by order and date and save in storage
     saves.unshift(save);
-    // We always sort URLs by length to allow for more specific URL patterns to be found before more general URL patterns
-    saves.sort((a, b) => (a.url && b.url && a.url.length < b.url.length) ? 1 : -1);
+    // We always sort URLs by length to allow for more specific URL patterns to be found before more general URL patterns (if length is same, then we sort by earliest ID)
+    // saves.sort((a, b) => (a.url && b.url && a.url.length < b.url.length) ? 1 : -1);
+    saves.sort((a, b) => b.url?.length - a.url?.length || a.id - b.id);
+    // saves.map(save => console.log({ "length": save.url.length, "id": save.id }));
     await Promisify.storageSet({"saves": saves});
     // Return the save in order for the caller to get the newly generated saveID (to be stored into the instance)
     return save;
@@ -205,7 +213,7 @@ const Saves = (() => {
       }
     }
     // Resort back to default sort order
-    saves.sort((a, b) => (a.url && b.url && a.url.length < b.url.length) ? 1 : -1);
+    saves.sort((a, b) => b.url?.length - a.url?.length || a.id - b.id);
     // Store the new save in storage before returning to avoid synchronous issues (e.g. addSave will also be writing the saves to storage)
     if (writeToStorage) {
       await Promisify.storageSet({"saves": saves});
@@ -250,7 +258,7 @@ const Saves = (() => {
 
   /**
    * Tests if a URL matches an item in a whitelist or blacklist.
-   * This is used for the following 2 lists: database blacklist and database whitelist.
+   * This is used for multiple lists, including the database blacklist and database whitelist.
    *
    * There are multiple ways a URL can "match" an item in a list:
    * 1. Pattern - The default. Checks if a URL includes the characters in the pattern as a substring or as a wildcard

@@ -17,7 +17,7 @@ const UI = (() => {
    *
    * @param {string[]} messages - the messages array to display, line by line
    * @param {boolean} isError - true if this is an error alert, false otherwise
-   * @see https://developer.chrome.com/extensions/samples#search:proxy
+   * @see https://github.com/GoogleChrome/chrome-extensions-samples/tree/main/_archive/mv2/extensions/proxy_configuration
    * @public
    */
   function generateAlert(messages, isError) {
@@ -55,7 +55,7 @@ const UI = (() => {
   /**
    * Fires confetti using Canvas Confetti!
    *
-   * This function is derived from the sample Canvas Confetti realistic option by catdad.
+   * This function is derived from Canvas Confetti's sample realistic option by catdad.
    *
    * @param {PointerEvent} event - the pointer event that triggered this
    * @see https://www.kirilv.com/canvas-confetti/#realistic
@@ -63,14 +63,14 @@ const UI = (() => {
    */
   function fireConfetti(event) {
     const options = [
-      { particleRatio: 0.25, spread: 26, startVelocity: 55, scalar: 1.0, angle: 45 },
-      { particleRatio: 0.20, spread: 60, scalar: 1.0, angle: 135 },
-      { particleRatio: 0.35, spread: 100,                    decay: 0.81, scalar: 0.8, angle: 60 },
+      { particleRatio: 0.25, spread: 26,  startVelocity: 55,              scalar: 1.0, angle: 45  },
+      { particleRatio: 0.20, spread: 60,                                  scalar: 1.0, angle: 135 },
+      { particleRatio: 0.35, spread: 100,                    decay: 0.81, scalar: 0.8, angle: 60  },
       { particleRatio: 0.10, spread: 120, startVelocity: 25, decay: 0.82, scalar: 1.2, angle: 120 },
-      { particleRatio: 0.10, spread: 120, startVelocity: 45, angle: 90 }
+      { particleRatio: 0.10, spread: 120, startVelocity: 45,                           angle: 90  }
     ];
     for (const option of options) {
-      confetti(Object.assign({ origin: { x: event.clientX / (document.documentElement?.clientWidth || 1), y: event.clientY / (document.documentElement?.clientHeight || 1) } }, option, { particleCount: Math.floor(200 * option.particleRatio) }));
+      confetti(Object.assign({ ticks: 300, origin: { x: event.clientX / (document.documentElement?.clientWidth || 1), y: event.clientY / (document.documentElement?.clientHeight || 1) } }, option, { particleCount: Math.floor(200 * option.particleRatio) }));
     }
   }
 

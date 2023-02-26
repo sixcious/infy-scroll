@@ -328,7 +328,7 @@ header {
 #button-path-text-field,
 #page-element-path-text-field,
 #element[data-type="ajax"] #page-element-path-text-field {
-  width: 495px;
+  width: 490px;
 }
 
 .mdc-drawer-app-content.drawer-collapsed #next-path-text-field,
@@ -336,17 +336,21 @@ header {
 .mdc-drawer-app-content.drawer-collapsed #button-path-text-field,
 .mdc-drawer-app-content.drawer-collapsed #page-element-path-text-field,
 .mdc-drawer-app-content.drawer-collapsed #element[data-type="ajax"] #page-element-path-text-field {
-  width: 643px;
+  width: 638px;
 }
 
 #load-element-path-text-field,
 #remove-element-path-text-field {
-  width: 240px;
+  width: 235px;
 }
 
 .mdc-drawer-app-content.drawer-collapsed #load-element-path-text-field,
 .mdc-drawer-app-content.drawer-collapsed #remove-element-path-text-field {
-  width: 388px;
+  width: 383px;
+}
+
+#insert-before-path-text-field {
+  width: 102px;
 }
 
 /* Next */
@@ -557,12 +561,8 @@ footer #extras svg {
   font-size: 11px;
   font-weight: 500;
   vertical-align: top;
-  width: 10px;
-}
-
-/* Don't make the cursor be a pointer due to the nearby element picker button */
-.type-label[aria-label][data-balloon-pos] {
-  cursor: initial;
+  width: 15px;
+  user-select: none;
 }
 
 /* SVG Fill Icon Colors */
@@ -741,20 +741,34 @@ footer #extras svg {
   min-height: 142px;
 }
 
-/* For AP label position absolute */
-/* Need negative margin-top to prevent scrollbar from appearing when AUTO is enabled in Element Mode */
-#page-element-result {
+/* So the header position absolute can be relative to this */
+#element {
   position: relative;
-  margin-top: -6px;
 }
 
 #element-header, #ajax-header {
   position: absolute;
-  right: -7px;
-  top: -6px;
+  top: 0;
+  right: 0;
   font-size: 12px;
   font-weight: 500;
-  display: none;
+  margin: 0;
+}
+
+/*
+#element-header span, #ajax-header span {
+  border-bottom: 1px dotted;
+}
+*/
+
+#element-header-icon, #ajax-header-icon {
+  width: 12px;
+  height: 12px;
+}
+
+/* Need negative margin-top to prevent scrollbar from appearing when AUTO is enabled in Element Mode */
+#page-element-result {
+  margin-top: -6px;
 }
 
 #page-element-result-details  {
@@ -764,10 +778,6 @@ footer #extras svg {
 
 #element[data-type="ajax"] span.separator {
   display: none;
-}
-
-#insert-before-path-text-field {
-  width: 102px;
 }
 
 /* Keeps the media type chip-set from taking up more space and the same as the other append modes */
@@ -805,20 +815,20 @@ html[data-extra-document] [data-extra], html[data-extra-document] [data-extra].t
 }
 
 html[data-extra-document] #next-path-text-field, html[data-extra-document] #prev-path-text-field {
-  width: 412px;
+  width: 407px;
 }
 
 html[data-extra-document] #page-element-path-text-field {
-  width: 390px;
+  width: 385px;
 }
 
 html[data-extra-document] .mdc-drawer-app-content.drawer-collapsed #next-path-text-field,
 html[data-extra-document] .mdc-drawer-app-content.drawer-collapsed #prev-path-text-field {
-  width: 560px;
+  width: 555px;
 }
 
 html[data-extra-document] .mdc-drawer-app-content.drawer-collapsed #page-element-path-text-field {
-  width: 538px;
+  width: 533px;
 }
 
 /* TODO: Decide on List Options */

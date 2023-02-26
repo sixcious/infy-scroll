@@ -154,7 +154,7 @@ const Popup = (() => {
     }
     DOM["#version-theme"].className = items.versionTheme ? "display-block" : "display-none";
     // Initialization that requires the instance
-    MDC.lists.get("action-list").selectedIndex = instance.action === "next" || instance.action === "prev" ? 0 : instance.action === "increment" || instance.action === "decrement" ? 1 : instance.action === "click" ? 2 : instance.action === "list" ? 3 : -1;
+    MDC.lists.get("action-list").selectedIndex = instance.action === "next" || instance.action === "prev" ? 0 : instance.action === "click" ? 1 : instance.action === "increment" || instance.action === "decrement" ? 2 : instance.action === "list" ? 3 : -1;
     MDC.lists.get("append-list").selectedIndex = instance.append === "page" ? 0 : instance.append === "iframe" ? 1 : instance.append === "element" ? 2 : instance.append === "media" ? 3 : instance.append === "none" ? 4 : instance.append === "ajax" ? 5 : -1;
     MDC.chips.get((instance.action === "prev" ? "prev" : "next") + "-chip").selected = true;
     MDC.chips.get("button-detection-" + (instance.buttonDetection === "manual" ? "manual": "auto") + "-chip").selected = true;
@@ -221,6 +221,11 @@ const Popup = (() => {
     DOM["#element-picker-load-button"].addEventListener("click", clickElementPicker);
     DOM["#element-picker-remove-button"].addEventListener("click", clickElementPicker);
     DOM["#auto-detect-page-element-button"].addEventListener("click", clickAutoDetectPageElement);
+    // Change Type Label
+    DOM["#next-type-label"].addEventListener("click", changeType);
+    DOM["#prev-type-label"].addEventListener("click", changeType);
+    DOM["#button-type-label"].addEventListener("click", changeType);
+    DOM["#page-element-type-label"].addEventListener("click", changeType);
     // Toggle the drawer by first always closing it and then listening to see when it has finished closing to re-open it with the new collapsed state
     DOM["#drawer-button"].addEventListener("click", closeDrawer);
     MDC.drawers.get("app-drawer").listen("MDCDrawer:closed", openDrawer);
@@ -521,7 +526,8 @@ const Popup = (() => {
          (action === "whitelist" && instance.databaseFound && !instance.autoEnabled) ||
          (action === "power")) {
       UI.clickHoverCss(this, "hvr-push-click");
-      // Need to manually set the page if this is Intersection Observer mode
+      // Extra justification: Ensure we always go down or up one page from the current page, regardless of location and where the pages are (e.g. think of higher numbered pages that may for some reason be located at the top)
+      // One drawback to this though is that if the user is scrolling the page with the Popup open, the page being moved to won't be the one below or above in terms of location, but rather the Popup's currentPage number
       const extra = action === "down" ? { page: instance.currentPage + 1 } : action === "up" ? { page: instance.currentPage - 1 } : {};
       chrome.tabs.sendMessage(tabs[0].id, {receiver: "contentscript", greeting: "executeWorkflow", action: action, caller: "popupClickActionButton", extra: extra});
       // Note: We no longer need to manually adjust the storage items (e.g. items.on = false) or instance anymore as we get a message back from Workflow.execute() telling us to update the instance and storage items
@@ -579,7 +585,7 @@ const Popup = (() => {
    */
   async function updateSetup(all = false) {
     console.log("updateSetup() - all=" + all);
-    // Save URL Setup
+    // Save Setup
     if (all) {
       DOM["#save-input"].checked = instance.saveFound;
       DOM["#save-button-icon"].children[0].setAttribute("href", "../lib/fontawesome/" + (instance.saveFound ? "solid" : "regular") + ".svg#heart");
@@ -588,6 +594,14 @@ const Popup = (() => {
       DOM["#save-type-pattern"].checked = instance.saveType === "pattern";
       DOM["#save-type-regex"].checked = instance.saveType === "regex";
       DOM["#save-type-exact"].checked = instance.saveType === "exact";
+    }
+    // Type Setup
+    if (all) {
+      // for (let type of ["nextLinkType", "prevLinkType", "buttonType", "pageElementType"]) {
+      for (const type of ["next", "prev", "button", "page-element"]) {
+        DOM["#" + type + "-type-label"].dataset.mode = instance[(type === "next" ? "nextLink" : type === "prev" ? "prevLink" : type === "page-element" ? "pageElement" : type) + "TypeMode"];
+        changeType(undefined, DOM["#" + type + "-type-label"]);
+      }
     }
     // Next Prev Setup
     if (all || instance.action === "next") {
@@ -811,7 +825,8 @@ const Popup = (() => {
       DOM["#next-prev-result-error"].style.display = "none";
       timeouts.checkNextPrev2 = setTimeout(async function () {
         const path = DOM["#" + action + "-path-textarea"].value;
-        const type = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "determinePathType", path: path, type: _[action + "LinkType"] });
+        const typeMode = DOM ["#" + action + "-type-label"].dataset.mode;
+        const type = ["selector", "xpath", "js"].includes(typeMode) ? typeMode :  await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "determinePathType", path: path, type: _[action + "LinkType"] });
         const property = DOM["#" + action + "-property-textarea"].value ? DOM["#" + action + "-property-textarea"].value.split(".").filter(Boolean) : [];
         // If the keywordsEnabled hasn't been decided yet (it's undefined), we will not use the checkbox value and instead pass in undefined to NextPrev so it tries to use the keywords
         const keywordsEnabled = _[action + "LinkKeywordsEnabled"] === undefined ? undefined : DOM["#" + action + "-keywords-enabled-input"].checked;
@@ -825,6 +840,7 @@ const Popup = (() => {
         const success = response && response.url && !response.duplicate;
         // This is the only opportunity to store the new type if the path changes
         _[action + "LinkType"] = type;
+        _[action + "LinkTypeMode"] = typeMode;
         DOM["#" + action + "-type-label"].textContent = chrome.i18n.getMessage(type + "_abbreviated_label");
         // If the keywordsEnabled hasn't been decided yet (it's undefined), we will manually decide it after getting the response from NextPrev and set it for the temporary instance  _
         if (_[action + "LinkKeywordsEnabled"] === undefined) {
@@ -853,7 +869,7 @@ const Popup = (() => {
           DOM["#next-prev-result-message-error"].textContent = chrome.i18n.getMessage("next_prev_result_message_" + (response.duplicate ? "duplicate" : "error")).replace("?", chrome.i18n.getMessage(action + "_label"));
           DOM["#next-prev-result-details-error"].textContent = details;
           // DOM["#next-prev-result-details-error"].setAttribute("aria-label", response && response.error ? response.error : "(" + chrome.i18n.getMessage(type + "_label") + ") " + chrome.i18n.getMessage("no_result_tooltip_error"));
-          DOM["#next-prev-result-details-error"].setAttribute("aria-label", response?.error ? response.error : response?.duplicate ? chrome.i18n.getMessage("duplicate_result_tooltip_error") : chrome.i18n.getMessage("no_result_tooltip_error"));
+          DOM["#next-prev-result-details-error"].setAttribute("aria-label", response?.error ? (typeMode === "js" ? chrome.i18n.getMessage("jspath_result_tooltip_error") : "") + response.error : response?.duplicate ? chrome.i18n.getMessage("duplicate_result_tooltip_error") : chrome.i18n.getMessage("no_result_tooltip_error"));
           DOM["#next-prev-url-textarea"].value = response.url || "";
         }
         MDC.linearProgresses.get("next-prev-linear-progress").foundation_.setDeterminate(true);
@@ -887,7 +903,8 @@ const Popup = (() => {
       DOM["#button-result-error"].style.display = "none";
       timeouts.checkButton2 = setTimeout(async function () {
         const buttonPath = DOM["#button-path-textarea"].value;
-        const buttonType = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "determinePathType", path: buttonPath, type: _.buttonType });
+        const typeMode = DOM ["#button-type-label"].dataset.mode;
+        const buttonType = ["selector", "xpath", "js"].includes(typeMode) ? typeMode : await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "determinePathType", path: buttonPath, type: _.buttonType });
         console.log("checkButton() - sending message to check: buttonType=" + buttonType + ", buttonPath=" + buttonPath);
         await Promisify.tabsExecuteScript(tabs[0].id, {file: "/lib/hoverbox/hoverbox.js", runAt: "document_end"});
         const response = await Promisify.tabsSendMessage(tabs[0].id, {caller: "popup", receiver: "contentscript", greeting: "checkButton", buttonType: buttonType, buttonPath: buttonPath, highlight: highlight});
@@ -896,6 +913,7 @@ const Popup = (() => {
         const success = response && response.found && response.clickable;
         // This is the only opportunity to store the new type if the path changes
         _.buttonType = buttonType;
+        _.buttonTypeMode = typeMode;
         DOM["#button-type-label"].textContent = chrome.i18n.getMessage(buttonType + "_abbreviated_label");
         DOM["#button-result-loading"].style.display = "none";
         DOM["#button-result-success"].style.display = success ? "block" : "none";
@@ -907,7 +925,7 @@ const Popup = (() => {
           DOM["#button-result-details-success"].setAttribute("aria-label", chrome.i18n.getMessage("button_result_tooltip_success").replace("?", response.buttonNode));
         } else {
           DOM["#button-result-details-error"].textContent = details;
-          DOM["#button-result-details-error"].setAttribute("aria-label", response && response.error ? response.error : response && response.found && !response.clickable ? chrome.i18n.getMessage("button_result_tooltip_error_clickable") : chrome.i18n.getMessage("no_result_tooltip_error"));
+          DOM["#button-result-details-error"].setAttribute("aria-label", response?.error ? (typeMode === "js" ? chrome.i18n.getMessage("jspath_result_tooltip_error") : "") + response.error : response?.found && !response?.clickable ? chrome.i18n.getMessage("button_result_tooltip_error_clickable") : chrome.i18n.getMessage("no_result_tooltip_error"));
         }
         MDC.linearProgresses.get("button-linear-progress").foundation_.setDeterminate(true);
         MDC.layout();
@@ -938,7 +956,8 @@ const Popup = (() => {
       timeouts.pageElement2 = setTimeout(async function () {
         const pageElementPath = DOM["#page-element-path-textarea"].value;
         const insertBeforePath = DOM["#insert-before-path-textarea"].value;
-        const pageElementType = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "determinePathType", path: pageElementPath, type: _.pageElementType });
+        const typeMode = DOM ["#page-element-type-label"].dataset.mode;
+        const pageElementType = ["selector", "xpath", "js"].includes(typeMode) ? typeMode : await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "determinePathType", path: pageElementPath, type: _.pageElementType });
         console.log("checkPageElement() - sending message to check: pageElementType=" + pageElementType + ", pageElementPath=" + pageElementPath + ", insertBeforePath="+ insertBeforePath);
         const response = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "checkPageElement", pageElementType: pageElementType, pageElementPath: pageElementPath, insertBeforePath: insertBeforePath, highlight: highlight, autoDetected: autoDetected});
         console.log("checkPageElement() - response received from check:");
@@ -946,6 +965,7 @@ const Popup = (() => {
         const success = response && response.found;
         // This is the only opportunity to store the new type if the path changes
         _.pageElementType = pageElementType;
+        _.pageElementTypeMode = typeMode;
         DOM["#page-element-type-label"].textContent = chrome.i18n.getMessage(pageElementType + "_abbreviated_label");
         // We are currently using the same type as the page element type for these inputs
         DOM["#load-element-type-label"].textContent = chrome.i18n.getMessage(pageElementType + "_abbreviated_label");
@@ -961,7 +981,7 @@ const Popup = (() => {
           DOM["#page-element-result-details-success"].setAttribute("aria-label", chrome.i18n.getMessage("page_element_result_tooltip_success").replace("?1", response.parentNode).replace("?2", response.insertDetails));
         } else {
           DOM["#page-element-result-details-error"].textContent = details;
-          DOM["#page-element-result-details-error"].setAttribute("aria-label", response && response.error ? response.error : chrome.i18n.getMessage("no_result_tooltip_error"));
+          DOM["#page-element-result-details-error"].setAttribute("aria-label", response?.error ? (typeMode === "js" ? chrome.i18n.getMessage("jspath_result_tooltip_error") : "") + response.error : chrome.i18n.getMessage("no_result_tooltip_error"));
         }
         MDC.linearProgresses.get("page-element-linear-progress").foundation_.setDeterminate(true);
         MDC.layout();
@@ -1003,6 +1023,35 @@ const Popup = (() => {
   }
 
   /**
+   * This function executes when the user clicks the path type labels, or is called manually in setupInput().
+   *
+   * @param {Event} event - the click event that triggered this callback function
+   * @param {Element} el - the type label element if calling this function manually
+   * @private
+   */
+  function changeType(event, el) {
+    const element = el || event.currentTarget;
+    const types = ["auto", "selector", "xpath", "js"];
+    const index = types.indexOf(element.dataset.mode);
+    // If calling this manually, we don't want to toggle the mode
+    const mode = el ? element.dataset.mode : (index + 1 < types.length) ? types[index + 1] : types[0];
+    element.dataset.mode = mode;
+    element.style.color = mode === "auto" ? "var(--mdc-theme-primary)" : "var(--mdc-theme-alert)";
+    element.setAttribute("aria-label", chrome.i18n.getMessage("change_type_" + (mode === "auto" ? "auto" : "fixed") + "_label").replace("?", mode === "auto" ? "" : chrome.i18n.getMessage(mode + "_label")));
+    if (["selector", "xpath", "js"].includes(mode)) {
+      element.textContent = chrome.i18n.getMessage(mode + "_abbreviated_label");
+    }
+    // If not calling this manually, need to check the path again based on the new mode type
+    if (!el) {
+      switch (element.id) {
+        case "next-type-label": case "prev-type-label": checkNextPrev(element.dataset.action, false, false, false, "changeType"); break;
+        case "button-type-label": checkButton(false, false, "changeType"); break;
+        case "page-element-type-label": checkPageElement(false, false, false, "changeType"); break;
+      }
+    }
+  }
+
+    /**
    * This function executes when the user clicks the auto detect page element button.
    *
    * @param {Event} event - the click event that triggered this callback function
@@ -1100,14 +1149,18 @@ const Popup = (() => {
     if (_.autoEnabled && _.urls && _.urls.length > 0) {
       _.autoTimes = _.urls.length;
     }
-    // Handle Save
-    await setupSave();
     // Note: We will also update Scroll's items.on to be true when we send the message to start
     if (!items.on) {
       console.log("setup() - turning infy on: items.on=true ...");
-      await Promisify.storageSet({"on": true});
+      Promisify.storageSet({"on": true});
       items.on = true;
     }
+    // Switch to the controls view (buttons) early? If the append mode uses iframes, it may take a few seconds to prepare the first page otherwise
+    // Set the instance early to _. Then we will call updateControls afterwards to update after we get the instance back
+    instance = _;
+    toggleView.call(DOM["#accept-button"]);
+    // Handle Save
+    await setupSave();
     // Give the content script the updated instance
     await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "setInstance", instance: _});
     // Ask the content script to start (or re-start again):
@@ -1115,6 +1168,8 @@ const Popup = (() => {
     // We need to get the instance back from the content script after it's been set to get the updated started property (after start() is called). Can't just set _ to the instance
     instance = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "getInstance"});
     _ = instance;
+    // Update the controls after we get the instance back
+    updateControls();
     // If auto is enabled, ask Auto to start auto timer (must do this after setting instance in the Content Script)
     // TODO: Investigate this in the case of wrapFirstPage() and when Auto is enabled... wouldn't it take time for the first page to be wrapped in the iframe first?
     if (instance.autoEnabled) {
@@ -1159,8 +1214,8 @@ const Popup = (() => {
       defaults.autoBehavior = _.autoBehavior;
     }
     chrome.storage.local.set(defaults);
-    // Switch to the controls view (buttons)
-    toggleView.call(DOM["#accept-button"]);
+    // // Switch to the controls view (buttons)
+    // toggleView.call(DOM["#accept-button"]);
   }
 
   /**
@@ -1212,8 +1267,8 @@ const Popup = (() => {
       _.list = DOM["#list-textarea"].value.match(/[^\r\n]+/g) || [];
       _.listOptions = _.action === "list" && DOM["#list-options-input"].checked;
       // Append
-      // Make the threshold be 100 for button for click button, including both ajax modes; in the case of iframe, this buys extra time to scroll
-      // the iframe, and in the case of native, if some of the bottom content hasn't loaded before the button has been clicked
+      // Make the threshold be 100 for click button, including both ajax modes; in the case of iframe, this also buys us extra time to scroll
+      // the iframe, and in the case of native, if some of the bottom content hasn't loaded before the button has been clicked, this is necessary
       _.scrollAppendThresholdPixels = _.action === "click" ? 100 : items.scrollAppendThresholdPixels;
       _.iframePageOne = DOM["#iframe-page-one-input"].checked;
       _.pageElementPath = DOM["#page-element-path-textarea"].value;

@@ -111,7 +111,7 @@ const Action = (() => {
       instance.url = result.url;
       Scroll.set("instance", instance);
     } else {
-      console.log("next() - " + (result && result.url ? ("duplicate result url found:" + result.url) : " no result found"));
+      console.log("next() - " + (result?.duplicate ? ("duplicate result url found:" + result.url) : " no result found"));
       if (instance.autoEnabled) {
         Auto.stopAutoTimer(instance, "action");
       }
@@ -282,7 +282,7 @@ const Action = (() => {
     const instance = Scroll.get("instance");
     const pages = Scroll.get("pages");
     const nextPage = extra?.page || instance.currentPage + 1;
-    const page = pages[(nextPage < pages.length ? nextPage : pages.length) - 1];
+    const page = pages[((nextPage < pages.length && nextPage >= 1) ? nextPage : pages.length) - 1];
     if (page && page.element && page.number && typeof page.element.scrollIntoView === "function") {
       instance.currentPage = page.number;
       Scroll.set("instance", instance);
@@ -306,7 +306,7 @@ const Action = (() => {
     const instance = Scroll.get("instance");
     const pages = Scroll.get("pages");
     const nextPage = extra?.page || instance.currentPage - 1;
-    let page = pages[(nextPage >= 1 ? nextPage : 1) - 1];
+    let page = pages[((nextPage < pages.length && nextPage >= 1) ? nextPage : 1) - 1];
     // This is for the page navigation button that goes to page 1. If there is a maximum/limited number of pages, then
     // we won't have page 1 anymore and need to calculate the "new" page 1 (topmost page). (Note: find finds the first.)
     if (!page?.element) {

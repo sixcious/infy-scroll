@@ -460,6 +460,10 @@ table tbody .url-cell .saves-dialog-opener, table tbody .database-dialog-opener 
   width: 140px;
 }
 
+.database-stats-primary-column {
+  width: 80%;
+}
+
 /* Scroll */
 
 #scroll-append-threshold-pages-text-field, #scroll-append-threshold-pixels-text-field, #scroll-append-delay-text-field, #scroll-maximum-pages-text-field {

@@ -101,7 +101,7 @@ const Background = (() => {
   }
 
   /**
-   * Listen for installation changes and do storage/extension initialization work.
+   * Listens for installation changes and does storage/extension initialization work.
    *
    * @param {Object} details - the details object that contains properties relevant to the installation/update
    * @private
@@ -110,14 +110,7 @@ const Background = (() => {
     console.log("installedListener() - details=" + JSON.stringify(details));
     if (details.reason === "install") {
       console.log("installedListener() - installing ...");
-      const SDV = Storage.getStorageDefaultValues();
-      SDV.firstRun = true;
-      await Promisify.storageClear();
-      await Promisify.storageSet(SDV);
-      // Note: When the extension is first installed, we await at least 2 seconds for the Options page to load and set the preferred color before startupListener executes
-      await Promisify.runtimeOpenOptionsPage();
-      await Promise.all([Database.download(true, true), Promisify.sleep(2000)]);
-      await Promisify.runtimeSendMessage({receiver: "options", greeting: "databaseDownloaded"});
+      await Storage.install();
     } else if (details.reason === "update" && details.previousVersion < chrome.runtime.getManifest().version) {
       console.log("installedListener() - updating ...");
       await Storage.update(details.previousVersion);

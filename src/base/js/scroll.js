@@ -5,15 +5,14 @@
  */
 
 /**
- * Scroll is the main content script and handles all infinite scrolling logic.
- *
- * This includes the following two purposes:
+ * Scroll is the main content script and handles all infinite scrolling logic. Scroll mainly handles:
  * 1. Scroll Detection - This can either be implemented via a Scroll Listener or Intersection Observer
  * 2. Appending of Pages* - Supports 6 modes: Page, Iframe, Element, Media, None, AJAX
  *
- * Scroll delegates business logic involving the workflow to Workflow and actions to Action.
+ * Scroll delegates business logic that involves executing the workflow to Workflow and performing actions to Action.
  *
- * *Append business logic is currently in Scroll, but should be refactored into a separate file (Append).
+ * Append business logic is currently in Scroll due to how tightly coupled it is, but should be refactored into a separate
+ * class/object (Append).
  *
  * To understand the workflow of how actions and appends are executed, see Workflow.
  *
@@ -21,7 +20,6 @@
  * needs access to it, a getter is provided.
  *
  * TODO: Move the Append code into its own file (Append - append.js)
- * TODO: For better accuracy with IntersectionObserver, observe more than just one element for each page
  * TODO: Move scrollbarExists and scrollbarAppends outside of the instance and into variable here called scrollbar (we only use them here)
  * TODO: Make PAGE_STYLE, IFRAME_STYLE, and such non constants so we can call processStyle on them in init once?
  * TODO: Should we replace: 1) document.body calls with (document.body || document.documentElement) 2) removeChild with remove 3) :scope with body in selectors?
@@ -45,7 +43,6 @@ const Scroll = (() => {
    * @param {Object} items - the storage items cache containing the user's settings
    * @param {Object[]} pages - the pages array that contains a reference to each appended page in the DOM
    * @param {Document} currentDocument - the cloned full document for the current (latest) page that is being observed
-   * @param {Document} iframeDocument - the live iframe document for the current (latest) page that is being observed
    * @param {Node} insertionPoint - the insertion point is only used in append element mode and is the point at the bottom of the content to start inserting more elements
    * @param {Element[]} pageElements - the current page's array of page elements (in append element mode)
    * @param {Element} button - the current button used for the Click Button action
@@ -81,7 +78,6 @@ const Scroll = (() => {
   let items = {};
   let pages = [];
   let currentDocument = document;
-  let iframeDocument;
   let insertionPoint;
   let pageElements;
   let button;
@@ -113,7 +109,6 @@ const Scroll = (() => {
       case "items": return items;
       case "pages": return pages;
       case "currentDocument": return currentDocument;
-      case "iframeDocument": return iframeDocument;
       case "insertionPoint": return insertionPoint;
       case "pageElements": return pageElements;
       case "button": return button;
@@ -140,7 +135,6 @@ const Scroll = (() => {
       case "items": items = value; break;
       case "pages": pages = value; break;
       case "currentDocument": currentDocument = value; break;
-      case "iframeDocument": iframeDocument = value; break;
       case "insertionPoint": insertionPoint = value; break;
       case "pageElements": pageElements = value; break;
       case "button": button = value; break;
@@ -163,7 +157,7 @@ const Scroll = (() => {
    */
   function debug() {
     return {
-      instance, items, pages, currentDocument, iframeDocument, insertionPoint, pageElements, button, iframe, lazys,
+      instance, items, pages, currentDocument, insertionPoint, pageElements, button, iframe, lazys,
       bottom, offset, loading, divider, overlay
       // TODO: Is it safe to return the below? (Don't really need them)
       , timeouts, scrollListener, intersectionObserver, bottomObserver, ajaxObserver, spaObserver
@@ -197,7 +191,9 @@ const Scroll = (() => {
         //   intersectionObserver.observe(bottomElement);
         // }
       }
-      bottomObserver = new IntersectionObserver(bottomObserverCallback, { root: null, rootMargin: "0px 0px " + (typeof items.scrollAppendThresholdPixels === "number" ? items.scrollAppendThresholdPixels : 500) + "px 0px", threshold: 0 });
+      // Note: The reason this is a separate observer is due to the rootMargin being different compared to the regular Intersection
+      // Observer. We use a rootMargin of 0px for the former and a rootMargin of scrollAppendThresholdPixels (500 pixels) for this.
+      bottomObserver = new IntersectionObserver(bottomObserverCallback, { root: null, rootMargin: "0px 0px " + (typeof instance.scrollAppendThresholdPixels === "number" ? instance.scrollAppendThresholdPixels : 500) + "px 0px", threshold: 0 });
       try {
         bottomObserver.observe(bottom);
       } catch (e) {
@@ -266,10 +262,7 @@ const Scroll = (() => {
    * detects when we've reached the bottom. We call the reusable scrollDetection function afterwards to detect if another
    * page should be appended.
    *
-   * Note: The reason this is a separate observer is due to the rootMargin being different compared to the regular Intersection
-   * Observer. We use a rootMargin of 0px for the former and a rootMargin of scrollAppendThresholdPixels (500 pixels) for this.
-   *
-   * @param {IntersectionObserverEntry[]} entries - the array of entries being observed (the pages' observed elements)
+   * @param {IntersectionObserverEntry[]} entries - the array of entries being observed (bottom)
    * @private
    */
   function bottomObserverCallback(entries) {
@@ -319,92 +312,72 @@ const Scroll = (() => {
    * @param {string} caller - the caller who called this function (e.g. "navigation")
    * @private
    */
-  function spaObserverCallback(mutations, observer, caller) {
+  async function spaObserverCallback(mutations, observer, caller) {
     console.log("spaObserverCallback() - mutations.length=" + mutations.length + ", caller=" + caller);
-    clearTimeout(timeouts.spaCheck);
-    timeouts.spaCheck = setTimeout(async () => {
-      let check = true;
+    // clearTimeout(timeouts.spaCheck);
+    // timeouts.spaCheck = setTimeout(async () => {
+      let shouldStop = true;
       // Why pickerEnabled?
       if (instance.enabled || instance.pickerEnabled) {
-        check = false;
-        for (const page of pages) {
+        // If append is none, then the only criteria is that the button no longer exists (can't rely on the page.element buttons as the site may have added a new button at the bottom)
+        if (instance.append === "none") {
+          shouldStop = !Click.findButton(instance.buttonPath, instance.buttonType, document, false).button;
+        } else {
           // A page must be active for it to check if page.element is still in the document (e.g. the page wasn't removed in removePages())
-          if (page.active && !document.contains(page.element)) {
-            console.log("spaObserverCallback() - stopping!");
-            check = true;
-            await stop("spaObserverCallback");
-            break;
-          }
+          // shouldStop = pages.every(page => !page.active || !document.contains(page.element));
+          shouldStop = pages.every(page => !page.active || !document.contains(page.element) || (page.observableElement && !document.contains(page.observableElement)));
         }
       }
-      if (check) {
+      console.log("spaObserverCallback() - shouldStop=" + shouldStop);
+      if (shouldStop) {
+        await stop("spaObserverCallback");
+        // Clean up existing pages before resetting
+        for (const page of pages) {
+          // Remove all the iframes
+          if (page.iframe && typeof page.iframe.remove === "function") {
+            console.log("spaObserverCallback() - removing iframe");
+            page.iframe.remove();
+          }
+          // Need to manually remove the dividers in case the website only handles its specific elements like (p when sorting from old to new or vice versa)
+          if (page.divider && typeof page.divider.remove === "function") {
+            console.log("spaObserverCallback() - removing divider");
+            page.divider.remove();
+          }
+          // TODO: This seems risky
+          // if (page.pageElements && page.pageElements.length > 0) {
+          //   for (const pageElement of page.pageElements) {
+          //     console.log("spaObserverCallback() - removing pageElements");
+          //     pageElement.remove();
+          //   }
+          // }
+        }
+        // Note that we are now always removing all the pages and resetting currentDocument and iframe if it's going to stop so that when it starts again,
+        // the currentDocument is able to find the next link on the top-level document, not the old cloned document
+        // We always need to reset the documents so we can still find the new next link on the new page
+        pages = [];
+        currentDocument = document;
+        insertionPoint = pageElements = button = iframe = lazys = bottom = loading = divider = overlay = undefined;
+        offset = 0;
+        timeouts = checks = {};
         const tab = { id: 0, url: window.location.href };
         // Note that the potential SPA database items and saves are still in our storage items cache and we don't have to get the full storage items again
         // Unless: this is a navigate event!
         if (caller === "navigate") {
           items = await Promisify.storageGet(undefined, undefined, []);
         }
-        instance = await Instance.buildInstance(tab, items);
-        delete instance.items;
-        // Note that we are now always removing all the pages and resetting currentDocument and iframeDocument if it's going to stop so that when it starts again,
-        // the currentDocument is able to find the next link on the top-level document, not the old cloned document
-        // Clean up existing pages before resetting
-        for (const page of pages) {
-          // Remove all the iframes
-          if (page.iframe && typeof page.iframe.remove === "function") {
-            console.log("spaObserver() - removing iframe");
-            page.iframe.remove();
+        // instance = await Instance.buildInstance(tab, items);
+        // Here is where we may be waiting quite some time (e.g. 5 seconds)
+        const temp = await Instance.buildInstance(tab, items, 1);
+        if (!instance.enabled) {
+          instance = temp;
+          delete instance.items;
+          if (instance.enabled) {
+            console.log("spaObserverCallback() - starting!");
+            start(caller);
           }
-          // Need to manually remove the dividers in case the website only handles its specific elements like (p when sorting from old to new or vice versa)
-          if (page.divider && typeof page.divider.remove === "function") {
-            console.log("spaObserver() - removing divider");
-            page.divider.remove();
-          }
-          // TODO: This seems risky
-          // if (page.pageElements && page.pageElements.length > 0) {
-          //   for (const pageElement of page.pageElements) {
-          //     console.log("spaObserver() - removing pageElements");
-          //     pageElement.remove();
-          //   }
-          // }
         }
-        // We always need to reset the documents so we can still find the new next link on the new page
-        pages = [];
-        currentDocument = document;
-        iframeDocument = undefined;
-        if (instance.enabled) {
-          console.log("spaObserverCallback() - starting!");
-          start(caller);
-        }
-        // if (instance.enabled) {
-        //   console.log("spaObserverCallback() - starting!");
-        //   // Clean up existing pages before resetting
-        //   for (const page of pages) {
-        //     // Remove all the iframes
-        //     if (page.iframe && typeof page.iframe.remove === "function") {
-        //       console.log("spaObserver() - removing iframe");
-        //       page.iframe.remove();
-        //     }
-        //     // Need to manually remove the dividers in case the website only handles its specific elements like (p when sorting from old to new or vice versa)
-        //     if (page.divider && typeof page.divider.remove === "function") {
-        //       console.log("spaObserver() - removing divider");
-        //       page.divider.remove();
-        //     }
-        //     // TODO: This seems risky
-        //     // if (page.pageElements && page.pageElements.length > 0) {
-        //     //   for (const pageElement of page.pageElements) {
-        //     //     console.log("spaObserver() - removing pageElements");
-        //     //     pageElement.remove();
-        //     //   }
-        //     // }
-        //   }
-        //   pages = [];
-        //   currentDocument = document;
-        //   iframeDocument = undefined;
-        //   start(caller);
-        // }
       }
-    }, 1000);
+    // }, 1000);
   }
 
   /**
@@ -573,7 +546,10 @@ const Scroll = (() => {
 
   /**
    * Determines if the element (e.g. page) has been scrolled into the current viewport.
-   * Note: This function is only called in Scroll Listener mode.
+   * Note: This function is only called in Scroll Listener mode and by Scroll.removePages().
+   *
+   * Gotcha Note: If the element is in another context (e.g. iframe), then this may return a
+   * false positive true if we are evaluating the top-level document context.
    *
    * @param {Element} element - the element (e.g. page)
    * @returns {boolean} true if the element has been scrolled into view, false otherwise
@@ -612,10 +588,10 @@ const Scroll = (() => {
    * @private
    */
   function getTotalHeight(doc) {
-    const html = doc.documentElement;
-    const body = doc.body;
-    console.log("getTotalHeight() - hch="  + html.clientHeight + ", hsh=" + html.scrollHeight + ", hoh=" + html.offsetHeight + ", bch=" + body.clientHeight + ", bsh=" + body.scrollHeight + ", boh=" + body.offsetHeight);
-    return Math.max(html.clientHeight, html.scrollHeight, html.offsetHeight, body.clientHeight, body.scrollHeight, body.offsetHeight);
+    const html = doc?.documentElement;
+    const body = doc?.body;
+    console.log("getTotalHeight() - hch="  + html?.clientHeight + ", hsh=" + html?.scrollHeight + ", hoh=" + html?.offsetHeight + ", bch=" + body?.clientHeight + ", bsh=" + body?.scrollHeight + ", boh=" + body?.offsetHeight);
+    return Math.max(html?.clientHeight, html?.scrollHeight, html?.offsetHeight, body?.clientHeight, body?.scrollHeight, body?.offsetHeight);
   }
 
   /**
@@ -676,7 +652,8 @@ const Scroll = (() => {
     const nextDocument = await getNextDocument();
     if (!nextDocument) { return; }
     const fragment = document.createDocumentFragment();
-    nextDocument.body.querySelectorAll(":scope > *").forEach(element => fragment.appendChild(DOMNode.transferNode(element, instance.transferNodeMode)));
+    pageElements = DOMNode.getElements("body > *", "selector", nextDocument).elements;
+    pageElements.forEach(element => fragment.appendChild(DOMNode.transferNode(element, instance.transferNodeMode)));
     page.appendChild(fragment);
     resizeMedia("page", page);
     triggerCustomEvent(EVENT_NODE_APPENDED, page, { url: instance.url });
@@ -717,6 +694,7 @@ const Scroll = (() => {
     if (iframeMode === "full" || !iframe) {
       await createIframe(instance.url, IFRAME_STYLE, iframeMode, caller);
     }
+    const iframeDocument = iframe.contentDocument;
     if (!iframeDocument) {
       return;
     }
@@ -731,7 +709,8 @@ const Scroll = (() => {
       // We need to cache both the pageElements (already done above) and the scripts/styles before we remove everything from the iframeDocument
       const scriptsAndStyles = iframeDocument.body.querySelectorAll("script, style");
       // Remove all elements from the iframeDocument so that we can then re-add just what we need
-      iframeDocument.body.querySelectorAll(":scope > *").forEach(element => { iframeDocument.body.removeChild(element); });
+      // iframeDocument.body.querySelectorAll(":scope > *").forEach(element => { iframeDocument.body.removeChild(element); });
+      iframeDocument.querySelectorAll("body > *").forEach(element => { if (typeof element?.remove === "function") { element.remove(); } });
       const fragment = document.createDocumentFragment();
       // TODO: Test resizeMedia() more in this mode before we calculate the welements (commented out code)
       // const welements = instance.resizeMediaEnabled && nextDocument && nextDocument.body ? DOMNode.getNodesByTreeWalker(nextDocument.body, NodeFilter.SHOW_ELEMENT) : [];
@@ -780,22 +759,16 @@ const Scroll = (() => {
         console.log("appendElement() - warning: no iframe, even though this instance uses iframes. creating iframe...");
         await createIframe(instance.url, IFRAME_STYLE + IFRAME_FIXED_STYLE, instance.pageElementIframe, caller);
       }
-      // If the iframe has loaded a new URL (e.g. the button click was a link or form), we need to obtain the updated iframeDocument or it will stay on the previous page forever
-      if (instance.append === "ajax") {
-        iframeDocument = iframe.contentDocument;
-        currentDocument = iframe.contentDocument.cloneNode(true);
-      }
       // TODO: To be safe, should we await both promises and wait for the next link/button as well as the page elements even though it's not necessary?
-      pageElements = await Iframe.getPageElementsFromIframe(iframeDocument);
+      pageElements = await Iframe.getPageElementsFromIframe(iframe.contentDocument);
       instance.scrollIframe = false;
       // TODO: See if we can refactor this so we can place this consistently in all append modes. This is normally done in getNextDocument(), but in Element Iframe mode we aren't sure if the elements have loaded till now
       setLinksNewTab(pageElements);
-      // We store a clone of the iframeDocument after we have successfully retrieved the page elements and next link
-      // Note that this isn't necessary for Element Iframe Import mode because the live iframeDocument will remain on the page, but is done as a precaution
+      // We store a clone of the iframe's document after we have successfully retrieved the page elements and next link
+      // Note that this isn't necessary for Element Iframe Import mode because the live iframe document will remain on the page, but is done as a precaution
       // We still want to do this so we can use the currentDocument to check the page elements in the popup
-      if (instance.append !== "ajax") {
-        currentDocument = iframeDocument.cloneNode(true);
-      }
+      // AJAX needs this too: If the iframe has loaded a new URL (e.g. the button click was a link or form), we need to obtain the updated iframe's document or it will stay on the previous page forever
+      currentDocument = iframe.contentDocument.cloneNode(true);
     } else {
       const nextDocument = await getNextDocument();
       if (!nextDocument) { return; }
@@ -917,6 +890,7 @@ const Scroll = (() => {
       }
     }
     // The newly added pageElements from the button click may not be on the page yet so we use a timeout to set them in the future
+    // MutationObserver is not reliable enough because it can get called every second on some pages (e.g. sr.com)
     for (let i = 1; i <= 3; i++) {
       setTimeout(() => {
         console.log("appendAjax() - setTimeout(), i=" + i);
@@ -999,6 +973,7 @@ const Scroll = (() => {
       "divider": divider,
       "append": instance.append,
       "mode": instance.pageElementIframe,
+      // "ajaxMode": instance.ajaxMode,
       "active": true
       //, "bottomElements": [observableElement]
       //, "isIntersecting": true
@@ -1143,12 +1118,12 @@ const Scroll = (() => {
   async function prepareIframe(actionPerformed, caller) {
     console.log("prepareIframe() - actionPerformed=" + actionPerformed + ", caller=" + caller);
     // This part is only called when starting
-    if (caller === "start" || caller === "mirrorPageAdopt") {
+    if (caller === "start" || caller === "mirrorPageAdopt" || caller === "setInstance") {
       // Element Iframe
       if (instance.append === "element" && instance.pageElementIframe) {
         await Action.perform(instance.action, "prepareFirstPage");
         await createIframe(instance.url, IFRAME_STYLE + IFRAME_FIXED_STYLE, instance.pageElementIframe, "prepareFirstPage");
-        if (!iframeDocument) {
+        if (!iframe?.contentDocument) {
           return;
         }
         scrollIframeIndefinitely();
@@ -1159,10 +1134,11 @@ const Scroll = (() => {
         // If the caller is mirrorPageAdopt, we are calling this function a second time and don't need to create the Iframe again
         if (caller !== "mirrorPageAdopt") {
           await createIframe(instance.url, IFRAME_STYLE + IFRAME_FIXED_STYLE, "import", "prepareFirstPage");
-          if (!iframeDocument) {
+          if (!iframe?.contentDocument) {
             return;
           }
-          if (instance.mirrorPage && instance.action === "click" && instance.append === "ajax") {
+          // if (instance.mirrorPage && instance.action === "click" && instance.append === "ajax") {
+          if (instance.mirrorPage && caller !== "setInstance") {
             return await prepareFirstPage("mirrorPageAdopt");
           }
           scrollIframeIndefinitely();
@@ -1645,7 +1621,7 @@ const Scroll = (() => {
    */
   function removePages() {
     // We don't want to remove pages while AUTO is enabled as the user will have set their own times value manually
-    if (instance.scrollMaximumPages > 0 && !instance.autoEnabled && !["none", "ajax"].includes(instance.append)) {
+    if (instance.scrollMaximumPages > 0 && !instance.autoEnabled && !["none"].includes(instance.append)) {
       // Get all the page elements so we can check which ones are currently in view
       let allElements = [];
       for (const page of pages) {
@@ -1661,7 +1637,9 @@ const Scroll = (() => {
         //   continue;
         // }
         // We do not want to remove the page if any of its elements are still on the screen
-        const elements = (page.pageElements || []).concat([page.element, page.observableElement, page.iframe, page.divider]).filter(e => e?.nodeType === Node.ELEMENT_NODE && typeof e.remove === "function");
+        // Note: we don't look at page.iframe in case we're in AJAX Iframe mode; regular iframe appends will have observableElement be the iframe)
+        // Note 2: In Element Iframe (Trim) mode, we don't look at the page elements because scrolledIntoView always seems to return true for them (due to being in an iframe)
+        const elements = (page.append === "element" && page.mode === "trim" ? [] : page.pageElements || []).concat([page.element, page.observableElement, page.divider]).filter(e => e?.nodeType === Node.ELEMENT_NODE && typeof e.remove === "function");
         const isInView = elements.some(element => isScrolledIntoView(element));
         console.log("removePages() - isInView=" + isInView + ", elements=");
         console.log(elements);
@@ -1669,8 +1647,8 @@ const Scroll = (() => {
           if (instance.append === "element") {
             // In order to calculate the height of what we're removing, we calculate the top-most and bottom-most position of the elements and take the difference
             // Note that getBoundingClientRect includes the padding and border, but does not include the margin, so we include them in our overall height calculation
-            // const top = Math.min(...(elements.map(e => { const style = window.getComputedStyle(e); return getElementPosition(e).top - parseFloat(style.marginTop); } )));
-            // const bottom = Math.max(...(elements.map(e => { const style = window.getComputedStyle(e); return getElementPosition(e).bottom + parseFloat(style.marginBottom); } )));
+            // const top = Math.min(...(elements.map(e => { const style = window.getComputedStyle(e); return DOMNode.getElementPosition(e).top - parseFloat(style.marginTop); } )));
+            // const bottom = Math.max(...(elements.map(e => { const style = window.getComputedStyle(e); return DOMNode.getElementPosition(e).bottom + parseFloat(style.marginBottom); } )));
             // const height = bottom - top;
             const visibleElements = allElements.filter(e => isScrolledIntoView(e));
             const beforeTotalHeight = getTotalHeight(document);
@@ -1727,7 +1705,12 @@ const Scroll = (() => {
     switch (mode) {
       case "page":
         // We choose the first page's element by picking the first one with a height > 0 px. We first look at the body's first-level children and then fall-back to walking through every element in the body
-        observableElement = getObservableElements([...document.body.querySelectorAll(":scope > *")])[0] || getObservableElements(DOMNode.getNodesByTreeWalker(document.body, NodeFilter.SHOW_ELEMENT))[0];
+        // pageElements.forEach(element => fragment.appendChild(element));
+        //document.querySelectorAll("body > *");
+        // elements = Array.from(doc.querySelectorAll(path));
+        pageElements = DOMNode.getElements("body > *", "selector", document).elements;
+        // observableElement = getObservableElements([...document.body.querySelectorAll(":scope > *")])[0] || getObservableElements(DOMNode.getNodesByTreeWalker(document.body, NodeFilter.SHOW_ELEMENT))[0];
+        observableElement = getObservableElements(pageElements)[0] || getObservableElements(DOMNode.getNodesByTreeWalker(document.body, NodeFilter.SHOW_ELEMENT))[0];
         if (!observableElement) {
           observableElement = document.createElement("span");
           document.body.prepend(observableElement);
@@ -1736,6 +1719,7 @@ const Scroll = (() => {
         const marginBottom = document.createElement("div");
         marginBottom.style.setProperty("margin-bottom", "2rem", "important");
         document.body.appendChild(marginBottom);
+        pageElements.push(marginBottom);
         resizeMedia("page", document.body);
         appendFinally("page", observableElement, "prepareFirstPage");
         break;
@@ -1764,41 +1748,16 @@ const Scroll = (() => {
             instance.scrollDividerGrid = style.gridTemplateColumns.split(" ").length || 0;
           }
         }
-        if (instance.append === "ajax" && instance.ajaxMode === "native" && !checks.ajaxScriptInjected) {
-          const script = document.createElement("script");
-          // TODO: We can make the event name random by passing in a parameter to this script, like this:
-          // EVENT_AJAX = instance.randomString;
-          // script.src = chrome.runtime.getURL("/js/ajax.js?") + new URLSearchParams({eventName: EVENT_AJAX});
-          script.src = chrome.runtime.getURL("/js/ajax.js");
-          script.onload = function () {
-            console.log("prepareFirstPage() - ajax.js script loaded");
-            checks.ajaxScriptInjected = true;
-            setTimeout(() => {
-              triggerCustomEvent(EVENT_AJAX, document, {
-                // Test disableScrollObjects: window,document,document.documentElement,document.body
-                "disableScrollObjects": instance.disableScrollObjects || "window",
-                "disableScrollElementPath": instance.disableScrollElementPath || "",
-                "disableScrollFunctions": instance.disableScrollFunctions || "onscroll,scroll,scrollBy,scrollIntoView,scrollIntoViewIfNeeded,scrollTo",
-                "pathType": instance.pageElementType
-              }, true);
-              triggerCustomEvent(EVENT_AJAX, document, {
-                "disableRemoveElementPath": instance.disableRemoveElementPath || DOMPath.generatePath(insertionPoint.parentNode, instance.pageElementType).path,
-                "disableRemoveFunctions": instance.disableRemoveFunctions || "remove,removeChild",
-                "pathType": instance.pageElementType
-              }, true);
-            }, 1000);
-            // Remove the script to keep the page clean, the listener will still be active when we trigger events to it later on
-            this.remove();
-          };
-          (document.head || document.body || document.documentElement).appendChild(script);
-        }
-        // TODO: Commenting this out for now since not sure if this is a good idea for page 1 links to open in a new tab
+        // Doing this in start() because we need to make sure it's also done if the user changes the append mode when this isn't called anymore
+        // injectAjaxScript();
+        // TODO: Commenting this out for now since not sure if it is a good idea for page 1 links to open in a new tab.
+        //  Based on testing, I found it weird on some pages that it did it
         // Note: We only set the links to open in a new tab on Page 1 for Append Element/AJAX modes since they are not the entire page
         // Some websites dynamic content anchors haven't yet loaded; this is a bit hacky as we are using setTimeout()...
         // if (instance.linksNewTabOneEnabled) {
-          for (let timeoutCheck = 0; timeoutCheck <= 2000; timeoutCheck += 1000) {
-            setTimeout(() => { setLinksNewTab(pageElements); }, timeoutCheck);
-          }
+        //   for (let timeoutCheck = 0; timeoutCheck <= 2000; timeoutCheck += 1000) {
+        //     setTimeout(() => { setLinksNewTab(pageElements); }, timeoutCheck);
+        //   }
         // }
         // resizeMedia("element", document.body);
         appendFinally(mode, observableElement, "prepareFirstPage");
@@ -1908,8 +1867,9 @@ const Scroll = (() => {
         // Divider needs to be appended differently depending on the append mode. If element/ajax, use insertionPoint otherwise just append to the end of the document (page and iframe)
         if (instance.append === "element" || instance.append === "ajax") {
           // If we are in Element Iframe (Trim), we need to put the divider right before the iframe instead of using the insertion point because it was appended early
-          const point = instance.append === "element" && instance.pageElementIframe === "trim" && iframe ? iframe : insertionPoint;
-          DOMNode.insertBefore(bottom, point);
+          // const point = instance.append === "element" && instance.pageElementIframe === "trim" && iframe ? iframe : insertionPoint;
+          // Note: When repositioning the bottom, we don't have to worry about Element Iframe (Trim) and can just always use the insertionPoint as the reference point instead of the iframe
+          DOMNode.insertBefore(bottom, insertionPoint);
         } else {
           document.body.appendChild(bottom);
         }
@@ -2095,8 +2055,12 @@ const Scroll = (() => {
     timeouts.scrollIframe = setTimeout(() => {
       instance.scrollIframe = false;
     }, 10000);
+    let attempt = 0;
     while (instance.enabled && instance.scrollIframe) {
-      await scrollIframe(iframe);
+      // TODO: Always just scroll the full iframe? Worried getTotalHeight() may not return the full height on some sites, so using a hybrid approach for now
+      // await scrollIframe(iframe, "full");
+      console.log("scrollIframeIndefinitely() - attempt=" + attempt + ", mode=" + ((((attempt) % 2) === 0) ? "full" : "element"));
+      await scrollIframe(iframe, ((attempt++) % 2) === 0 ? "full" : "element");
     }
     if (!instance.debugEnabled) {
       iframe.style.setProperty("height", "0", "important");
@@ -2104,49 +2068,68 @@ const Scroll = (() => {
   }
 
   /**
-   * Scrolls the hidden iframe to display each page element. This is done to force the site to lazy load the page
-   * elements' (images) before they are transferred from the iframe to the top-level document.
+   * Scrolls the hidden iframe. This is done to force the site to lazy load the page elements' (e.g. images) before they
+   * are transferred from the iframe to the top-level document. This is also done to ensure other important elements
+   * such as the button or next link are lazily loaded, if applicable.
    *
    * @param {HTMLIFrameElement} iframe_ - the iframe to scroll
+   * @param {string} mode - the scroll mode ("full" to scroll the full page or "element" for just the page elements)
    * @private
    */
-  async function scrollIframe(iframe_) {
+  async function scrollIframe(iframe_, mode) {
     await Promisify.sleep(1);
     if (!iframe_ || !iframe_.contentDocument) {
       return;
     }
-    const pageElements_ = Elementify.getPageElements(iframe_.contentDocument);
-    // Scroll by pageElements (scrollIntoView)
-    // Note: If the pageElements is just one element (e.g. a container element), look at its children (risky)
-    for (const pageElement of (pageElements_.length === 1 && pageElements_[0] && pageElements_[0].children ? pageElements_[0].children : pageElements_)) {
-      // Firefox Dead Object Error: Need to wrap this in a try-catch because the iframe document may have changed after we slept, and the pageElements may be dead
-      try {
-        // If scrollIframe was set to false, we need to exit this loop immediately (only really needed for Element Iframe Trim)
-        if (!instance.scrollIframe) {
+    if (mode === "full") {
+      const height = getTotalHeight(iframe_.contentDocument);
+      for (let i = 0; i < height; i+= 25) {
+        try {
+          if (!instance.scrollIframe) {
+            break;
+          }
+          iframe.contentWindow.scrollTo({top: i, left: 0, behavior: "auto"});
+          await Promisify.sleep(1);
+        } catch (e) {
+          console.log("scrollIframe() - Error (most likely Firefox Dead Object Error):");
+          console.log(e);
           break;
         }
-        // We only want to scroll if the pageElement hasn't been imported to the top-level document
-        if (pageElement.ownerDocument === iframe_.contentDocument) {
-          // "start" seems to perform the best; options are start, end, center, nearest
-          pageElement.scrollIntoView({behavior: "auto", block: "start", inline: "start"});
-        }
-        // We must sleep for at least 0ms or else this strategy won't work (using 1ms to be safe)
-        await Promisify.sleep(1);
-      } catch (e) {
-        console.log("scrollIframe() - Error (most likely Firefox Dead Object Error):");
-        console.log(e);
-        break;
       }
+    } else {
+      const pageElements_ = Elementify.getPageElements(iframe_.contentDocument);
+      // Scroll by pageElements (scrollIntoView)
+      // Note: If the pageElements is just one element (e.g. a container element), look at its children (risky)
+      for (const pageElement of (pageElements_.length === 1 && pageElements_[0] && pageElements_[0].children ? pageElements_[0].children : pageElements_)) {
+        // Firefox Dead Object Error: Need to wrap this in a try-catch because the iframe document may have changed after we slept, and the pageElements may be dead
+        try {
+          // If scrollIframe was set to false, we need to exit this loop immediately (only really needed for Element Iframe Trim)
+          if (!instance.scrollIframe) {
+            break;
+          }
+          // We only want to scroll if the pageElement hasn't been imported to the top-level document
+          if (pageElement.ownerDocument === iframe_.contentDocument) {
+            // "start" seems to perform the best; options are start, end, center, nearest
+            pageElement.scrollIntoView({behavior: "auto", block: "start", inline: "start"});
+          }
+          // We must sleep for at least 0ms or else this strategy won't work (using 1ms to be safe)
+          await Promisify.sleep(1);
+        } catch (e) {
+          console.log("scrollIframe() - Error (most likely Firefox Dead Object Error):");
+          console.log(e);
+          break;
+        }
+      }
+      // TODO: This doesn't seem to work after the first page or two; it may be a positioning issue
+      // // Scroll by pageElements top and bottom (scrollTo)
+      // const filteredElements = pageElements_.filter(e => e.nodeType === Node.ELEMENT_NODE);
+      // const top = Math.min(...(filteredElements.map(e => DOMNode.getElementPosition(e).top)));
+      // const bottom = Math.max(...(filteredElements.map(e => DOMNode.getElementPosition(e).bottom)));
+      // for (let i = top; i < bottom; i += 25) {
+      //   iframe.contentWindow.scrollTo({top: i, left: 0, behavior: "auto"});
+      //   await Promisify.sleep(1);
+      // }
     }
-    // TODO: This doesn't seem to work after the first page or two; it may be a positioning issue
-    // // Scroll by pageElements top and bottom (scrollTo)
-    // const filteredElements = pageElements_.filter(e => e.nodeType === Node.ELEMENT_NODE);
-    // const top = Math.min(...(filteredElements.map(e => getElementPosition(e).top)));
-    // const bottom = Math.max(...(filteredElements.map(e => getElementPosition(e).bottom)));
-    // for (let i = top; i < bottom; i += 25) {
-    //   iframe.contentWindow.scrollTo({top: i, left: 0, behavior: "auto"});
-    //   await Promisify.sleep(1);
-    // }
   }
 
   /**
@@ -2242,19 +2225,19 @@ const Scroll = (() => {
     // First get the absolute bottom position (total height of the document) in pixels
     const bottom_ = getTotalHeight(document);
     // Check where the element point is on the document and find its position. Its position (top) can then be used to calculate the offset
-    let elementPosition = instance.append === "none" ? getElementPosition(button) : getElementPosition(insertionPoint);
+    let elementPosition = instance.append === "none" ? DOMNode.getElementPosition(button) : DOMNode.getElementPosition(insertionPoint);
     // TODO: Experiment with NOT doing this anymore on the elementPosition and just relying on option 2 if insert isn't an element
     // If the insertion point isn't an element, we must wrap it inside an element to calculate its position
     // if (insertionPoint && insertionPoint.nodeType === Node.TEXT_NODE) {
     //   const element = convertTextToElement(insertionPoint);
-    //   elementPosition = getElementPosition(element);
+    //   elementPosition = DOMNode.getElementPosition(element);
     //   // Take the insertion point out of the element and back where it was, then remove the element
     //   if (element) {
     //     DOMNode.insertBefore(insertionPoint, element);
     //     element.remove();
     //   }
     // } else {
-    //  elementPosition = getElementPosition(insertionPoint);
+    //  elementPosition = DOMNode.getElementPosition(insertionPoint);
     // }
     // 1st Option: Use the element's top position
     let difference = elementPosition.top;
@@ -2265,9 +2248,9 @@ const Scroll = (() => {
       if (!pageElements) {
         pageElements = Elementify.getPageElements(document);
       }
-      // difference = Math.max(...(pageElements.filter(e => e.nodeType === Node.ELEMENT_NODE).map(e => getElementPosition(e).bottom)));
+      // difference = Math.max(...(pageElements.filter(e => e.nodeType === Node.ELEMENT_NODE).map(e => DOMNode.getElementPosition(e).bottom)));
       // TODO: getBoundingClientRect includes padding and border, should we remove these before computing the element's bottom?
-      difference = Math.max(...(Elementify.getPageElements(document).filter(e => e.nodeType === Node.ELEMENT_NODE).map(e => getElementPosition(e).bottom)));
+      difference = Math.max(...(Elementify.getPageElements(document).filter(e => e.nodeType === Node.ELEMENT_NODE).map(e => DOMNode.getElementPosition(e).bottom)));
     }
     // 3rd Option: Fall back to using the total document height * 0.75
     if (!difference || difference <= 0) {
@@ -2276,37 +2259,8 @@ const Scroll = (() => {
     }
     // ceil (round up 1 pixel) just in case?
     offset = Math.ceil(bottom_ - difference);
-    console.log(pageElements ? ("calculateOffset() - the elements' max bottom position was:" + Math.max(...(pageElements.filter(e => e.nodeType === Node.ELEMENT_NODE).map(e => getElementPosition(e).bottom)))) : "");
+    console.log(pageElements ? ("calculateOffset() - the elements' max bottom position was:" + Math.max(...(pageElements.filter(e => e.nodeType === Node.ELEMENT_NODE).map(e => DOMNode.getElementPosition(e).bottom)))) : "");
     console.log("calculateOffset() - bottom=" + bottom_ + ", offset=" + offset + ", elementPosition=" + elementPosition.top + ", backup bottom*0.75=" + (bottom_ * .75) + ", and the value chosen was=" + difference);
-  }
-
-  /**
-   * Gets an element's position relative to the entire document. We use getBoundingClientRect() to find the position.
-   *
-   * @param {Element} element - the element to get the position of
-   * @returns {{top: number, left: number}|{top}}
-   * @see https://plainjs.com/javascript/styles/get-the-position-of-an-element-relative-to-the-document-24/
-   * @see https://stackoverflow.com/a/1461143
-   * @private
-   */
-  function getElementPosition(element) {
-    let position = { top: 0, bottom: 0, left: 0 };
-    try {
-      if (typeof element.getBoundingClientRect === "function") {
-        // Commented out the left since it's not needed for our purposes (we only care about vertical position)
-        const rect = element.getBoundingClientRect();
-        // const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-        const scrollTop = window.scrollY || document.documentElement.scrollTop;
-        position.top = rect.top + scrollTop;
-        position.bottom = rect.bottom + scrollTop;
-        // position.left = rect + scrollLeft;
-      }
-    } catch (e) {
-      console.log("getElementPosition() - Error:");
-      console.log(e);
-    }
-    // console.log("getElementPosition() - position.top=" + position.top + ", position.bottom=" + position.bottom);
-    return position;
   }
 
   /**
@@ -2607,10 +2561,10 @@ const Scroll = (() => {
         // TODO: Calculating the bottomInsert every time here is very CPU-heavy just for debugging; need to find another way to do it when we append
         // let bottomInsert = "N/A";
         // if (instance.append === "element") {
-        //   bottomInsert = getElementPosition(insertionPoint).top;
-        //   bottomInsert = getElementPosition(insertionPoint).top || (bottom - offset);
+        //   bottomInsert = DOMNode.getElementPosition(insertionPoint).top;
+        //   bottomInsert = DOMNode.getElementPosition(insertionPoint).top || (bottom - offset);
         //   const elements = Elementify.getPageElements(document);
-        //   bottomElements = Math.floor(Math.max(...(elements.filter(e => e.nodeType === Node.ELEMENT_NODE).map(e => getElementPosition(e).bottom))));
+        //   bottomElements = Math.floor(Math.max(...(elements.filter(e => e.nodeType === Node.ELEMENT_NODE).map(e => DOMNode.getElementPosition(e).bottom))));
         // }
         const details = overlay.children[3].children[1];
         details.children[0].textContent  = "total bottom = " + bottom_;
@@ -2712,7 +2666,7 @@ const Scroll = (() => {
     }
     console.log("createIframe() -` iframe.contentDocument.readyState=" + iframe.contentDocument.readyState);
     // Note that in the Element Iframe modes, we will later clone the iframe.contentDocument and set it to currentDocument after we're sure the page elements/next link have been loaded
-    iframeDocument = iframe.contentDocument;
+    // iframeDocument = iframe.contentDocument;
     currentDocument = iframe.contentDocument.cloneNode(true);
     // Step 4 Debug
     if (instance.debugEnabled) {
@@ -2723,6 +2677,7 @@ const Scroll = (() => {
       console.log("createIframe() - mirroring the top-level document to this iframe");
       // @see https://stackoverflow.com/a/11627589/988713
       // We need to mirror the current page the user is viewing
+      const iframeDocument = iframe?.contentDocument;
       switch (instance.mirrorPage) {
         case "adopt":
           // Adopting is rather complicated. First, we adopt the nodes into the iframe from the page
@@ -2742,6 +2697,42 @@ const Scroll = (() => {
       }
       // Some breathing space after all the mirroring (not necessary?)
       await Promisify.sleep(1000);
+    }
+  }
+
+  /**
+   * Injects the ajax.js script into the page's world. (Applies only to AJAX Native.)
+   *
+   * @private
+   */
+  function injectAjaxScript() {
+    if (instance.append === "ajax" && instance.ajaxMode === "native" && !checks.ajaxScriptInjected) {
+      const script = document.createElement("script");
+      // TODO: We can make the event name random by passing in a parameter to this script, like this:
+      // EVENT_AJAX = instance.randomString;
+      // script.src = chrome.runtime.getURL("/js/ajax.js?") + new URLSearchParams({eventName: EVENT_AJAX});
+      script.src = chrome.runtime.getURL("/js/ajax.js");
+      script.onload = function () {
+        console.log("prepareFirstPage() - ajax.js script loaded");
+        checks.ajaxScriptInjected = true;
+        setTimeout(() => {
+          triggerCustomEvent(EVENT_AJAX, document, {
+            // Test disableScrollObjects: window,document,document.documentElement,document.body
+            "disableScrollObjects": instance.disableScrollObjects || "window",
+            "disableScrollElementPath": instance.disableScrollElementPath || "",
+            "disableScrollFunctions": instance.disableScrollFunctions || "onscroll,scroll,scrollBy,scrollIntoView,scrollIntoViewIfNeeded,scrollTo",
+            "pathType": instance.pageElementType
+          }, true);
+          triggerCustomEvent(EVENT_AJAX, document, {
+            "disableRemoveElementPath": instance.disableRemoveElementPath || DOMPath.generatePath(insertionPoint.parentNode, instance.pageElementType).path,
+            "disableRemoveFunctions": instance.disableRemoveFunctions || "remove,removeChild",
+            "pathType": instance.pageElementType
+          }, true);
+        }, 1000);
+        // Remove the script to keep the page clean, the listener will still be active when we trigger events to it later on
+        this.remove();
+      };
+      (document.head || document.body || document.documentElement).appendChild(script);
     }
   }
 
@@ -2814,6 +2805,22 @@ const Scroll = (() => {
     items = instance.items;
     // Delete the items cache in the instance (we need to do this now in case the user enters the Popup early and tries to copy their debug data)
     delete instance.items;
+    // The Navigation API can help detect SPAs: Currently only supported in Chrome 102+ (not currently supported in Firefox!)
+    // We add a timeout just in case this is fired very early to let init() build the instance first
+    // @see https://developer.chrome.com/docs/web-platform/navigation-api/
+    // @see https://developer.mozilla.org/docs/Web/API/Navigation_API
+    // @see https://developer.mozilla.org/docs/Web/API/Navigation
+    // @see https://stackoverflow.com/questions/75313690/is-there-chrome-api-event-listener-that-fires-when-modern-web-apps-update-their
+    try {
+      const matches = Saves.matchesList(tab.url, tab.url, items?.navigationBlacklist, "Navigation Blacklist")?.matches;
+      if (!matches && typeof navigation !== "undefined" && typeof navigation?.addEventListener === "function") {
+        console.log("init() - adding navigation listener");
+        navigation.addEventListener("navigate", navigateEvent => { spaObserverCallback([], {}, "navigate") });
+      }
+    } catch (e) {
+      console.log("init() - error initializing navigation listener, Error:")
+      console.log(e);
+    }
     // If the instance's source is still items, check a few more times in case dynamic content hasn't finished loading
     if (instance.via === "items" || instance.via === "placeholder") {
       // Here is where we may be waiting quite some time (e.g. 5 seconds)
@@ -2844,7 +2851,8 @@ const Scroll = (() => {
     // Note: We don't want to enable this on every website. For example, simply entering text in https://regex101.com/ keeps firing mutation changes
     if (instance.spa && items.on && (instance.databaseFound ? items.databaseMode === "blacklist" ? !instance.databaseBlacklisted : instance.databaseWhitelisted : true)) {
       console.log("init() - watching SPA");
-      spaObserver = new MutationObserver(spaObserverCallback);
+      // spaObserver = new MutationObserver(spaObserverCallback);
+      spaObserver = new MutationObserver(Util.throttle(spaObserverCallback, 1000));
       spaObserver.observe(document.body, { childList: true, subtree: true });
     }
   }
@@ -2875,8 +2883,18 @@ const Scroll = (() => {
       // If caller is command and via is items, this was a down action while not enabled, or it was a re-start if it was previously enabled already (somehow?)
       if (caller === "command" && instance.via === "items") {
         // We need to initialize it with the default action and append (next page) if we didn't find a save or database URL
+        // // await Promisify.storageSet({action: "next", append: "page"});
+        // const tab = { id: 0, url: window.location.href };
+        // items.action = "next";
+        // items.append = "page";
+        // instance = await Instance.buildInstance(tab, items);
         instance.action = "next";
         instance.append = "page";
+        // If the previous action/append mode was workflowReverse, that will be true so we need to reset it back to false
+        instance.workflowReverse = false;
+        instance.workflowPrepend = "";
+        instance.documentType = "current";
+        instance.transferNodeMode = "adopt";
         // We need to determine whether keywords should be enabled or not. We only enable keywords if the path failed on page 1 for a Keyboard Shortcut Command
         const link = Next.findLink(instance.nextLinkPath, instance.nextLinkType, instance.nextLinkProperty, undefined, items.nextLinkKeywords, undefined, true, document, false);
         instance.nextLinkKeywordsEnabled = link.method === "keyword";
@@ -2898,6 +2916,7 @@ const Scroll = (() => {
     createLoading();
     appendBottom();
     addScrollDetection();
+    injectAjaxScript();
     // The AJAX Observer is only added if we are in native mode and removing or hiding elements
     if (instance.append === "ajax" &&  instance.ajaxMode === "native" && (instance.removeElementPath || instance.hideElementPath)) {
       ajaxObserver = new MutationObserver(ajaxObserverCallback);
@@ -2949,6 +2968,10 @@ const Scroll = (() => {
     if (instance.autoEnabled) {
       Auto.stopAutoTimer(instance, "stop");
     }
+    // Only show the off badge if it was previously on so we can call stop silently for other situations where the instance may not be enabled?
+    if (instance.enabled) {
+      Promisify.runtimeSendMessage({receiver: "background", greeting: "setBadge", badge: "off", temporary: true});
+    }
     // For callers like popup that still need the instance, disable all states and reset auto, multi, and urls array
     instance.enabled = instance.multiEnabled = instance.autoEnabled = instance.autoPaused = instance.autoSlideshow = instance.shuffleURLs = false;
     // instance.started will always remain true, do not reset it to false in the case the user re-enables the extension on this page
@@ -2963,8 +2986,6 @@ const Scroll = (() => {
     Promisify.storageGet("on").then(on => {
       items.on = on;
     });
-    // chrome.runtime.sendMessage({receiver: "background", greeting: "setBadge", badge: "off", temporary: true}, function (response) { if (chrome.runtime.lastError) {} });
-    Promisify.runtimeSendMessage({receiver: "background", greeting: "setBadge", badge: "off", temporary: true});
   }
 
   /**
@@ -3017,10 +3038,28 @@ const Scroll = (() => {
         break;
       case "setInstance":
         // Note: This setInstance message is only called from the Popup (Accept Button)
-        // Store the current page before setting the instance
+        // Store the current page and append mode before setting the instance to do some post setInstance work
         const currentPage = instance.currentPage;
+        const append = instance.append;
+        const workflowReverse = instance.workflowReverse;
         // Clone to be safe?
         instance = Util.clone(request.instance);
+        // We may need to reset the iframe if the user is changing the append mode so that we always load a new iframe with the latest instance.url
+        // If we didn't do this, then if the pre-existing iframe had an older instance.url, we would use that for the next workflow's action/append
+        // const isIframe = (instance.append === "iframe" || (instance.append === "element" && instance.pageElementIframe) || (instance.append === "ajax" && instance.ajaxMode !== "native"));
+        if (append !== instance.append && iframe) {
+          // If the user is changing from the regular iframe to another append, then we shouldn't remove the previously appended iframe (all other cases, we probably ought to though)
+          // iframe.remove();
+          iframe = undefined;
+        }
+        if (!workflowReverse && instance.workflowReverse) {
+          await prepareIframe(true, "setInstance");
+        }
+        // TODO: We need to reset the instance's URL back to the previous URL so Next.findLink() doesn't return a duplicate URL when we try again. We should refactor the code so that the instance URL is only set after the page has been successfully appended...
+        // TODO: We need to revert currentDocument back to previous document...?
+        if (workflowReverse && !instance.workflowReverse && Array.isArray(pages) && pages[pages.length - 1]) {
+          instance.url = pages[pages.length - 1].url;
+        }
         // Popup sometimes has out of date values for the current page and total pages
         instance.currentPage = currentPage;
         instance.totalPages = pages.length || 1;
@@ -3058,7 +3097,8 @@ const Scroll = (() => {
         break;
       case "autoDetectPageElement":
         // Do not use our storage items cache of path properties as it may be out of date compared to the Popup's
-        const autoDetectResult = AutoDetectPageElement.detect(items.preferredPathType, request.algorithm, request.quote, request.optimized);
+        // const autoDetectResult = AutoDetectPageElement.detect(items.preferredPathType, request.algorithm, request.quote, request.optimized);
+        const autoDetectResult = AutoDetectPageElement.detect(request.instance.pageElementType, request.algorithm, request.quote, request.optimized);
         response = autoDetectResult.path;
         if (request.highlight && typeof HoverBox !== "undefined") {
           new HoverBox().highlightElement(autoDetectResult.el, true);
@@ -3129,13 +3169,13 @@ const Scroll = (() => {
   // Message Listener: We need to return immediately if the function will be performing asynchronous work
   chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) { if (!request || request.receiver !== "contentscript") { return; } messageListener(request, sender, sendResponse); if (request && request.async) { return true; } });
 
-  // The Navigation API can help detect SPAs: Currently only supported in Chrome 102+ (not currently supported in Firefox!)
-  // We add a timeout just in case this is fired very early to let init() build the instance first
-  // @see https://developer.chrome.com/docs/web-platform/navigation-api/
-  // @see https://developer.mozilla.org/docs/Web/API/Navigation_API
-  // @see https://developer.mozilla.org/docs/Web/API/Navigation
-  // @see https://stackoverflow.com/questions/75313690/is-there-chrome-api-event-listener-that-fires-when-modern-web-apps-update-their
-  setTimeout(() => { try { if (typeof navigation !== "undefined" && typeof navigation?.addEventListener === "function") { navigation.addEventListener("navigate", navigateEvent => { spaObserverCallback([], {}, "navigate"); }); } } catch (e) { } }, 1000);
+  // // The Navigation API can help detect SPAs: Currently only supported in Chrome 102+ (not currently supported in Firefox!)
+  // // We add a timeout just in case this is fired very early to let init() build the instance first
+  // // @see https://developer.chrome.com/docs/web-platform/navigation-api/
+  // // @see https://developer.mozilla.org/docs/Web/API/Navigation_API
+  // // @see https://developer.mozilla.org/docs/Web/API/Navigation
+  // // @see https://stackoverflow.com/questions/75313690/is-there-chrome-api-event-listener-that-fires-when-modern-web-apps-update-their
+  // setTimeout(() => { try { if (typeof navigation !== "undefined" && typeof navigation?.addEventListener === "function") { navigation.addEventListener("navigate", navigateEvent => { spaObserverCallback([], {}, "navigate"); }); } } catch (e) { } }, 1000);
 
   // Initialize Scroll
   // Note: Previously we had timing issues with some websites, but due to the new multiple checks for activation, we no

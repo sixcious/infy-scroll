@@ -34,7 +34,7 @@ const PickerUI = (() => {
     // If we don't have chrome, display an error message. Note: Firefox allows Private Window Installation, which is primarily the reason why we need this check (though less so outside the Options screen)
     if (typeof chrome === "undefined") {
       console.log("init() - error: chrome is undefined");
-      document.getElementById("text").textContent = "The chrome object is undefined! This indicates a severe error as chrome is the base object in the Extension API. Please report this issue on GitHub for assistance.";
+      document.getElementById("text").textContent = "The chrome object is undefined! This indicates a severe error as chrome is the base object in the Browser API. Please report this issue on GitHub for assistance.";
       return;
     }
     const ids = document.querySelectorAll("[id]");

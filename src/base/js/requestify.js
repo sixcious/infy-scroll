@@ -91,18 +91,17 @@ const Requestify = (() => {
    * @private
    */
   function xhrify(url, method = "GET", responseType = "document") {
-    console.log("xhr() - method=" + method + ", responseType=" + responseType + ", url=" + url);
     return new Promise((resolve, reject) => {
       const request = new XMLHttpRequest();
       request.open(method, url);
       request.responseType = responseType;
       request.onload = function (event) {
-        console.log("xhr() onload() - request.response=" + request.response);
+        console.log("xhrify() onload() - request.response=" + request.response);
         resolve(request.response);
       };
       request.onerror = function () {
-        console.log("xhr() onerror() - request=" + request);
-        reject("xhr() onerror() - promise rejected");
+        console.log("xhrify() onerror() - request=" + request);
+        reject("xhrify() onerror() - promise rejected");
       };
       request.send();
     });

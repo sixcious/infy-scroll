@@ -92,7 +92,7 @@ const MDC = {
   // })),
 
   /**
-   * Performs a layout for each applicable MDC object. And MDC object needs to run layout each time it is displayed or
+   * Performs a layout for each applicable MDC object. An MDC object needs to run layout each time it is displayed or
    * is shown again after being hidden (e.g. display: none).
    *
    * @public

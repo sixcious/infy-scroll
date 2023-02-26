@@ -74,7 +74,7 @@
             <button class="mdc-tab mdc-tab--stacked" role="tab" tabindex="-1">
               <span class="mdc-tab__content">
                 <svg class="mdc-tab__icon" aria-hidden="true"><use href="../lib/fontawesome/solid.svg#database"></use></svg>
-                <span class="mdc-tab__text-label" id="options-tab-database" data-i18n="textContent"></span>
+                <span class="mdc-tab__text-label" id="options-tab-databases" data-i18n="textContent"></span>
                 <span class="mdc-tab-indicator">
                   <span class="mdc-tab-indicator__content mdc-tab-indicator__content--underline"></span>
                 </span>
@@ -420,7 +420,7 @@
         <p id="saves-manage" data-i18n="textContent"></p>
       </div>
     </section>
-    <section id="database" class="mdc-tab-content" data-tab-bar="options-tab-bar">
+    <section id="databases" class="mdc-tab-content" data-tab-bar="options-tab-bar">
       <header>
         <svg><use href="../lib/fontawesome/solid.svg#database"></use></svg>
         <span id="database-settings-header" data-i18n="textContent"></span>
@@ -605,7 +605,7 @@
               <br><br>
               <ol>
                 <li>www.example.com/page</li>
-                <li>*://*.example.com/page*</li>
+                <li>*example.com/*</li>
                 <li>/^https?://www\.example(\.com|\.co\.jp)/page/</li>
                 <li>"https://www.example.com/page?q=this-exact-url"</li>
                 <li>(^https?://.)</li>
@@ -1168,10 +1168,10 @@
         </div>
         <div class="row">
           <div class="column">
-            <label id="error-skip-label" data-i18n="textContent" aria-describedby="tooltip" aria-label="error-skip-tooltip" data-balloon-pos="up" data-balloon-length="xlarge"></label>
+            <label id="error-codes-label" data-i18n="textContent" aria-describedby="tooltip" aria-label="error-codes-tooltip" data-balloon-pos="up" data-balloon-length="xlarge"></label>
           </div>
           <div class="column">
-            <div id="error-skip-checkboxes">
+            <div id="error-codes-checkboxes">
               <div class="table table-no-margin">
                 <div class="row">
                   <div class="column">
@@ -1417,13 +1417,13 @@
     <section id="about" class="mdc-tab-content" data-tab-bar="options-tab-bar">
       <div id="version-theme" style="position: relative;">
         <div id="version-theme-buildup">
-          <span style="position: absolute;top: 35px;left: 270px;transform: rotate(-5deg);font-size: 1.5rem;font-weight: 900;" class="version-theme-small">AJAX</span>
-          <span style="position: absolute;top: 35px;left: 351px;transform: rotate(-5deg);font-size: 1rem;font-weight: 900;" class="version-theme-medium">is</span>
-          <span style="position: absolute;top: 48px;left: 344px;transform: rotate(-5deg);font-size: 1.25rem;font-weight: 900;color: var(--mdc-theme-primary);" class="version-theme-medium">here!</span>
+          <span style="position: absolute;top: 35px;left: 262px;transform: rotate(-5deg);font-size: 1.5rem;font-weight: 900;" class="version-theme-small">AJAX</span>
+          <span style="position: absolute;top: 38px;left: 330px;transform: rotate(-5deg);font-size: 1rem;font-weight: 900;" class="version-theme-medium">is</span>
+          <span style="position: absolute;top: 48px;left: 347px;transform: rotate(-5deg);font-size: 1.25rem;font-weight: 900;color: var(--mdc-theme-primary);" class="version-theme-medium">here!</span>
           <span style="display: none; position: absolute;top: 114px;left: 320px;transform: rotate(-5deg);font-size: 1rem;font-weight: 900;" class="version-theme-medium">So</span>
           <span style="position: absolute; top: 114px;left: 346px; transform: rotate(-10deg); font-size: 2rem;font-weight: 900;color: var(--mdc-theme-primary);" class="version-theme-medium">Click!</span>
           <span style=" display: none; position: absolute;top: 124px;left: 560px;transform: rotate(-3deg);font-size: 0.7rem;font-weight: 900;font-family: 'RobotoMono', monospace;" class="version-theme-medium">  async function <span style="color: var(--mdc-theme-primary);">ajaxNative</span>() {<span style="opacity: 70%"> // AJAX - but without iframes!</span><br>&nbsp;&nbsp;await Promise.all([disableScroll(), disableRemove()]);<br>&nbsp;&nbsp;await Action.click(button);<br>}</span>
-          <div style="position: absolute; top: 50px; left: 210px; transform: rotate(-10deg);"><svg style="width: 50px; height: 50px; cursor: pointer;" class="version-theme-small hvr-grow"><use href="../lib/fontawesome/solid.svg#circle-chevron-right"></use></svg></div>
+          <div style="position: absolute; top: 50px; left: 205px; transform: rotate(-10deg);"><svg style="width: 50px; height: 50px; cursor: pointer;" class="version-theme-small hvr-grow"><use href="../lib/fontawesome/solid.svg#circle-chevron-right"></use></svg></div>
           <div style="position: absolute; top: 70px; left: 290px; transform: rotate(-10deg);"><svg style="width: 40px; height: 40px; cursor: pointer; fill: var(--mdc-theme-primary); " class="version-theme-small hvr-grow"><use href="../lib/fontawesome/alt.svg#solid-circle-plus"></use></svg></div>
           <div style="position: absolute; top: 70px; left: 360px; transform: rotate(-10deg);"><svg style="width: 40px; height: 40px; cursor: pointer;" class="version-theme-medium hvr-grow"><use href="../lib/fontawesome/solid.svg#circle-dot"></use></svg></div>
           <div style="position: absolute; top: 40px; left: 420px; transform: rotate(10deg);"><svg style="width: 50px; height: 50px; cursor: pointer; fill: var(--mdc-theme-primary);" class="version-theme-large hvr-grow"><use href="../lib/fontawesome/regular.svg#heart"></use></svg></div>
@@ -1481,7 +1481,7 @@
         <div id="about-mascot">
           <img src="../img/infy.png" alt="infy" id="about-infy" class="mascot">
         </div>
-        <div id="thank-you" class="version-theme-medium">
+        <div id="thank-you">
           <div id="thank-you-rainbow-underline">
             <span id="thank-you-rainbow" data-i18n="textContent"></span>
             <svg id="thank-you-icon"><use href="../lib/fontawesome/solid.svg#heart"></use></svg>
@@ -1826,6 +1826,19 @@
                           </span>
                           <span class="mdc-tab__ripple mdc-ripple-upgraded"></span>
                         </button>
+                        <button class="mdc-tab mdc-tab--stacked" role="tab" tabindex="-1">
+                          <span class="mdc-tab__content">
+                            <svg class="mdc-tab__icon" aria-hidden="true"><use href="../lib/fontawesome/solid.svg#earth-americas"></use></svg>
+                            <span class="mdc-tab__text-label">
+                              <span data-id="database-stats-tab-urls" data-i18n="textContent"></span>
+                              <span id="database-stats-tab-urls-value"></span>
+                            </span>
+                            <span class="mdc-tab-indicator">
+                              <span class="mdc-tab-indicator__content mdc-tab-indicator__content--underline"></span>
+                            </span>
+                          </span>
+                          <span class="mdc-tab__ripple mdc-ripple-upgraded"></span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1835,7 +1848,7 @@
                     <table class="mdc-data-table__table" aria-label="Database Stats">
                       <thead>
                       <tr class="mdc-data-table__header-row">
-                        <th class="mdc-data-table__header-cell" role="columnheader" scope="col" data-id="table-heading-database-creator" data-i18n="textContent"></th>
+                        <th class="mdc-data-table__header-cell database-stats-primary-column" role="columnheader" scope="col" data-id="table-heading-database-creator" data-i18n="textContent"></th>
                         <th class="mdc-data-table__header-cell" role="columnheader" scope="col" data-id="table-heading-database-items" data-i18n="textContent"></th>
                       </tr>
                       </thead>
@@ -1854,13 +1867,32 @@
                     <table class="mdc-data-table__table" aria-label="Database Stats">
                       <thead>
                       <tr class="mdc-data-table__header-row">
-                        <th class="mdc-data-table__header-cell" role="columnheader" scope="col" data-id="table-heading-database-key" data-i18n="textContent"></th>
+                        <th class="mdc-data-table__header-cell database-stats-primary-column" role="columnheader" scope="col" data-id="table-heading-database-key" data-i18n="textContent"></th>
                         <th class="mdc-data-table__header-cell" role="columnheader" scope="col" data-id="table-heading-database-items" data-i18n="textContent"></th>
                       </tr>
                       </thead>
                       <tbody id="database-stats-keys-tbody" class="mdc-data-table__content"></tbody>
                     </table>
                     <template id="database-stats-keys-tr-template">
+                      <tr class="mdc-data-table__row">
+                        <td class="mdc-data-table__cell primary-cell"></td>
+                        <td class="mdc-data-table__cell"></td>
+                      </tr>
+                    </template>
+                  </div>
+                </section>
+                <section id="database-stats-urls" class="mdc-tab-content" data-tab-bar="database-stats-tab-bar">
+                  <div id="database-stats-urls-data-table" class="mdc-data-table">
+                    <table class="mdc-data-table__table" aria-label="Database Stats">
+                      <thead>
+                      <tr class="mdc-data-table__header-row">
+                        <th class="mdc-data-table__header-cell database-stats-primary-column" role="columnheader" scope="col" data-id="table-heading-database-url" data-i18n="textContent"></th>
+                        <th class="mdc-data-table__header-cell" role="columnheader" scope="col" data-id="table-heading-database-items" data-i18n="textContent"></th>
+                      </tr>
+                      </thead>
+                      <tbody id="database-stats-urls-tbody" class="mdc-data-table__content"></tbody>
+                    </table>
+                    <template id="database-stats-urls-tr-template">
                       <tr class="mdc-data-table__row">
                         <td class="mdc-data-table__cell primary-cell"></td>
                         <td class="mdc-data-table__cell"></td>

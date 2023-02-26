@@ -49,8 +49,11 @@ const Instance = (() => {
       console.log("buildInstance() - after checking databaseIS, spa=" + spa);
     }
     // Check DatabaseAP (Only if source.via is still items)
-    if (!checks && (source.via === "items" || source.via === "placeholder") && items.databaseAP && Array.isArray(items.databaseAP) && items.databaseAP.length > 0) {
-      const check = checkDatabaseAP(tab, items, source, checks === CHECK_VALUES.length);
+    // Commenting out the below line because I think this was before we started filtering the items.databaseAP from the first check, but we can still check late activation with the filtered items
+    // if (!checks && (source.via === "items" || source.via === "placeholder") && items.databaseAP && Array.isArray(items.databaseAP) && items.databaseAP.length > 0) {
+    if ((source.via === "items" || source.via === "placeholder") && items.databaseAP && Array.isArray(items.databaseAP) && items.databaseAP.length > 0) {
+      // disregardActivate is always false because there are generic database URLs that are longer than 13 characters e.g. ^https?://(www\.)?.+\.com/
+      const check = checkDatabaseAP(tab, items, source, false);
       source = check.source;
       items = check.items;
       spa = spa || check.spa;
@@ -146,6 +149,11 @@ const Instance = (() => {
           delete source[key];
         }
       }
+      // Add another property called type + "Mode" and if the source has a type defined for it, set it there for later
+      // We need to do this here and now because we always set the type before we create the instance: Auto or Fixed Type
+      for (let type of ["nextLinkType", "prevLinkType", "buttonType", "pageElementType"]) {
+        source[type + "Mode"] = source[type] || "auto";
+      }
     } else {
       for (const [key, value] of translations) {
         if (source.hasOwnProperty(value)) {
@@ -232,17 +240,17 @@ const Instance = (() => {
     _.startingURLsCurrentIndex = 0;
     _.urlsCurrentIndex = 0;
     _.nextLinkPath = source.nextLinkPath || items.nextLinkPath;
-    _.nextLinkType = source.nextLinkType || items.preferredPathType;
+    _.nextLinkType = source.nextLinkTypeDetected || items.preferredPathType;
     _.nextLinkProperty = source.nextLinkProperty || items.nextLinkProperty;
     _.nextLinkKeywordsEnabled = source.via !== "items" ? !!source.nextLinkKeywordsEnabled : undefined;
     _.nextLinkKeyword = source.action === "next" ? source.nextLinkKeyword : undefined;
     _.prevLinkPath = source.prevLinkPath || items.prevLinkPath;
-    _.prevLinkType = source.prevLinkType || items.preferredPathType;
+    _.prevLinkType = source.prevLinkTypeDetected || items.preferredPathType;
     _.prevLinkProperty = source.prevLinkProperty || items.prevLinkProperty;
     _.prevLinkKeywordsEnabled = source.via !== "items" ? !!source.prevLinkKeywordsEnabled : undefined;
     _.prevLinkKeyword = source.action === "prev" ? source.prevLinkKeyword : undefined;
     _.buttonPath = source.buttonPath || "";
-    _.buttonType = source.buttonType || items.preferredPathType;
+    _.buttonType = source.buttonTypeDetected || items.preferredPathType;
     _.buttonDetection = typeof source.buttonPosition !== "undefined" && source.via !== "items" ? "manual" : "auto";
     _.buttonPosition = source.via !== "items" ? source.buttonPosition : undefined;
     _.list = source.list || [];
@@ -250,7 +258,7 @@ const Instance = (() => {
     _.iframePageOne = !!source.iframePageOne;
     _.mediaType = source.mediaType || items.mediaType;
     _.pageElementPath = source.pageElementPath || "";
-    _.pageElementType = source.pageElementType || items.preferredPathType;
+    _.pageElementType = source.pageElementTypeDetected || items.preferredPathType;
     _.pageElementIframe = source.pageElementIframe;
     _.insertBeforePath = source.insertBeforePath || "";
     _.ajaxMode = source.ajaxMode || "iframe";
@@ -284,6 +292,10 @@ const Instance = (() => {
     _.spa = spa;
     _.transferNode = source.transferNode;
     _.transferNodeMode = _.transferNode || (_.append === "ajax" ? "import" : "adopt");
+    // Types (Auto or Fixed)
+    for (const type of ["nextLinkType", "prevLinkType", "buttonType", "pageElementType"]) {
+      _[type + "Mode"] = source[type + "Mode"] || "auto";
+    }
     // Instance Option Keys
     for (const key of getInstanceOptionKeys()) {
       // If the source isn't the storage items (save/database), we prefix it with "_" and store it in the instance so that we can see them if we re-save it in Saves
@@ -295,9 +307,10 @@ const Instance = (() => {
     }
     // Because there is no global color option, if there is no color from the source, use the default one
     _.color = _.color || "#55555F"
-    // Make the threshold be 100 for button for click button, including both ajax modes; in the case of iframe, this buys extra time to scroll
-    // the iframe, and in the case of native, if some of the bottom content hasn't loaded before the button has been clicked
+    // Make the threshold be 100 for click button, including both ajax modes; in the case of iframe, this also buys us extra time to scroll
+    // the iframe, and in the case of native, if some of the bottom content hasn't loaded before the button has been clicked, this is necessary
     _.scrollAppendThresholdPixels = source.action === "click" ? 100 : _.scrollAppendThresholdPixels;
+    // _.scrollAppendDelay = source.action === "click" ? _.scrollAppendDelay + 1000 : _.scrollAppendDelay;
     _.scrollDividerGrid = 0;
     _.scrollDividerGridParentModified = false;
     _.scrollbarExists = false;
@@ -619,26 +632,29 @@ const Instance = (() => {
     console.log("checkActivate() - action=" + action + ", append=" + append);
     if (action === "next" || action === "prev") {
       // Note that if a source has a type already set for it, we don't change it
-      source[action + "LinkType"] = source[action + "LinkType"] || DOMPath.determinePathType(source[action + "LinkPath"], items.preferredPathType).type;
+      // Important: We declare a new property for the source called "TypeDetected" instead of overriding its "Type"  with the detected type because
+      // in subsequent checks, we don't want the source type to be defined if it wasn't already, or else it will be a considered
+      // a fixed type (e.g. late activation, or on checks > 1)
+      source[action + "LinkTypeDetected"] = source[action + "LinkType"] || DOMPath.determinePathType(source[action + "LinkPath"], items.preferredPathType).type;
       // Note that we intentionally convert undefined save[action +"KeywordEnabled"] to false to avoid storing them in the save
       source[action + "LinkKeywordsEnabled"] = !!source[action + "LinkKeyword"];
       const keyword = typeof source[action + "LinkKeyword"] === "object" ? source[action + "LinkKeyword"] : undefined;
-      const link = Next.findLink(source[action + "LinkPath"], source[action + "LinkType"], source[action + "LinkProperty"], source[action + "LinkKeywordsEnabled"], items[action + "LinkKeywords"], keyword, true, document, false);
+      const link = Next.findLink(source[action + "LinkPath"], source[action + "LinkTypeDetected"], source[action + "LinkProperty"], source[action + "LinkKeywordsEnabled"], items[action + "LinkKeywords"], keyword, true, document, false);
       activate = link && link.url;
       source[action + "LinkKeyword"] = link.method === "keyword" ? link.keywordObject : undefined;
     } else if (action === "increment" || action === "decrement") {
       const selection = Increment.findSelection(tab.url, source.selectionStrategy, source.selectionCustom);
       activate = selection && !!selection.selection;
     } else if (action === "click") {
-      source.buttonType = source.buttonType || DOMPath.determinePathType(source.buttonPath, items.preferredPathType).type;
-      activate = Click.findButton(source.buttonPath, source.buttonType, document, false).details.found;
+      source.buttonTypeDetected = source.buttonType || DOMPath.determinePathType(source.buttonPath, items.preferredPathType).type;
+      activate = Click.findButton(source.buttonPath, source.buttonTypeDetected, document, false).details.found;
     } else if (action === "list") {
       activate = true;
     }
     // The only append modes we have to validate is element and ajax (page, iframe, media, and none are all assumed to be true)
     if (activate && (append === "element" || append === "ajax")) {
-      source.pageElementType = source.pageElementType || DOMPath.determinePathType(source.pageElementPath, items.preferredPathType).type;
-      const pageElements = Elementify.getPageElements(document, source.pageElementType, source.pageElementPath);
+      source.pageElementTypeDetected = source.pageElementType || DOMPath.determinePathType(source.pageElementPath, items.preferredPathType).type;
+      const pageElements = Elementify.getPageElements(document, source.pageElementTypeDetected, source.pageElementPath);
       activate = pageElements && pageElements.length > 0 && pageElements[0] && pageElements[0].parentNode;
     }
     console.log("checkActivate() - activate=" + activate);

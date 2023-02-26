@@ -24,16 +24,16 @@ const Util = (() => {
   function throttle(fn, wait) {
     let previouslyRun = 0;
     let timeout;
-    return function invokeFn() {
+    return function invokeFn(...args) {
       const now = Date.now();
       const elapsed = now - previouslyRun;
       clearTimeout(timeout);
       if (elapsed >= wait) {
         console.log("throttle() - executing fn, wait=" + wait + ", elapsed=" + elapsed);
-        fn();
+        fn.apply(null, args);
         previouslyRun = now;
       } else {
-        timeout = setTimeout(invokeFn, wait - elapsed);
+        timeout = setTimeout(invokeFn.bind(null, ...args), wait - elapsed);
       }
     }
   }

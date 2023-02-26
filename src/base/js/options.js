@@ -202,7 +202,7 @@ const Options = (() => {
     DOM["#selection-custom-save-button"].addEventListener("click", function () { customSelection("save"); });
     DOM["#selection-custom-test-button"].addEventListener("click", function () { customSelection("test"); });
     DOM["#leading-zeros-pad-by-detection-input"].addEventListener("change", function () { chrome.storage.local.set({ "leadingZerosPadByDetection": this.checked }); });
-    DOM["#error-skip-checkboxes"].addEventListener("change", function () { updateErrorCodes(); });
+    DOM["#error-codes-checkboxes"].addEventListener("change", function () { updateErrorCodes(); });
     DOM["#error-codes-custom-input"].addEventListener("input", function () { saveInput(this, "errorCodesCustom", "array-split-all"); });
     // Extra
     DOM["#custom-scripts-enable-input"].addEventListener("change", function () { chrome.storage.local.set({"customScriptsEnabled": this.checked}); });
@@ -565,7 +565,7 @@ const Options = (() => {
         }
       }
       // Resort back to default sort order
-      saves.sort((a, b) => (a.url && b.url && a.url.length < b.url.length) ? 1 : -1);
+      saves.sort((a, b) => b.url?.length - a.url?.length || a.id - b.id);
       await Promisify.storageSet({saves: saves});
       populateValuesFromStorage("saves");
       MDC.dialogs.get("save-dialog").close();
@@ -602,7 +602,7 @@ const Options = (() => {
         }
       }
       // Resort back to default sort order
-      newSaves.sort((a, b) => (a.url && b.url && a.url.length < b.url.length) ? 1 : -1);
+      newSaves.sort((a, b) => b.url?.length - a.url?.length || a.id - b.id);
       await Promisify.storageSet({saves: newSaves});
       populateValuesFromStorage("saves");
       // Make sure to give the user infinite time to undo this operation
@@ -641,13 +641,17 @@ const Options = (() => {
           database.forEach(d => { creators.set(d.created_by, (creators.get(d.created_by) || 0) + 1); });
           creators = new Map([...creators].sort((a, b) => b[1] - a[1] || a[0]?.localeCompare(b[0])));
           let keys = new Map();
-          database.forEach(d => { const iterations = Object.keys(d).filter(k => !["created_by", "resource_url", "updated_at", "name"].includes(k)); for (const key of iterations) { keys.set(key, (keys.get(key) || 0) + 1); } });
+          database.forEach(d => { const iterations = Object.keys(d).filter(k => !["created_by", "resource_url", "created_at", "updated_at", "name"].includes(k)); for (const key of iterations) { keys.set(key, (keys.get(key) || 0) + 1); } });
           keys = new Map([...keys].sort((a, b) => b[1] - a[1] || a[0]?.localeCompare(b[0])));
+          let urls = new Map();
+          database.forEach(d => { urls.set(d.url, (urls.get(d.url) || 0) + 1); });
+          urls = new Map([...urls].sort((a, b) => b[1] - a[1] || a[0]?.localeCompare(b[0])));
           // Tab Values (#)
           DOM["#database-stats-tab-creators-value"].textContent = "(" + creators.size + ")";
           DOM["#database-stats-tab-keys-value"].textContent = "(" + keys.size + ")";
+          DOM["#database-stats-tab-urls-value"].textContent = "(" + urls.size + ")";
           // Table
-          for (const stat of [{name: "creators", map: creators}, {name: "keys", map: keys}]) {
+          for (const stat of [{name: "creators", map: creators}, {name: "keys", map: keys}, { name: "urls", map: urls}]) {
             const tbody = DOM["#database-stats-" + stat.name + "-tbody"];
             const template = DOM["#database-stats-" + stat.name + "-tr-template"];
             const trs = [];

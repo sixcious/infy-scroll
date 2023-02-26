@@ -19,6 +19,8 @@
   --mdc-theme-secondary-dark: #009A86;
   --mdc-theme-error-light: #B00020;
   --mdc-theme-error-dark: #B64D60;
+  --mdc-theme-alert-light: #FF6600;
+  --mdc-theme-alert-dark: #FF801A;
   --mdc-theme-warning-light: #FFCD56;
   --mdc-theme-warning-dark: #FFCD56;
   --light-background: #FFFFFF;
@@ -50,12 +52,11 @@
   --increment-decrement-1-color: #4AACED;
   --increment-decrement-2-color: #1779BA;
   --increment-decrement-3-color: #004687;
+  --auto-color: var(--mdc-theme-alert);
   --shuffle-color: var(--mdc-theme-error);
   --success-color: var(--mdc-theme-secondary);
   --error-color: var(--mdc-theme-error);
   --error-overlay-color: #FF4D8B;
-  --light-auto-color: #FF6600;
-  --dark-auto-color: #FF801A;
   --google-blue-color: #1A73E8;
 }
 
@@ -69,6 +70,7 @@
   --mdc-theme-primary-rgb: var(--mdc-theme-primary-light-rgb);
   --mdc-theme-secondary: var(--mdc-theme-secondary-light);
   --mdc-theme-error: var(--mdc-theme-error-light);
+  --mdc-theme-alert: var(--mdc-theme-alert-light);
   --mdc-theme-warning: var(--mdc-theme-warning-light);
   --mdc-theme-background: var(--light-background);
   --mdc-theme-on-surface: var(--light-color);
@@ -87,7 +89,6 @@
   --mdc-theme-on-surface-adjusted: var(--light-tab-text-label-color);
   --mdc-theme-surface-adjusted: var(--mdc-theme-surface);
   --balloon-color: rgba(16,16,16,0.95);
-  --auto-color: var(--light-auto-color);
   --success-color: var(--mdc-theme-secondary-light);
 }
 
@@ -101,6 +102,7 @@
   --mdc-theme-primary-rgb: var(--mdc-theme-primary-dark-rgb);
   --mdc-theme-secondary: var(--mdc-theme-secondary-dark);
   --mdc-theme-error: var(--mdc-theme-error-dark);
+  --mdc-theme-alert: var(--mdc-theme-alert-dark);
   --mdc-theme-warning: var(--mdc-theme-warning-dark);
   --mdc-theme-background: var(--dark-background);
   --mdc-theme-on-surface: var(--dark-color);
@@ -119,7 +121,6 @@
   --mdc-theme-on-surface-adjusted: var(--dark-color);
   --mdc-theme-surface-adjusted: var(--light-background); /* For dark themes, it sometimes makes better sense to use the light version e.g. mdc-switches */
   --balloon-color: rgba(63,64,67,0.99);
-  --auto-color: var(--dark-auto-color);
   --success-color: var(--mdc-theme-secondary-dark);
 }
 
@@ -133,6 +134,7 @@
     --mdc-theme-primary-rgb: var(--mdc-theme-primary-dark-rgb);
     --mdc-theme-secondary: var(--mdc-theme-secondary-dark);
     --mdc-theme-error: var(--mdc-theme-error-dark);
+    --mdc-theme-alert: var(--mdc-theme-alert-dark);
     --mdc-theme-warning: var(--mdc-theme-warning-dark);
     --mdc-theme-background: var(--dark-background);
     --mdc-theme-on-surface: var(--dark-color);
@@ -151,7 +153,6 @@
     --mdc-theme-on-surface-adjusted: var(--dark-color);
     --mdc-theme-surface-adjusted: var(--light-background); /* For dark themes, it sometimes makes better sense to use the light version e.g. mdc-switches */
     --balloon-color: rgba(63,64,67,0.99);
-    --auto-color: var(--dark-auto-color);
     --success-color: var(--mdc-theme-secondary-dark);
   }
 }

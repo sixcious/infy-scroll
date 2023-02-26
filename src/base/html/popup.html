@@ -59,15 +59,15 @@
                   <span class="mdc-list-item__text" id="action-next-label" data-i18n="textContent"></span>
                   <div class="drawer-collapsed-tooltip tooltip-without-underline" aria-describedby="tooltip" aria-label="action-next-label" data-balloon-pos="right">&nbsp;</div>
                 </li>
-                <li class="mdc-list-item" data-action="increment">
-                  <svg class="mdc-list-item__graphic"><use href="../lib/fontawesome/alt.svg#solid-circle-plus"></use></svg>
-                  <span class="mdc-list-item__text" id="action-increment-label" data-i18n="textContent"></span>
-                  <div class="drawer-collapsed-tooltip tooltip-without-underline" aria-describedby="tooltip" aria-label="action-increment-label" data-balloon-pos="right">&nbsp;</div>
-                </li>
                 <li class="mdc-list-item" data-action="click">
                   <svg class="mdc-list-item__graphic"><use href="../lib/fontawesome/solid.svg#circle-dot"></use></svg>
                   <span class="mdc-list-item__text" id="action-click-label" data-i18n="textContent"></span>
                   <div class="drawer-collapsed-tooltip tooltip-without-underline" aria-describedby="tooltip" aria-label="action-click-label" data-balloon-pos="right">&nbsp;</div>
+                </li>
+                <li class="mdc-list-item" data-action="increment">
+                  <svg class="mdc-list-item__graphic"><use href="../lib/fontawesome/alt.svg#solid-circle-plus"></use></svg>
+                  <span class="mdc-list-item__text" id="action-increment-label" data-i18n="textContent"></span>
+                  <div class="drawer-collapsed-tooltip tooltip-without-underline" aria-describedby="tooltip" aria-label="action-increment-label" data-balloon-pos="right">&nbsp;</div>
                 </li>
                 <li class="mdc-list-item" data-action="list">
                   <svg class="mdc-list-item__graphic"><use href="../lib/fontawesome/regular.svg#rectangle-list"></use></svg>
@@ -179,7 +179,7 @@
                           </div>
                         </div>
                       </div>
-                      <div id="next-type-label" class="type-label"></div>
+                      <div id="next-type-label" data-action="next" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-auto-label" data-balloon-pos="up"></div>
                       <div id="element-picker-next-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                         <label class="hvr-grow-2x">
                           <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
@@ -227,7 +227,7 @@
                           </div>
                         </div>
                       </div>
-                      <div id="prev-type-label" class="type-label"></div>
+                      <div id="prev-type-label" data-action="prev" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-auto-label" data-balloon-pos="up"></div>
                       <div id="element-picker-prev-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                         <label class="hvr-grow-2x">
                           <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
@@ -553,7 +553,7 @@
                       </div>
                     </div>
                   </div>
-                  <div id="button-type-label" class="type-label"></div>
+                  <div id="button-type-label" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-auto-label" data-balloon-pos="up"></div>
                   <div id="element-picker-button-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                     <label class="hvr-grow-2x">
                       <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
@@ -681,6 +681,14 @@
                 </div>
               </section>
               <section id="element">
+                <header id="element-header" class="tooltip-without-underline" aria-describedby="tooltip" aria-label="element-description" data-balloon-pos="left" data-balloon-length="large">
+                  <svg id="element-header-icon"><use href="../lib/fontawesome/solid.svg#cube"></use></svg>
+                  <span data-id="element-header" data-i18n="textContent"></span>
+                </header>
+                <header id="ajax-header" class="tooltip-without-underline" aria-describedby="tooltip" aria-label="ajax-description" data-balloon-pos="left" data-balloon-length="large">
+                  <svg id="ajax-header-icon"><use href="../lib/fontawesome/solid.svg#ghost"></use></svg>
+                  <span data-id="ajax-header" data-i18n="textContent"></span>
+                </header>
                 <header id="page-element-result" class="async-result">
                   <div id="page-element-result-loading" class="result-loading">
                     <span data-id="loading-message" data-i18n="textContent"></span>
@@ -713,8 +721,6 @@
                         <svg><use href="../lib/fontawesome/solid.svg#magnifying-glass"></use></svg>
                       </label>
                     </div>
-                    <div id="element-header" data-id="element-header" data-i18n="textContent"></div>
-                    <div id="ajax-header" data-id="ajax-header" data-i18n="textContent"></div>
                   </div>
                 </header>
                 <div class="section">
@@ -730,7 +736,7 @@
                       </div>
                     </div>
                   </div>
-                  <div id="page-element-type-label" class="type-label"></div>
+                  <div id="page-element-type-label" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-auto-label" data-balloon-pos="up"></div>
                   <div id="element-picker-element-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                     <label class="hvr-grow-2x">
                       <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>

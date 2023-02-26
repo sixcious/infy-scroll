@@ -245,9 +245,9 @@ var DOMPath = (() => {
 })();
 
 /**
- * {@link InternalPath} is the custom-made internal DOMPath implementation for both CSS Selectors and XPath.
+ * InternalPath is the custom-made internal DOMPath implementation for both CSS Selectors and XPath.
  */
-var InternalPath = InternalPath || (() => {
+var InternalPath = (() => {
 
   /**
    * Generates a DOM Path (CSS Selector or XPath expression) for a node using a custom-made internal algorithm.
@@ -470,7 +470,7 @@ var InternalPath = InternalPath || (() => {
  * @see https://github.com/chromium/chromium/blob/77578ccb4082ae20a9326d9e673225f1189ebb63/third_party/blink/renderer/devtools/front_end/elements/DOMPath.js
  * @see https://stackoverflow.com/a/58677712
  */
-var ChromiumPath = ChromiumPath || (() => {
+var ChromiumPath = (() => {
 
   /**
    * Variables
