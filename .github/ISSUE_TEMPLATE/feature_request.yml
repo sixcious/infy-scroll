@@ -10,5 +10,6 @@ body:
   attributes:
     label: Feature Request
     description: Please describe your feature request. The more detailed you can be, the better! You can upload any screenshots here as well (but please do not upload images of the mascot).
+    placeholder: Describe your feature request
   validations:
     required: true
