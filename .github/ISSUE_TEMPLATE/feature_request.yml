@@ -1,18 +1,14 @@
 name: Feature Request
 description: Suggest an idea
-labels: ["enhancement"]
-assignees:
-  - sixcious
 body:
 - type: markdown
   attributes:
     value: |
-      Thanks for taking the time to fill out this feature request!
+      Thanks for taking the time to fill out this feature request.
 - type: textarea
   id: feature-request
   attributes:
     label: Feature Request
     description: Please describe your feature request. The more detailed you can be, the better! You can upload any screenshots here as well (but please do not upload images of the mascot).
-    placeholder: Say what you want!
   validations:
     required: true
