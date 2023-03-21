@@ -54,17 +54,16 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
 *You can copy and paste these settings using the Add Save feature in the Options. (Tested on December 22, 2022.)*
 
 ## SPA Support
-[SPAs (Single-page Applications)](https://developer.mozilla.org/docs/Glossary/SPA) are tricky to deal with because they update their page content dynamically, and sometimes don't even update the address bar. However, Infy now supports the [Navigation](https://developer.mozilla.org/docs/Web/API/Navigation) API (Chrome/Edge 102+ Only) to detect browser navigations and it can also watch for changes on the page and auto-activate and auto-deactivate itself if the website changes its content dynamically. It even works here on GitHub and on Pixiv. Just check the setting in the UI Window (Version 0.8) and save it. No more refreshing the page!
+[SPAs (Single-page Applications)](https://developer.mozilla.org/docs/Glossary/SPA) are tricky to deal with because they update their page content dynamically, and sometimes don't even update the address bar. However, Infy now supports the [Navigation API](https://developer.mozilla.org/docs/Web/API/Navigation_API) (Chrome/Edge 102+ Only) to detect browser navigations and it can also watch for changes on the page and auto-activate and auto-deactivate itself if the website changes its content dynamically. It even works here on GitHub and on Pixiv. Just check the setting in the UI Window (Version 0.8) and save it. No more refreshing the page!
 
 ## Installation
-Installing from GitHub is simple. First, [download the zip](https://github.com/sixcious/infy-scroll/archive/refs/heads/main.zip) and unzip it. Then:
+Installing from GitHub is super simple. First, [download the zip](https://github.com/sixcious/infy-scroll/archive/refs/heads/main.zip) and unzip it. Then:
 
 #### Chrome and Edge
-1. [Follow these instructions](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked) to enable Developer Mode and load an Unpacked Extension
+- [Follow these instructions](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked) to enable Developer Mode and load an Unpacked Extension
 
 #### Firefox
-1. Copy the `src/firefox/manifest.json` file and paste/overwrite the `src/base/manifest.json` file
-2. [Follow these instructions](https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/Your_first_WebExtension#installing) to load a Temporary Add-on
+- [Follow these instructions](https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/Your_first_WebExtension#installing) to load a Temporary Add-on
 
 **Finally**: When prompted for the location, select the `src/base` folder (Firefox: select `manifest.json`) and it will install.
 
@@ -102,19 +101,21 @@ Infy Scroll does *not* track you. It does *not* use analytic services. It does *
 ## Credits and Special Thanks
 <ul>
   <li>Infy: <a href="https://twitter.com/thejoyfool" target="_blank">Joyfool</a></li>
-  <li>UI: <a href="https://material.io/" target="_blank">Material Design</a></li>
+  <li>UI: <a href="https://material.io" target="_blank">Material Design</a></li>
   <li>Fonts: <a href="https://fonts.google.com/specimen/Roboto" target="_blank">Roboto</a></li>
-  <li>Icons: <a href="https://fontawesome.com/" target="_blank">FontAwesome</a></li>
-  <li>Animations: <a href="https://ianlunn.github.io/Hover/" target="_blank">Hover.css</a></li>
-  <li>Tooltips: <a href="https://kazzkiq.github.io/balloon.css/" target="_blank">Balloon.css</a></li>
-  <li>Loading: <a href="https://loading.io/" target="_blank">Loading.io</a></li>
+  <li>Icons: <a href="https://fontawesome.com" target="_blank">FontAwesome</a>, <a href="https://github.com/feathericons/feather" target="_blank">Feather</a></li>
+  <li>Animations: <a href="https://ianlunn.github.io/Hover" target="_blank">Hover.css</a></li>
+  <li>Tooltips: <a href="https://kazzkiq.github.io/balloon.css" target="_blank">Balloon.css</a></li>
+  <li>Loading: <a href="https://loading.io" target="_blank">Loading.io</a></li>
+  <li>Charts: <a href="https://github.com/chartjs/Chart.js" target="_blank">Chart.js</a></li>
+  <li>Confetti: <a href="https://github.com/catdad/canvas-confetti" target="_blank">Canvas Confetti</a></li>
   <li>Resizing: <a href="https://github.com/davidjbradshaw/iframe-resizer" target="_blank">Iframe Resizer</a></li>
   <li>Hover Box: <a href="https://github.com/AlienKevin" target="_blank">AlienKevin</a></li>
   <li>DOM Paths: <a href="https://github.com/chromium/chromium" target="_blank">Chromium</a></li>
-  <li>Database: <a href="http://wedata.net/users/" target="_blank">AutoPagerize Contributors | Wedata</a></li>
-  <li>Shoutout To: <a href="#byWindLi">AutoPager</a>, <a href="https://github.com/swdyh/autopagerize" target="_blank">AutoPagerize</a>, <a href="https://github.com/jkoomjian/PageZipper" target="_blank">PageZipper</a>, <a href="https://github.com/machsix/Super-preloader" target="_blank">Super-preloader</a></li>
-  <li>With Special Thanks:
-    <a href="#lostpacket">LostPacket</a> and <a href="#daydreaming5">DayDreaming</a></li>
+  <li>CDNs: <a href="https://www.jsdelivr.com" target="_blank">Jsdelivr</a>, <a href="http://statically.io" target="_blank">Statically</a></li>
+  <li>Database: <a href="http://wedata.net/users" target="_blank">Wedata Contributors</a></li>
+  <li>Shoutout To: <a href="#AutoPagerByWindLi">AutoPager</a>, <a href="https://github.com/swdyh/autopagerize" target="_blank">AutoPagerize</a>, <a href="https://github.com/Griever/userChromeJS/tree/master/uAutoPagerize">uAutoPagerize</a>, <a href="https://github.com/jkoomjian/PageZipper" target="_blank">PageZipper</a>, <a href="https://github.com/hoothin/UserScripts/tree/master/Pagetual" target="_blank">Pagetual</a>, <a href="https://github.com/machsix/Super-preloader" target="_blank">Super-preloader</a></li>
+  <li>With Special Thanks: <a href="#lostpacket">LostPacket</a>, <a href="#daydreaming5">DayDreaming</a>, <a href="https://github.com/Tanookirby" target="_blank">Tanookirby</a>, and <a href="https://github.com/alexolog" target="_blank">Alex</a></li>
 </ul>
 
 ... and most of all you for using Infy
