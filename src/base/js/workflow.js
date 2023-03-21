@@ -5,7 +5,7 @@
  */
 
 /**
- * Workflow handles the business logic involving the overall workflow of performing actions and appending pages. The
+ * Workflow is a class that handles the workflow business logic of performing actions and appending pages. The
  * core function is the execute() function.
  *
  * The basic workflow:
@@ -22,21 +22,21 @@
  * There is also a special case of the Normal workflow, where we need to prepend an element (e.g. the divider) before
  * the action is performed.
  *
- * Page 1's Workflow
+ * Page 1's Workflow:
  * Workflow does not perform the workflow for the first page. Scroll.start() handles that instead.
  * 1. After the page has loaded, in prepareFirstPage(): create the iframe, perform the action (button click), and start scrolling the iframe
  * 2. When the user reaches the bottom, call append() and import the iframe's elements, then call action() and start scrolling the iframe again
  */
-const Workflow = (() => {
+class Workflow {
 
   /**
-   * Variables
+   * Fields
    *
    * @param {string[]} MAIN_ACTIONS - the array of all main actions
    * @param {string[]} SUB_ACTIONS - the array of all sub actions
    */
-  const MAIN_ACTIONS = ["next", "prev", "increment", "decrement", "click", "list"];
-  const SUB_ACTIONS = ["down", "up", "auto", "repeat", "return", "blacklist", "whitelist", "power"];
+  static #MAIN_ACTIONS = ["next", "prev", "increment", "decrement", "click", "list"];
+  static #SUB_ACTIONS = ["down", "up", "auto", "repeat", "return", "blacklist", "whitelist", "power"];
 
   /**
    * Executes the workflow.
@@ -47,48 +47,49 @@ const Workflow = (() => {
    * @return {boolean} true if the action was successfully performed, false otherwise
    * @public
    */
-  async function execute(action, caller, extra = {}) {
+  static async execute(action, caller, extra = {}) {
     console.log("Workflow.execute() - caller=" + caller + ", action=" + action + ", extra=" + extra);
-    action = preWorkflow(action, caller);
-    const actionPerformed = await mainWorkflow(action, caller, extra);
-    await postWorkflow(action, caller, actionPerformed);
+    action = Workflow.#preWorkflow(action, caller);
+    const actionPerformed = await Workflow.#mainWorkflow(action, caller, extra);
+    await Workflow.#postWorkflow(action, caller, actionPerformed);
     return actionPerformed;
   }
 
   /**
    * Pre Workflow determines what the final action will be. For example, if the user clicks the "down" button to perform
    * a down action, but there are no pages below the current page, the action resolves to a primary action in order to
-   * append the next page. It also handles Auto initialization.
+   * append the next page.
    *
    * @param {string} action - the action to perform (e.g. "next")
    * @param {string} caller - the caller who called this function (e.g. "popup")
    * @return {string} the final (resolved) action
    * @private
    */
-  function preWorkflow(action, caller) {
+  static #preWorkflow(action, caller) {
     console.log("preWorkflow()");
-    const instance = Scroll.get("instance");
-    const pages = Scroll.get("pages");
-    // Handle Down Action:
-    if (!instance.autoEnabled && action === "down") {
-      action = instance.isLoading || instance.currentPage + 1 <= pages.length ? "down" : instance.action;
+    // Handle Down:
+    if (action === "down" && !V.instance.autoEnabled && !V.instance.isLoading && ((V.instance.currentPage + 1) > V.pages.length)) {
       // TODO: Write a better check for this isLoading situation, integrating it with the normal appending we do when scrolling. We need to guard against excessive user actions (shortcuts and button clicks). Normal appends via scrolling should handle isLoading properly
-      // IMPORTANT: The following is necessary if the user tries to perform the down command too many times very fast (e.g. holding down the shortcut key or pressing Down Button too rapidly)
-      // If the action is no longer a "down" (i.e. it is now the instance.action as changed above), we are now performing the action itself and we should set the instance's isLoading to true. This will avoid performing multiple increments if the user tries to press the Down Shortcut multiple times quickly when on the last page
-      if (action !== "down") {
-        console.log("preWorkflow() - changing the down action to the instance.action and setting the instance isLoading to true because the action is no longer down, action=" + action);
-        instance.isLoading = true;
-        Scroll.set("instance", instance);
-      }
+      // IMPORTANT: Setting isLoading to true is necessary to guard against the user trying to perform the down command too many times very fast (e.g. holding down the shortcut key or pressing Down Button too rapidly)
+      // If the action is no longer a "down" (i.e. it is now the instance.action as changed above), we are now performing the action itself and we should set the instance's isLoading to true.
+      // This will avoid performing multiple actions if the user tries to press the Down Shortcut multiple times quickly when on the last page
+      console.log("preWorkflow() - changing the down action to the instance.action=" + V.instance.action);
+      action = V.instance.action;
+      V.instance.isLoading = true;
+      // if (!instance.autoEnabled && action === "down") {
+      // action = instance.isLoading || instance.currentPage + 1 <= pages.length ? "down" : instance.action;
     }
-    // Handle Auto:
-    // TODO: Also need to handle Up for Auto Slideshow if decrementing auto times
-    if (instance.autoEnabled && caller === "auto" && action === "down") {
-      // If slideshow mode and have enough pages, action is always just down; otherwise Regular auto or slideshow without enough pages is always the scroll action (appends a new page); otherwise it's just going down one page (only slideshow)
+    // Handle Auto Slideshow:
+    if (action === "down" && V.instance.autoEnabled && caller === "auto" && V.instance.autoSlideshow && V.pages.length <= V.instance.autoTimesOriginal) {
       // TODO: Handle Auto Slideshow, should buttons/shortcuts increment or decrement autoTimes?
-      action = instance.autoSlideshow && pages.length > instance.autoTimesOriginal ? "down" : instance.action;
-      instance.autoTimes--;
-      Scroll.set("instance", instance);
+      // TODO: Also need to handle Up for Auto Slideshow if decrementing auto times
+      // If slideshow mode and have enough pages, action is always just down; otherwise Regular auto or slideshow without enough pages is always the scroll action (appends a new page); otherwise it's just going down one page (only slideshow)
+      console.log("preWorkflow() - (auto) changing the down action to the instance.action=" + V.instance.action);
+      action = V.instance.action;
+      V.instance.isLoading = true;
+      // V.instance.autoTimes--;
+      // if (V.instance.autoEnabled && caller === "auto" && action === "down") {
+      // action = V.instance.autoSlideshow && pages.length > V.instance.autoTimesOriginal ? "down" : V.instance.action;
     }
     return action;
   }
@@ -103,38 +104,37 @@ const Workflow = (() => {
    * @return {boolean} true if the action was successfully performed, false otherwise
    * @private
    */
-  async function mainWorkflow(action, caller, extra) {
+  static async #mainWorkflow(action, caller, extra) {
     console.log("mainWorkflow()");
     let actionPerformed;
-    let instance = Scroll.get("instance");
     // Workflow 1 - Sub Actions (Just perform the action, these actions do not need to append anything)
-    if (SUB_ACTIONS.includes(action)) {
-      actionPerformed = await Action.perform(action, caller, extra);
+    if (Workflow.#SUB_ACTIONS.includes(action)) {
+      actionPerformed = await Action.execute(action, caller, extra);
     }
     // Workflow 2 - Reverse Workflow: Append Action
-    else if (instance.workflowReverse) {
+    else if (V.instance.workflowReverse) {
       // If the previous action attempt failed, we don't want to append anything (this includes the divider)
-      if (!instance.workflowSkipAppend) {
+      if (!V.instance.workflowSkipAppend) {
         // We must await this before the action is called so that appendFinally() appends the current page before instance.url is updated
-        await Scroll.append(caller);
+        await Append.execute(caller);
         // // This is when we really want to update the popup with the new current page, but we have to await the action below so we call it now instead of in postWorkflow
         // updatePopup(action, caller);
       }
-      // The reason why we await this is mainly due to Scroll.prepareIframe()
-      actionPerformed = await Action.perform(action, caller, extra);
+      // The reason why we await this is mainly due to Iframe.prepareIframe()
+      actionPerformed = await Action.execute(action, caller, extra);
       // Should we await this?
-      await Scroll.prepareIframe(actionPerformed, caller);
+      await Iframe.prepareIframe(actionPerformed, caller);
     }
     // Workflow 3 - Normal Workflow: Action Append
     else {
       // Certain actions and append mode combinations need to append (prepend) the divider before the action; otherwise they operate the same as normal workflow
-      if (instance.workflowPrepend) {
-        Scroll.prepend(caller);
+      if (V.instance.workflowPrepend) {
+        Append.prepend(caller);
       }
-      actionPerformed = await Action.perform(action, caller, extra);
+      actionPerformed = await Action.execute(action, caller, extra);
       if (actionPerformed) {
         // Should we await this?
-        await Scroll.append(caller);
+        await Append.execute(caller);
       }
     }
     return actionPerformed;
@@ -143,42 +143,41 @@ const Workflow = (() => {
   /**
    * Executes after the workflow has finished, doing any post workflow tasks or cleanup.
    *
-   * After the action is performed, a message is sent to the Popup to update the instance if and only if the action was
-   * called by the Popup.
+   * After the action is performed, a message is sent to the Popup to update the instance if the action was called by the Popup.
    *
    * @param {string} action - the action to perform (e.g. "next")
    * @param {string} caller - the caller who called this function (e.g. "popup")
    * @param {boolean} actionPerformed - whether the action was performed (true) or not (false)
    * @private
    */
-  async function postWorkflow(action, caller, actionPerformed) {
+  static async #postWorkflow(action, caller, actionPerformed) {
     console.log("postWorkflow()");
-    let instance = Scroll.get("instance");
     // Handle Auto Slideshow after Down/Up
-    if (instance.autoEnabled && instance.autoSlideshow && caller === "auto" && action === "down") {
-      Auto.autoListener(instance);
+    if (V.instance.autoEnabled && V.instance.autoSlideshow && caller === "auto" && action === "down") {
+      Auto.autoListener();
     }
     // Icon Feedback if debug enabled and if relevant action was performed (e.g. not down, etc.) and other conditions are met (e.g. we don't show feedback if auto is enabled):
-    if (instance.debugEnabled && actionPerformed && !(instance.autoEnabled || (caller === "auto" && instance.autoSlideshow)) && !["down", "up", "blacklist", "whitelist", "power"].includes(action) ) {
+    if (V.instance.debugEnabled && actionPerformed && !(V.instance.autoEnabled || (caller === "auto" && V.instance.autoSlideshow)) && !["down", "up", "blacklist", "whitelist", "power"].includes(action) ) {
       // Reset Multi Action to the appropriate badge (increment becomes "incrementm", increment1 becomes "increment")
-      const badge = instance.multiEnabled ? action === "increment" || action === "decrement" ? action + "m" : action === "increment1" || action === "decrement1" ? action.slice(0, -1) : action : action;
+      const badge = V.instance.multiEnabled ? action === "increment" || action === "decrement" ? action + "m" : action === "increment1" || action === "decrement1" ? action.slice(0, -1) : action : action;
       Promisify.runtimeSendMessage({receiver: "background", greeting: "setBadge", badge: badge, temporary: true});
     }
-    // Send a message to update the popup if this is a relevant action (this process wakes up the Background, so we don't want to always do it)
-    if ((caller === "popupClickActionButton") || ["auto", "power", "blacklist", "whitelist"].includes(action)) {
+    // Send a message to update the popup if it's opened or if this is a relevant action (this process wakes up the Background, so we don't want to always do it)
+    // if (V.instance.popupOpened || (caller === "popupClickActionButton") || ["auto", "power", "blacklist", "whitelist"].includes(action)) {
+    if (V.instance.popupOpened) {
       // If a new page was appended (action is now a MAIN_ACTION), we need to set current page to total pages in case scrolling is smooth (finishes after sending instance to popup)
-      if (MAIN_ACTIONS.includes(action)) {
-        instance.currentPage = Scroll.get("pages").length;
+      if (Workflow.#MAIN_ACTIONS.includes(action)) {
+        V.instance.currentPage = V.pages.length;
       }
-      Promisify.runtimeSendMessage({receiver: "popup", greeting: "updatePopupInstance", caller: caller, action: action, instance: instance});
+      Promisify.runtimeSendMessage({receiver: "popup", greeting: "updatePopupInstance", caller: caller, action: action, instance: V.instance});
     }
     // // We call this function in two places; in mainWorkflow if workflowReverse and not a sub action
     // // Otherwise we always call it here in postWorkflow. This if guards against it being called twice if the former condition is true
-    // if (SUB_ACTIONS.includes(action) || !instance.workflowReverse) {
+    // if (Workflow.#SUB_ACTIONS.includes(action) || !instance.workflowReverse) {
     //   updatePopup(action, caller);
     // }
     // Sub Actions end their post workflow here and do not have a delay imposed on them
-    if (SUB_ACTIONS.includes(action)) {
+    if (Workflow.#SUB_ACTIONS.includes(action)) {
       return;
     }
     // We impose a delay on main actions to prevent them from calling the workflow again quickly
@@ -196,20 +195,14 @@ const Workflow = (() => {
   //  */
   // function updatePopup(action, caller) {
   //   console.log("updatePopup()");
-  //   const instance = Scroll.get("instance");
   //   // Send a message to update the popup if this is a relevant action (this process wakes up the Background, so we don't want to always do it)
   //   if ((caller === "popupClickActionButton") || ["auto", "power", "blacklist", "whitelist"].includes(action)) {
   //     // If a new page was appended (action is now a MAIN_ACTION), we need to set current page to total pages in case scrolling is smooth (finishes after sending instance to popup)
   //     if (MAIN_ACTIONS.includes(action)) {
-  //       instance.currentPage = Scroll.get("pages").length;
+  //       V.instance.currentPage = V.pages.length
   //     }
-  //     Promisify.runtimeSendMessage({receiver: "popup", greeting: "updatePopupInstance", caller: caller, action: action, instance: instance});
+  //     Promisify.runtimeSendMessage({receiver: "popup", greeting: "updatePopupInstance", caller: caller, action: action, instance: V.instance});
   //   }
   // }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    execute
-  };
-
-})();
+}

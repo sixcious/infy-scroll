@@ -10,15 +10,15 @@
  *
  * List of potential locations: jsdelivr.net, statically.io, github.io, wedata.net, pages.dev, githubusercontent.com
  */
-const Database = (() => {
+class Database {
 
   /**
-   * Variables
+   * Fields
    *
    * @oaram {Object} URLS the immutable object that contains the database URLs in a fixed order
    * @param {Object} urls the mutable object that is cloned from the URLS object, but with an order based on downloadLocation
    */
-  const URLS = {
+  static #URLS = {
     AP: [
       { location: "jsdelivr.net",  url: "https://cdn.jsdelivr.net/gh/infyscroll/infyscroll.github.io/databases/AutoPagerize/items_all.json" },
       { location: "statically.io", url: "https://cdn.statically.io/gh/infyscroll/infyscroll.github.io/main/databases/AutoPagerize/items_all.json" },
@@ -36,7 +36,7 @@ const Database = (() => {
       // , { location: "githubusercontent.com", url: "https://raw.githubusercontent.com/infyscroll/infyscroll.github.io/main/databases/InfyScroll/items_all.json" }
     ]
   };
-  let urls;
+  static #urls;
 
   /**
    * Downloads the databases.
@@ -51,23 +51,23 @@ const Database = (() => {
    * @returns {Promise<{url: string, error: *, downloaded: boolean}>} the result (true if successful and any error message)
    * @public
    */
-  async function download(downloadAP = true, downloadIS = true, downloadLocation) {
+  static async download(downloadAP = true, downloadIS = true, downloadLocation = undefined) {
     console.log("download() - downloadAP=" + downloadAP + ", downloadIS=" + downloadIS);
     // Save the Database Date first (separately) to avoid potential issues, such as this function being called on every request in case of error with the fetch request
     await Promisify.storageSet({"databaseDate": new Date().toJSON()});
     // We need to clone the URLS array each time because if this is called again before the background is unloaded, the index order will be different
-    urls = Util.clone(URLS);
+    Database.#urls = Util.clone(Database.#URLS);
     // If the preferred location is specified, swap its index so that it's the first entry in the arrays (if not found, default to 0 so no change occurs)
     if (downloadLocation) {
-      for (const key of Object.keys(urls)) {
-        let index = urls[key].findIndex(d => d.location === downloadLocation);
-        index = index >= 0 && index < urls[key].length ? index : 0;
-        [urls[key][0],urls[key][index]] = [urls[key][index],urls[key][0]];
+      for (const key of Object.keys(Database.#urls)) {
+        let index = Database.#urls[key].findIndex(d => d.location === downloadLocation);
+        index = index >= 0 && index < Database.#urls[key].length ? index : 0;
+        [Database.#urls[key][0],Database.#urls[key][index]] = [Database.#urls[key][index],Database.#urls[key][0]];
       }
     }
     // Download the databases if they are specified
-    const resultAP = downloadAP ? await downloadDatabase("AP", 0) : {};
-    const resultIS = downloadIS ? await downloadDatabase("IS", 0) : {};
+    const resultAP = downloadAP ? await Database.#downloadDatabase("AP", 0) : {};
+    const resultIS = downloadIS ? await Database.#downloadDatabase("IS", 0) : {};
     // Merge the results of the downloaded and error properties
     const result = {};
     result.downloaded = (downloadAP && resultAP.downloaded) || (resultIS && resultIS.downloaded);
@@ -84,10 +84,10 @@ const Database = (() => {
    * @returns {Promise<{location: string, error: *, downloaded: boolean}>} the result (true if successful and any error message)
    * @private
    */
-  async function downloadDatabase(databaseName, index = 0) {
+  static async #downloadDatabase(databaseName, index = 0) {
     console.log("downloadDatabase() - databaseName=" + databaseName + ", index=" + index);
     const result = { location: "", downloaded: false, error: undefined };
-    const databaseURLs = urls[databaseName];
+    const databaseURLs = Database.#urls[databaseName];
     try {
       const url = databaseURLs[index].url;
       const location = databaseURLs[index].location;
@@ -142,15 +142,10 @@ const Database = (() => {
       result.error = e.message;
       index++;
       if (index < databaseURLs.length) {
-        return await downloadDatabase(databaseName, index);
+        return await Database.#downloadDatabase(databaseName, index);
       }
     }
     return result;
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    download
-  };
-
-})();
+}

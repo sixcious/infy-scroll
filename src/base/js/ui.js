@@ -5,9 +5,9 @@
  */
 
 /**
- * UI provides user interface functions, such as generating alert messages and clicking buttons.
+ * UI is a class that provides user interface functions, such as generating alert messages and clicking buttons.
  */
-const UI = (() => {
+class UI {
 
   /**
    * Generates an alert to display messages.
@@ -20,7 +20,7 @@ const UI = (() => {
    * @see https://github.com/GoogleChrome/chrome-extensions-samples/tree/main/_archive/mv2/extensions/proxy_configuration
    * @public
    */
-  function generateAlert(messages, isError) {
+  static generateAlert(messages, isError) {
     const div = document.createElement("div");
     const ul = document.createElement("ul");
     div.classList.add("overlay");
@@ -46,7 +46,7 @@ const UI = (() => {
    * @param {string} effect - the Hover.css effect (class name) to use
    * @public
    */
-  function clickHoverCss(el, effect) {
+  static clickHoverCss(el, effect) {
     // Carefully toggle the Hover.css class using setTimeout() to force a delay
     el.classList.remove(effect);
     setTimeout(function () { el.classList.add(effect); }, 50);
@@ -61,7 +61,7 @@ const UI = (() => {
    * @see https://www.kirilv.com/canvas-confetti/#realistic
    * @public
    */
-  function fireConfetti(event) {
+  static fireConfetti(event) {
     const options = [
       { particleRatio: 0.25, spread: 26,  startVelocity: 55,              scalar: 1.0, angle: 45  },
       { particleRatio: 0.20, spread: 60,                                  scalar: 1.0, angle: 135 },
@@ -74,11 +74,4 @@ const UI = (() => {
     }
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    generateAlert,
-    clickHoverCss,
-    fireConfetti
-  };
-
-})();
+}

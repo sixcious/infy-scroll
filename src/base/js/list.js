@@ -9,7 +9,7 @@
  *
  * TODO: Move array/list related features from increment.js to here.
  */
-const List = (() => {
+class List {
 
   /**
    * Finds all the links (URLs) on the page and returns them as an array.
@@ -17,7 +17,7 @@ const List = (() => {
    * @returns {string[]} the array of links (URLs)
    * @public
    */
-  function findLinks() {
+  static findLinks() {
     console.log("findLinks()");
     // We use a set instead of an array to avoid duplicate links, note in JS that Sets maintain insertion order
     const links = new Set();
@@ -42,9 +42,4 @@ const List = (() => {
     return Array.from(links);
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    findLinks
-  };
-
-})();
+}

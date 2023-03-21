@@ -11,14 +11,14 @@
  * Since this extension is designed to be a content script based extension, and because this extension does not have a
  * persistent background, there is little logic contained here, and there is no "state" (objects in memory).
  */
-const Background = (() => {
+class Background {
 
   /**
-   * Variables
+   * Fields
    *
    * @param {Object} BROWSER_ACTION_BADGES - the browser action badges displayed against the extension icon (each "badge" consists of a text string and backgroundColor)
    */
-  const BROWSER_ACTION_BADGES = {
+  static #BROWSER_ACTION_BADGES = {
     "incrementm": { "text": "+",    "backgroundColor": "#000000" },
     "decrementm": { "text": "-",    "backgroundColor": "#000000" },
     "increment":  { "text": "+",    "backgroundColor": "#000000" },
@@ -49,7 +49,7 @@ const Background = (() => {
    * @param {string} backgroundColor - (optional) the backgroundColor to use instead of the badge backgroundColor
    * @private
    */
-  function setBadge(tabId, badge, temporary, text, backgroundColor) {
+  static #setBadge(tabId, badge, temporary, text, backgroundColor) {
     console.log("setBadge() - tabId=" + tabId + ", badge=" + badge + ", temporary=" + temporary + ", text=" + text + ", backgroundColor=" + backgroundColor);
     // Firefox Android: chrome.action.setBadge API isn't supported
     if (!chrome.action || !chrome.action.setBadgeText || !chrome.action.setBadgeBackgroundColor) {
@@ -57,25 +57,25 @@ const Background = (() => {
       return;
     }
     // Must either have a badge object OR both a text and backgroundColor to continue
-    if (!BROWSER_ACTION_BADGES[badge] && (!text || !backgroundColor)) {
+    if (!Background.#BROWSER_ACTION_BADGES[badge] && (!text || !backgroundColor)) {
       console.log("setBadge() - no badge and either no text or backgroundColor detected, returning");
       return;
     }
-    chrome.action.setBadgeText({text: text || BROWSER_ACTION_BADGES[badge].text, tabId: tabId});
-    chrome.action.setBadgeBackgroundColor({color: backgroundColor || BROWSER_ACTION_BADGES[badge].backgroundColor, tabId: tabId});
+    chrome.action.setBadgeText({text: text || Background.#BROWSER_ACTION_BADGES[badge].text, tabId: tabId});
+    chrome.action.setBadgeBackgroundColor({color: backgroundColor || Background.#BROWSER_ACTION_BADGES[badge].backgroundColor, tabId: tabId});
     if (temporary) {
       setTimeout(async function () {
         // Infy Scroll Only: Assume we are reverting back to on, but revert to default if this is an off and it's not enabled still
         // To determine the latter, we get the instance to check and see if it has become enabled again if the user tried turning it back on before the timeout executes
         let revert = "on";
         if (badge === "off") {
-          const instance = await Promisify.tabsSendMessage(tabId, {receiver: "contentscript", greeting: "getInstance"});
+          const instance = await Promisify.tabsSendMessage(tabId, {sender: "background", receiver: "contentscript", greeting: "getInstance"});
           if (instance && !instance.enabled) {
             revert = "default";
           }
         }
-        chrome.action.setBadgeText({text: BROWSER_ACTION_BADGES[revert].text, tabId: tabId});
-        chrome.action.setBadgeBackgroundColor({color: BROWSER_ACTION_BADGES[revert].backgroundColor, tabId: tabId});
+        chrome.action.setBadgeText({text: Background.#BROWSER_ACTION_BADGES[revert].text, tabId: tabId});
+        chrome.action.setBadgeBackgroundColor({color: Background.#BROWSER_ACTION_BADGES[revert].backgroundColor, tabId: tabId});
       }, 2000);
     }
   }
@@ -83,20 +83,25 @@ const Background = (() => {
   /**
    * Sets the browser action icon (the toolbar icon) to the specified icon.
    *
-   * @param {string} icon - the icon to set
+   * @param {string} icon - the icon to use (e.g. "dark" or "light")
+   * @param {number} tabId - the specific tab ID's icon to set (defaults to setting the icon to all tabs if omitted)
    * @private
    */
-  function setIcon(icon) {
+  static #setIcon(icon, tabId = undefined) {
     console.log("setIcon() - setting browserAction icon to " + icon);
     // Ensure the chosen toolbar icon is set. Firefox Android: chrome.action.setIcon() not supported
-    if (chrome.action && chrome.action.setIcon && ["dark", "light"].includes(icon)) {
-      chrome.action.setIcon({
-        path : {
-          "16": "/img/icon-" + icon + ".png",
-          "24": "/img/icon-" + icon + ".png",
-          "32": "/img/icon-" + icon + ".png"
-        }
-      });
+    if (chrome.action && chrome.action.setIcon) {
+      if (icon === "system" && typeof window === "object" && window.matchMedia) {
+        icon = window.matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "dark";
+      }
+      const details = {};
+      // icon-dark.png, icon-light.png, or icon.png (default)
+      const path = "/img/icon" + (["dark", "light"].includes(icon) ? "-" + icon : "") + ".png";
+      details.path = { "16": path, "24": path, "32": path };
+      if (tabId) {
+        details.tabId = tabId;
+      }
+      chrome.action.setIcon(details);
     }
   }
 
@@ -106,7 +111,7 @@ const Background = (() => {
    * @param {Object} details - the details object that contains properties relevant to the installation/update
    * @private
    */
-  async function installedListener(details) {
+  static async #installedListener(details) {
     console.log("installedListener() - details=" + JSON.stringify(details));
     if (details.reason === "install") {
       console.log("installedListener() - installing ...");
@@ -115,7 +120,7 @@ const Background = (() => {
       console.log("installedListener() - updating ...");
       await Storage.update(details.previousVersion);
     }
-    startupListener("installedListener");
+    Background.#startupListener("installedListener");
   }
 
   /**
@@ -123,15 +128,15 @@ const Background = (() => {
    * For example, when Chrome is started, when the extension is installed or updated, or when the
    * extension is re-enabled after being disabled.
    *
-   * Note: caller is useful because startupListener can be called from multiple different places!
+   * Note: caller is useful because startupListener can be called from multiple places!
    *
    * @param {string} caller - the caller who called this function (e.g. "popup")
    * @private
    */
-  async function startupListener(caller) {
+  static async #startupListener(caller) {
     console.log("startupListener() - caller=" + caller);
-    const items = await Promisify.storageGet();
-    setIcon(items.icon);
+    const icon = await Promisify.storageGet("icon");
+    Background.#setIcon(icon);
     // Firefox: Set badge text color to white always instead of using default color-contrasting introduced in FF 63
     if (typeof browser !== "undefined" && browser.browserAction && typeof browser.browserAction.setBadgeTextColor === "function") {
       browser.browserAction.setBadgeTextColor({color: "#FFFFFF"});
@@ -141,7 +146,7 @@ const Background = (() => {
     else if (typeof chrome !== "undefined" && chrome.action && typeof chrome.action.setBadgeTextColor === "function") {
       chrome.action.setBadgeTextColor({color: "#FFFFFF"});
     }
-    // MV3: We need to store the started state in memory in case this didn't  get called when the extension is disabled and re-enabled (e.g. the toolbar icon isn't updated)
+    // MV3: We need to store the started state in memory in case this didn't get called when the extension is disabled and re-enabled (e.g. the toolbar icon isn't updated)
     if (chrome.storage.session) {
       Promisify.storageSet({"started": true}, "session");
     }
@@ -155,7 +160,7 @@ const Background = (() => {
    * @param {function} sendResponse - the optional callback function (e.g. for a reply back to the sender)
    * @private
    */
-  async function messageListener(request, sender, sendResponse) {
+  static async #messageListener(request, sender, sendResponse) {
     console.log("messageListener() - request=");
     console.log(request);
     // TODO: This isn't actually needed anymore because we don't ever use the sender.tab.url (this was a carryover from URLI); however keeping it commented out for reference in the future
@@ -170,14 +175,14 @@ const Background = (() => {
     switch (request.greeting) {
       case "setBadge":
         // const tabId = request.tabId ? request.tabId : sender.tab.id;
-        setBadge(tabId, request.badge, request.temporary, request.text, request.backgroundColor);
+        Background.#setBadge(tabId, request.badge, request.temporary, request.text, request.backgroundColor);
         // Only respond back with the tabId when Scroll.start() needs it the very first time
         if (request.needsTabId) {
           response = tabId;
         }
         break;
       case "setIcon":
-        setIcon(request.icon);
+        Background.#setIcon(request.icon, request.tabSpecific ? tabId : undefined);
         break;
       case "getSDV":
         response = Storage.getStorageDefaultValues();
@@ -243,7 +248,7 @@ const Background = (() => {
    * @param {string} command - the shortcut command that was performed
    * @private
    */
-  async function commandListener(command) {
+  static async #commandListener(command) {
     console.log("commandListener() - command=" + command);
     if (command === "down" || command === "up" || command === "power" || command === "blacklist" || command === "auto")  {
       const tabs = await Promisify.tabsQuery();
@@ -253,16 +258,27 @@ const Background = (() => {
     }
   }
 
-  // Background Listeners
-  chrome.runtime.onInstalled.addListener(installedListener);
-  chrome.runtime.onStartup.addListener(startupListener);
-  // Message Listener: We need to return immediately if the function will be performing asynchronous work
-  chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) { if (!request || request.receiver !== "background") { return; } messageListener(request, sender, sendResponse); if (request && request.async) { return true; } });
-  // Firefox Android: chrome.commands is unsupported
-  if (chrome.commands) { chrome.commands.onCommand.addListener(commandListener); }
-  // MV3: We need this in case the startupListener didn't get called when the extension is disabled and re-enabled (e.g. the toolbar icon isn't updated)
-  if (chrome.storage.session) { setTimeout(async () => { const started = await Promisify.storageGet("started", "session"); if (!started) { startupListener("timeout");} }, 3000); }
-  // MV3 / MV2 convenience code
-  if (!chrome.action) { chrome.action = chrome.browserAction; }
+  /**
+   * Background initialization (IIFE).
+   *
+   * @see https://stackoverflow.com/a/61203517
+   * @private
+   */
+  static #init = (() => {
+    console.log("init()");
+    // Background Listeners
+    chrome.runtime.onInstalled.addListener(Background.#installedListener);
+    chrome.runtime.onStartup.addListener(Background.#startupListener);
+    // chrome.tabs.onCreated.addListener(Background.#iconListener);
+    // chrome.tabs.onUpdated.addListener(Background.#iconListener);
+    // Message Listener: We need to return immediately if the function will be performing asynchronous work
+    chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) { if (!request || request.receiver !== "background") { return; } Background.#messageListener(request, sender, sendResponse); if (request && request.async) { return true; } });
+    // Firefox Android: chrome.commands is unsupported
+    if (chrome.commands) { chrome.commands.onCommand.addListener(Background.#commandListener); }
+    // MV3: We need this in case the startupListener didn't get called when the extension is disabled and re-enabled (e.g. the toolbar icon isn't updated)
+    if (chrome.storage.session) { setTimeout(async () => { const started = await Promisify.storageGet("started", "session"); if (!started) { Background.#startupListener("timeout");} }, 3000); }
+    // MV3 / MV2 convenience code
+    if (!chrome.action) { chrome.action = chrome.browserAction; }
+  })();
 
-})();
+}

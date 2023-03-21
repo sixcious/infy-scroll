@@ -5,9 +5,9 @@
  */
 
 /**
- * Cryptography is an object responsible for various cryptographic functions.
+ * Cryptography is a class that contains various functions that use the window.crypto API.
  *
- * The API provides the following six features:
+ * Cryptography provides the following features:
  * 1. Generates a securely random number
  * 2. Generates a securely random string
  * 3. Calculates a cryptographic hash
@@ -50,7 +50,7 @@
  * const decryption = await Cryptography.decrypt(encryption.ciphertext, encryption.iv, key);
  * @see https://developer.mozilla.org/docs/Web/API/crypto_property
  */
-const Cryptography = (() => {
+class Cryptography {
 
   /**
    * Generates a random number securely in the range of min (inclusive) and max (inclusive).
@@ -63,7 +63,7 @@ const Cryptography = (() => {
    * @see https://stackoverflow.com/a/62792582
    * @public
    */
-  function randomNumber(min = 0, max = 16) {
+  static randomNumber(min = 0, max = 16) {
     min = Math.ceil(min);
     max = Math.floor(max);
     const random = crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff + 1);
@@ -78,10 +78,10 @@ const Cryptography = (() => {
    * @returns {string} the randomly generated string
    * @public
    */
-  function randomString(length = 16, alphabet = "abcdefghijklmnopqrstuvwxyz") {
+  static randomString(length = 16, alphabet = "abcdefghijklmnopqrstuvwxyz") {
     let result = "";
     for (let i = 0; i < length; i++) {
-      result += alphabet.charAt(randomNumber(0, alphabet.length - 1));
+      result += alphabet.charAt(Cryptography.randomNumber(0, alphabet.length - 1));
     }
     return result;
   }
@@ -95,10 +95,10 @@ const Cryptography = (() => {
    * @returns {Promise<string>} the hash as a base 64 encoded string
    * @public
    */
-  async function hash(text, salt) {
+  static async hash(text, salt) {
     const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(text), "PBKDF2", false, ["deriveBits"]);
-    const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-512", salt: b642u8a(salt), iterations: 1000 }, key, 512);
-    return u8a2b64(new Uint8Array(bits));
+    const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-512", salt: Cryptography.#b642u8a(salt), iterations: 1000 }, key, 512);
+    return Cryptography.#u8a2b64(new Uint8Array(bits));
   }
 
   /**
@@ -108,8 +108,8 @@ const Cryptography = (() => {
    * @returns {string} the salt as a base 64 encoded string
    * @public
    */
-  function salt(length = 64) {
-    return u8a2b64(crypto.getRandomValues(new Uint8Array(length)));
+  static salt(length = 64) {
+    return Cryptography.#u8a2b64(crypto.getRandomValues(new Uint8Array(length)));
   }
 
   /**
@@ -121,12 +121,12 @@ const Cryptography = (() => {
    * @returns {Promise<{iv: string, ciphertext: string}>} the iv and ciphertext as base 64 encoded strings
    * @public
    */
-  async function encrypt(plaintext, secret) {
+  static async encrypt(plaintext, secret) {
     const algorithm = { name: "AES-GCM", iv: crypto.getRandomValues(new Uint8Array(64)) };
     const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(secret));
     const key = await crypto.subtle.importKey("raw", digest, algorithm, false, ["encrypt"]);
     const encryption = await crypto.subtle.encrypt(algorithm, key, new TextEncoder().encode(plaintext));
-    return { iv: u8a2b64(algorithm.iv), ciphertext: u8a2b64(new Uint8Array(encryption)) };
+    return { iv: Cryptography.#u8a2b64(algorithm.iv), ciphertext: Cryptography.#u8a2b64(new Uint8Array(encryption)) };
   }
 
   /**
@@ -139,11 +139,11 @@ const Cryptography = (() => {
    * @returns {Promise<string>} the decrypted text
    * @public
    */
-  async function decrypt(ciphertext, iv, secret) {
-    const algorithm = { name: "AES-GCM", iv: b642u8a(iv) };
+  static async decrypt(ciphertext, iv, secret) {
+    const algorithm = { name: "AES-GCM", iv: Cryptography.#b642u8a(iv) };
     const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(secret));
     const key = await crypto.subtle.importKey("raw", digest, algorithm, false, ["decrypt"]);
-    const decryption = await crypto.subtle.decrypt(algorithm, key, b642u8a(ciphertext));
+    const decryption = await crypto.subtle.decrypt(algorithm, key, Cryptography.#b642u8a(ciphertext));
     return new TextDecoder().decode(decryption);
   }
 
@@ -154,7 +154,7 @@ const Cryptography = (() => {
    * @returns {string} the base 64 encoded string
    * @private
    */
-  function u8a2b64(u8a) {
+  static #u8a2b64(u8a) {
     return btoa(String.fromCharCode(...u8a));
   }
 
@@ -165,18 +165,8 @@ const Cryptography = (() => {
    * @returns {Uint8Array} the unsigned 8-bit integer array
    * @private
    */
-  function b642u8a(b64) {
+  static #b642u8a(b64) {
     return new Uint8Array([...atob(b64)].map(c => c.charCodeAt(0)));
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    randomNumber,
-    randomString,
-    hash,
-    salt,
-    encrypt,
-    decrypt
-  };
-
-})();
+}

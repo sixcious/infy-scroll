@@ -4,6 +4,16 @@
  * @license https://github.com/sixcious/infy-scroll/blob/main/LICENSE
  */
 
+/* Variables */
+/* These two variables are helpful so we can dynamically adjust them to auto-calc() the path widths */
+
+:root {
+  --type-label-width: 20px;
+  --element-picker-button-width: 36px;
+  --link-property-width: 80px;
+  --insert-before-path-width: 102px;
+}
+
 /* Controls */
 
 /* margin:8px+ instead of 4px to keep Firefox from displaying scrollbars and user-select: none to prevent highlighting text after clicking buttons */
@@ -323,20 +333,20 @@ header {
 
 /* Paths */
 
-#next-path-text-field,
-#prev-path-text-field,
+#next-link-path-text-field,
+#prev-link-path-text-field,
 #button-path-text-field,
 #page-element-path-text-field,
 #element[data-type="ajax"] #page-element-path-text-field {
-  width: 490px;
+  width: calc(541px - var(--type-label-width) - var(--element-picker-button-width));
 }
 
-.mdc-drawer-app-content.drawer-collapsed #next-path-text-field,
-.mdc-drawer-app-content.drawer-collapsed #prev-path-text-field,
+.mdc-drawer-app-content.drawer-collapsed #next-link-path-text-field,
+.mdc-drawer-app-content.drawer-collapsed #prev-link-path-text-field,
 .mdc-drawer-app-content.drawer-collapsed #button-path-text-field,
 .mdc-drawer-app-content.drawer-collapsed #page-element-path-text-field,
 .mdc-drawer-app-content.drawer-collapsed #element[data-type="ajax"] #page-element-path-text-field {
-  width: 638px;
+  width: calc(689px - var(--type-label-width) - var(--element-picker-button-width));
 }
 
 #load-element-path-text-field,
@@ -350,13 +360,41 @@ header {
 }
 
 #insert-before-path-text-field {
-  width: 102px;
+  width: var(--insert-before-path-width);
+}
+
+/* Paths (data-extra) */
+
+[data-extra], [data-extra].text-field-container.path {
+  display: none;
+}
+
+/* Note: inline-block has margin-bottom issues with AJAX due to insert before text field (Chrome only) */
+html[data-extra-document] [data-extra], html[data-extra-document] [data-extra].text-field-container.path {
+  display: inline;
+}
+
+html[data-extra-document] #next-link-path-text-field, html[data-extra-document] #prev-link-path-text-field {
+  width: calc(537px - var(--type-label-width) - var(--element-picker-button-width) - var(--link-property-width));
+}
+
+html[data-extra-document] #page-element-path-text-field {
+  width: calc(537px - var(--type-label-width) - var(--element-picker-button-width) - var(--insert-before-path-width));
+}
+
+html[data-extra-document] .mdc-drawer-app-content.drawer-collapsed #next-link-path-text-field,
+html[data-extra-document] .mdc-drawer-app-content.drawer-collapsed #prev-link-path-text-field {
+  width: calc(685px - var(--type-label-width) - var(--element-picker-button-width) - var(--link-property-width));
+}
+
+html[data-extra-document] .mdc-drawer-app-content.drawer-collapsed #page-element-path-text-field {
+  width: calc(685px - var(--type-label-width) - var(--element-picker-button-width) - var(--insert-before-path-width));
 }
 
 /* Next */
 
-#next-property-text-field, #prev-property-text-field {
-  width: 80px;
+#next-link-property-text-field, #prev-link-property-text-field {
+  width: var(--link-property-width);
 }
 
 /* Increment */
@@ -550,6 +588,7 @@ footer #extras svg {
 /* Firefox: Need to vertically align the element picker buttons to top (Chrome doesn't need this, but respects it) */
 .element-picker-button {
   vertical-align: top;
+  width: var(--element-picker-button-width);
 }
 
 /* Type Label */
@@ -561,7 +600,7 @@ footer #extras svg {
   font-size: 11px;
   font-weight: 500;
   vertical-align: top;
-  width: 15px;
+  width: var(--type-label-width);
   user-select: none;
 }
 
@@ -689,7 +728,7 @@ footer #extras svg {
 }
 
 /* 7 is the perfect number when dealing with mdc dialogs and drawers */
-#version-theme {
+#theme-version {
   position: fixed;
   z-index: 7;
   top: 10px;
@@ -699,14 +738,14 @@ footer #extras svg {
   font-weight: 600;
 }
 
-#version-theme svg#version-theme-icon {
+#theme-version svg#theme-version-icon {
   width: 16px;
   height: 16px;
   margin-left: 2px;
   margin-bottom: 2px;
 }
 
-.drawer-collapsed #version-theme {
+.drawer-collapsed #theme-version {
   top: initial;
   bottom: 24px;
   left: 40px;
@@ -714,7 +753,7 @@ footer #extras svg {
 }
 
 /* display-none for 0.8 */
-.drawer-collapsed #version-theme svg#version-theme-icon {
+.drawer-collapsed #theme-version svg#theme-version-icon {
   width: 14px;
   height: 14px;
   display: none;
@@ -754,12 +793,6 @@ footer #extras svg {
   font-weight: 500;
   margin: 0;
 }
-
-/*
-#element-header span, #ajax-header span {
-  border-bottom: 1px dotted;
-}
-*/
 
 #element-header-icon, #ajax-header-icon {
   width: 12px;
@@ -801,34 +834,6 @@ footer #extras #scripts-button svg {
 
 #lazy-load-source-text-field, #lazy-load-destination-text-field {
   width: 175px;
-}
-
-/* data-extra */
-
-[data-extra], [data-extra].text-field-container.path {
-  display: none;
-}
-
-/* Note: inline-block has margin-bottom issues with AJAX due to insert before text field (Chrome only) */
-html[data-extra-document] [data-extra], html[data-extra-document] [data-extra].text-field-container.path {
-  display: inline;
-}
-
-html[data-extra-document] #next-path-text-field, html[data-extra-document] #prev-path-text-field {
-  width: 407px;
-}
-
-html[data-extra-document] #page-element-path-text-field {
-  width: 385px;
-}
-
-html[data-extra-document] .mdc-drawer-app-content.drawer-collapsed #next-path-text-field,
-html[data-extra-document] .mdc-drawer-app-content.drawer-collapsed #prev-path-text-field {
-  width: 555px;
-}
-
-html[data-extra-document] .mdc-drawer-app-content.drawer-collapsed #page-element-path-text-field {
-  width: 533px;
 }
 
 /* TODO: Decide on List Options */

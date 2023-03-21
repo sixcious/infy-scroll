@@ -26,12 +26,13 @@ const Options = (() => {
   let undo = {};
 
   /**
-   * Gets the declared variables. This can be used by other parts of the app or for debugging purposes.
+   * Gets all the declared variables for debugging purposes.
    *
    * @returns {*} the variables
    * @public
+   * @debug
    */
-  function get() {
+  function debug() {
     return {
       DOM, items, timeouts, charts, undo
     };
@@ -97,7 +98,7 @@ const Options = (() => {
     });
     // UI
     DOM["#theme-button"].addEventListener("click", async function (event) {
-      await changeTheme(items.theme === "default" ? "light" : items.theme === "light" ? "dark" : "default");
+      await changeTheme(items.theme === "system" ? "light" : items.theme === "light" ? "dark" : "system");
       populateValuesFromStorage("theme");
     });
     DOM["#stats-button"].addEventListener("click", () => { MDC.dialogs.get("stats-dialog").open(); viewStats(true, false); });
@@ -119,7 +120,7 @@ const Options = (() => {
     DOM["#button-size-icon"].addEventListener("click", function () { UI.clickHoverCss(this, "hvr-push-click"); });
     DOM["#tooltips-enable-input"].addEventListener("change", function () { chrome.storage.local.set({"tooltipsEnabled": this.checked}); });
     DOM["#extra-inputs-input"].addEventListener("change", function () { chrome.storage.local.set({"extraInputs": this.checked}); });
-    DOM["#version-theme-input"].addEventListener("change", function () { chrome.storage.local.set({"versionTheme": this.checked}); });
+    DOM["#theme-version-input"].addEventListener("change", function () { chrome.storage.local.set({"themeVersion": this.checked}); });
     DOM["#preferred-path-type-radios"].addEventListener("change", async function (event) {
       console.log(event.target.value + " event.target.value");
       await Promisify.storageSet({
@@ -129,6 +130,19 @@ const Options = (() => {
       });
       populateValuesFromStorage("all");
     });
+    // Add window.matchMedia listener in case the icon or theme is system
+    if (typeof window !== "undefined" && window.matchMedia) {
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(e) {
+        console.log("prefers-color-scheme change, dark=" + e.matches);
+        if (items.icon === "system") {
+          Promisify.runtimeSendMessage({sender: "contentscript", receiver: "background", greeting: "setIcon", icon: e.matches ? "light" : "dark"});
+        }
+        // Update the theme icon from sun to moon or vice-versa
+        if (items.theme === "system") {
+          populateValuesFromStorage("theme");
+        }
+      });
+    }
     // Saves
     DOM["#saves-switch-input"].addEventListener("change", async function () {
       await Promisify.storageSet({"savesEnabled": this.checked});
@@ -167,36 +181,31 @@ const Options = (() => {
       }
     });
     // Scroll
-    MDC.selects.get("scroll-divider-select").listen("MDCSelect:change", (el) => { chrome.storage.local.set({"scrollDivider": el.detail.value}); });
+    MDC.selects.get("page-divider-select").listen("MDCSelect:change", (el) => { chrome.storage.local.set({"pageDivider": el.detail.value}); });
     // Scroll Detection changes the scroll append threshold view between pixels (sl) or pages (io)
-    DOM["#scroll-detection-radios"].addEventListener("change", function (event) {
-      saveInput(event.target, "scrollDetection", "value");
-      // DOM["#scroll-append-threshold-pixels"].className = event.target.value === "sl" ? "display-block fade-in" : "display-none";
-      // DOM["#scroll-append-threshold-pages"].className = event.target.value === "io" ? "display-block fade-in" : "display-none";
-    });
+    DOM["#scroll-detection-radios"].addEventListener("change", function (event) { saveInput(event.target, "scrollDetection", "value"); });
     DOM["#scroll-behavior-radios"].addEventListener("change", function (event) { saveInput(event.target, "scrollBehavior", "value"); });
     DOM["#scroll-update-address-input"].addEventListener("change", function () { chrome.storage.local.set({"scrollUpdateAddress": this.checked}); });
     DOM["#scroll-update-title-input"].addEventListener("change", function () { chrome.storage.local.set({"scrollUpdateTitle": this.checked}); });
-    // DOM["#scroll-append-threshold-pages-input"].addEventListener("change", function () { if (+this.value >= 0 && +this.value <= 3) { saveInput(this, "scrollAppendThresholdPages", "number");} });
-    DOM["#scroll-append-threshold-pixels-input"].addEventListener("change", function () { if (+this.value >= 0 && +this.value <= 3000) { saveInput(this, "scrollAppendThresholdPixels", "number");} });
-    DOM["#scroll-append-delay-input"].addEventListener("change", function () { if (+this.value >= 1000 && +this.value <= 10000) { saveInput(this, "scrollAppendDelay", "number");} });
-    DOM["#scroll-divider-align-radios"].addEventListener("change", function (event) { saveInput(event.target, "scrollDividerAlign", "value"); });
-    DOM["#scroll-divider-buttons-input"].addEventListener("change", function () { chrome.storage.local.set({"scrollDividerButtons": this.checked}); });
-    DOM["#scroll-overlay-input"].addEventListener("change", function () { chrome.storage.local.set({"scrollOverlay": this.checked}); });
+    DOM["#append-threshold-input"].addEventListener("change", function () { if (+this.value >= 0 && +this.value <= 3000) { saveInput(this, "appendThreshold", "number");} });
+    DOM["#append-delay-input"].addEventListener("change", function () { if (+this.value >= 1000 && +this.value <= 10000) { saveInput(this, "appendDelay", "number");} });
+    DOM["#page-divider-align-radios"].addEventListener("change", function (event) { saveInput(event.target, "pageDividerAlign", "value"); });
+    DOM["#page-divider-buttons-input"].addEventListener("change", function () { chrome.storage.local.set({"pageDividerButtons": this.checked}); });
+    DOM["#page-overlay-input"].addEventListener("change", function () { chrome.storage.local.set({"pageOverlay": this.checked}); });
     DOM["#scroll-icon-input"].addEventListener("change", function () { chrome.storage.local.set({"scrollIcon": this.checked}); });
     DOM["#scroll-loading-input"].addEventListener("change", function () { chrome.storage.local.set({"scrollLoading": this.checked}); });
-    DOM["#scroll-maximum-pages-input"].addEventListener("change", function () { if (+this.value >= 0 && +this.value <= 100) { saveInput(this, "scrollMaximumPages", "number");} });
-    DOM["#scroll-maximum-pages-checkbox-input"].addEventListener("change", function () {
+    DOM["#maximum-pages-input"].addEventListener("change", function () { if (+this.value >= 0 && +this.value <= 100) { saveInput(this, "maximumPages", "number");} });
+    DOM["#maximum-pages-checkbox-input"].addEventListener("change", function () {
       // We always reset this to 0 on every checkbox change to avoid issues
-      DOM["#scroll-maximum-pages-input"].value = 0;
-      saveInput(DOM["#scroll-maximum-pages-input"], "scrollMaximumPages", "number");
-      DOM["#scroll-maximum-pages"].className = this.checked ? "display-inline-block fade-in" : "display-none";
+      DOM["#maximum-pages-input"].value = 0;
+      saveInput(DOM["#maximum-pages-input"], "maximumPages", "number");
+      DOM["#maximum-pages"].className = this.checked ? "display-inline-block fade-in" : "display-none";
     });
     // Next
-    DOM["#next-path-textarea"].addEventListener("input", function () { saveInput(this, "nextLinkPath", "value"); });
-    DOM["#next-keywords-textarea"].addEventListener("input", function () { saveInput(this, "nextLinkKeywords", "array-split-nospace-lowercase"); });
-    DOM["#prev-path-textarea"].addEventListener("input", function () { saveInput(this, "prevLinkPath", "value"); });
-    DOM["#prev-keywords-textarea"].addEventListener("input", function () { saveInput(this, "prevLinkKeywords", "array-split-nospace-lowercase"); });
+    DOM["#next-link-path-textarea"].addEventListener("input", function () { saveInput(this, "nextLinkPath", "value"); });
+    DOM["#next-link-keywords-textarea"].addEventListener("input", function () { saveInput(this, "nextLinkKeywords", "array-split-nospace-lowercase"); });
+    DOM["#prev-link-path-textarea"].addEventListener("input", function () { saveInput(this, "prevLinkPath", "value"); });
+    DOM["#prev-link-keywords-textarea"].addEventListener("input", function () { saveInput(this, "prevLinkKeywords", "array-split-nospace-lowercase"); });
     // Increment
     MDC.selects.get("selection-select").listen("MDCSelect:change", (el) => { DOM["#selection-custom"].className = el.detail.value === "custom" ? "display-block fade-in" : "display-none"; chrome.storage.local.set({"selectionStrategy": el.detail.value}); });
     DOM["#selection-custom-save-button"].addEventListener("click", function () { customSelection("save"); });
@@ -260,13 +269,14 @@ const Options = (() => {
       if (!items.firstRun) {
         document.documentElement.dataset.theme = items.theme;
       }
-      // Note: If the user is using the default theme and they change the system default while the Options page is still open, the icon will not update. It's not really worth adding extra icons and doing display none
+      // Note: If the user is using the default theme and they change the system default while the Options page is still open, we will update the icon in the window.matchMedia listener added in addEventListeners()
       DOM["#theme-icon"].children[0].setAttribute("href", "../lib/feather/feather.svg#" + (items.theme === "light" ? "sun" : items.theme === "dark" ? "moon" : getPreferredColor() === "light" ? "sun" : "moon"));
       DOM["#theme-icon"].style.display = "initial";
       // Firefox doesn't officially support ariaLabel, so we have to use setAttribute to change it
       DOM["#theme-button"].setAttribute("aria-label", chrome.i18n.getMessage("theme_button_tooltip").replaceAll("?", chrome.i18n.getMessage("theme_" + items.theme + "_label")));
     }
     if (values === "all" || values === "icon") {
+      DOM["#icon-radio-system"].checked = items.icon === "system";
       DOM["#icon-radio-dark"].checked = items.icon === "dark";
       DOM["#icon-radio-light"].checked = items.icon === "light";
     }
@@ -292,7 +302,7 @@ const Options = (() => {
       DOM["#button-size-icon"].style = (isNaN(items.buttonSize) || items.buttonSize < 16 || items.buttonSize > 128) ? "" : "width:" + items.buttonSize + "px; height:" + items.buttonSize + "px;";
       DOM["#tooltips-enable-input"].checked = items.tooltipsEnabled;
       DOM["#extra-inputs-input"].checked = items.extraInputs;
-      DOM["#version-theme-input"].checked = items.versionTheme;
+      DOM["#theme-version-input"].checked = items.themeVersion;
       DOM["#preferred-path-type-radio-selector"].checked = items.preferredPathType === "selector";
       DOM["#preferred-path-type-radio-xpath"].checked = items.preferredPathType === "xpath";
       MDC.switches.get("stats-switch").checked = items.statsEnabled;
@@ -314,27 +324,24 @@ const Options = (() => {
       DOM["#scroll-behavior-smooth-input"].checked = items.scrollBehavior === "smooth";
       DOM["#scroll-update-address-input"].checked = items.scrollUpdateAddress;
       DOM["#scroll-update-title-input"].checked = items.scrollUpdateTitle;
-      // DOM["#scroll-append-threshold-pixels"].className = items.scrollDetection === "sl" ? "display-block" : "display-none";
-      // DOM["#scroll-append-threshold-pages"].className = items.scrollDetection === "io" ? "display-block" : "display-none";
-      // DOM["#scroll-append-threshold-pages-input"].value = items.scrollAppendThresholdPages;
-      DOM["#scroll-append-threshold-pixels-input"].value = items.scrollAppendThresholdPixels;
-      DOM["#scroll-append-delay-input"].value = items.scrollAppendDelay;
-      MDC.selects.get("scroll-divider-select").value = items.scrollDivider;
-      DOM["#scroll-divider-align-left-input"].checked = items.scrollDividerAlign === "left";
-      DOM["#scroll-divider-align-center-input"].checked = items.scrollDividerAlign === "center";
-      DOM["#scroll-divider-align-right-input"].checked = items.scrollDividerAlign === "right";
-      DOM["#scroll-divider-buttons-input"].checked = items.scrollDividerButtons;
-      DOM["#scroll-overlay-input"].checked = items.scrollOverlay;
+      DOM["#append-threshold-input"].value = items.appendThreshold;
+      DOM["#append-delay-input"].value = items.appendDelay;
+      MDC.selects.get("page-divider-select").value = items.pageDivider;
+      DOM["#page-divider-align-left-input"].checked = items.pageDividerAlign === "left";
+      DOM["#page-divider-align-center-input"].checked = items.pageDividerAlign === "center";
+      DOM["#page-divider-align-right-input"].checked = items.pageDividerAlign === "right";
+      DOM["#page-divider-buttons-input"].checked = items.pageDividerButtons;
+      DOM["#page-overlay-input"].checked = items.pageOverlay;
       DOM["#scroll-icon-input"].checked = items.scrollIcon;
       DOM["#scroll-loading-input"].checked = items.scrollLoading;
-      DOM["#scroll-maximum-pages-checkbox-input"].checked = items.scrollMaximumPages > 0;
-      DOM["#scroll-maximum-pages"].className = items.scrollMaximumPages > 0 ? "display-inline-block" : "display-none";
-      DOM["#scroll-maximum-pages-input"].value = items.scrollMaximumPages;
+      DOM["#maximum-pages-checkbox-input"].checked = items.maximumPages > 0;
+      DOM["#maximum-pages"].className = items.maximumPages > 0 ? "display-inline-block" : "display-none";
+      DOM["#maximum-pages-input"].value = items.maximumPages;
       // Next
-      DOM["#next-path-textarea"].value = items.nextLinkPath;
-      DOM["#next-keywords-textarea"].value = items.nextLinkKeywords;
-      DOM["#prev-path-textarea"].value = items.prevLinkPath;
-      DOM["#prev-keywords-textarea"].value = items.prevLinkKeywords;
+      DOM["#next-link-path-textarea"].value = items.nextLinkPath;
+      DOM["#next-link-keywords-textarea"].value = items.nextLinkKeywords;
+      DOM["#prev-link-path-textarea"].value = items.prevLinkPath;
+      DOM["#prev-link-keywords-textarea"].value = items.prevLinkKeywords;
       // Increment
       MDC.selects.get("selection-select").value = items.selectionStrategy;
       DOM["#selection-custom"].className = items.selectionStrategy === "custom" ? "display-block" : "display-none";
@@ -405,13 +412,18 @@ const Options = (() => {
    */
   async function changeIcon(icon) {
     await Promisify.storageSet({"icon": icon});
+    // Need to keep the cache updated for the window.matchmedia listener
+    items.icon = icon;
+    if (icon === "system") {
+      icon = getPreferredColor() === "dark" ? "light" : "dark";
+    }
     Promisify.runtimeSendMessage({receiver: "background", greeting: "setIcon", icon: icon });
   }
 
   /**
-   * Changes the overall theme between light mode and dark mode.
+   * Changes the overall theme between system default mode, light mode, and dark mode.
    *
-   * @param {string} theme - the theme to change to ("default", "light", or "dark")
+   * @param {string} theme - the theme to change to ("system", "light", or "dark")
    * @private
    */
   async function changeTheme(theme) {
@@ -1175,7 +1187,7 @@ const Options = (() => {
         map.set("number", ["databaseUpdate"]);
         map.set("string", ["installVersion", "icon", "theme", "databaseAPLocation", "databaseISLocation", "databaseLocation", "databaseMode", "installDate", "databaseAPDate", "databaseISDate", "databaseDate"]);
         map.set("boolean", ["savesEnabled", "databaseAPEnabled", "databaseISEnabled", "statsEnabled"]);
-        map.set("array", ["saves", "databaseAP", "databaseIS", "databaseBlacklist", "databaseWhitelist"]);
+        map.set("array", ["saves", "databaseAP", "databaseIS", "databaseBlacklist", "databaseWhitelist", "navigationBlacklist"]);
         map.set("object", ["stats"]);
         //, "statsSites", "statsActions", "statsAppends", "statsElements"
         for (const [type, keys] of map) {
@@ -1213,6 +1225,10 @@ const Options = (() => {
         // This message is sent from the Background after the extension is first installed and when the database has been downloaded
         await populateValuesFromStorage("database");
         break;
+      case "themeChanged":
+        // Only need to change the icon, the page's css will auto-adjust dynamically
+        document.querySelector("link[rel='icon']").href = request.theme === "dark" ? "../img/icon-light.png" : "../img/icon-dark.png";
+        break;
       default:
         break;
     }
@@ -1228,7 +1244,7 @@ const Options = (() => {
 
   // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
   return {
-    get
+    debug
   };
 
 })();

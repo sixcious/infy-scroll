@@ -10,7 +10,7 @@
  *
  * Note: The name "Elementify" is used instead of the reserved interface name, {@link Element}.
  */
-const Elementify = (() => {
+class Elementify {
 
   /**
    * Gets the insertion point in the Append Element mode. We first check using the insertBefore path (if supplied), and
@@ -27,10 +27,9 @@ const Elementify = (() => {
    * @returns {Node|{Node, Object}} the insertion point or an object that includes it with extra details
    * @public
    */
-  function getInsertionPoint(elements, useInsertBefore = false, type = "", path = "", withDetails = false) {
-    const instance = Scroll.get("instance");
-    path = path || instance.insertBeforePath;
-    type = type || instance.pageElementType;
+  static getInsertionPoint(elements, useInsertBefore = false, type = undefined, path = undefined, withDetails = false) {
+    path = typeof path === "string" ? path : V.instance.insertBeforePath;
+    type = typeof type === "string" ? type : V.instance.pageElementType;
     // Note: We do not want to set the global insertionPoint variable in this function in case we are just checking for it
     let insertionPoint_;
     let details = "";
@@ -89,10 +88,9 @@ const Elementify = (() => {
    * @returns {Element[]|{Element[], Object}} the array of page elements or an object that includes them with extra details
    * @public
    */
-  function getPageElements(doc, type = "", path = "", withDetails = false) {
-    const instance = Scroll.get("instance");
-    path = path || instance.pageElementPath;
-    type = type || instance.pageElementType;
+  static getPageElements(doc, type = undefined, path = undefined, withDetails = false) {
+    path = typeof path === "string" ? path : V.instance.pageElementPath;
+    type = typeof type === "string" ? type : V.instance.pageElementType;
     // Note: We do not want to set the global pageElements variable in this function in case we are just checking for it
     // Stores the exception or error message in order to return it back to the user for feedback (e.g. invalid selector)
     const result = DOMNode.getElements(path, type, doc);
@@ -104,7 +102,7 @@ const Elementify = (() => {
   }
 
   /**
-   * Gets a filtered array of page elements that are not already in the pages array nor in the array of excluded
+   * Gets a filtered array of page elements that are not already in the pages array, nor in the array of excluded
    * elements (e.g. the divider and bottom elements).
    *
    * @param {Object[]} pages - the pages array that contains a reference to each appended page in the DOM
@@ -112,8 +110,8 @@ const Elementify = (() => {
    * @param {Document} doc - the document to use when querying or evaluating the array of elements
    * @returns {Element[]} the array of filtered page elements
    */
-  function getFilteredPageElements(pages, excludedPageElements, doc = document) {
-    const totalPageElements = getPageElements(doc);
+  static getFilteredPageElements(pages, excludedPageElements, doc = document) {
+    const totalPageElements = Elementify.getPageElements(doc);
     // Never include the divider or bottom in the pageElements
     // let pastPageElements = [divider, bottom];
     // We need to also make sure to not include any of the page dividers (including the current divider not yet part of the pages)
@@ -128,19 +126,12 @@ const Elementify = (() => {
     return filteredPageElements;
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    getInsertionPoint,
-    getPageElements,
-    getFilteredPageElements
-  };
-
-})();
+}
 
 /**
  * AutoDetectPageElement is solely responsible for auto detecting the page elements.
  */
-const AutoDetectPageElement = (() => {
+class AutoDetectPageElement {
 
   /**
    * Variables
@@ -148,18 +139,8 @@ const AutoDetectPageElement = (() => {
    * TODO: Convert map to object for easier filtering/reducing?
    * @param {Map<Element, Object>} elements - the map of parent element candidates with data for the auto detect page element function
    */
-  let elements;
-
-  /**
-   * Gets the declared variables. This can be used by other parts of the app or for debugging purposes.
-   *
-   * @returns {*} the variables
-   * @public
-   * @debug
-   */
-  function debug() {
-    return { elements };
-  }
+  static elements;
+  static details;
 
   /**
    * Auto detects the page elements using a custom-made algorithm and then generates its DOM Path.
@@ -175,27 +156,27 @@ const AutoDetectPageElement = (() => {
    * @returns {{el: Element, path: string}} the object containing the page element and its path
    * @public
    */
-  function detect(type, algorithm, quote, optimized) {
+  static detect(type, algorithm, quote, optimized) {
     console.log("autoDetectPageElement() - type=" + type);
-    elements = new Map();
+    AutoDetectPageElement.elements = new Map();
     let el;
     let path = "";
     try {
-      checkChildren(document.body);
-      parseMap();
-      if (!elements || elements.size <= 0) {
+      AutoDetectPageElement.#checkChildren(document.body);
+      AutoDetectPageElement.#parseMap();
+      if (!AutoDetectPageElement.elements || AutoDetectPageElement.elements.size <= 0) {
         throw new Error("The elements map is empty or undefined!");
       }
       console.log("autoDetectPageElement() - elements=");
-      console.log(elements);
-      el = elements.entries().next().value[0];
+      console.log(AutoDetectPageElement.elements);
+      el = AutoDetectPageElement.elements.entries().next().value[0];
       path = DOMPath.generatePath(el, type, algorithm, quote, optimized).path + (type === "xpath" ? "/*" : " > *");
       console.log("autoDetectPageElement() - path=" + path);
     } catch (e) {
       console.log("autoDetectPageElement() - Error:");
       console.log(e);
     }
-    return { el: el, path: path };
+    return { el: el, path: path, details: AutoDetectPageElement.details };
   }
 
   /**
@@ -204,7 +185,7 @@ const AutoDetectPageElement = (() => {
    * @param {Element} element - the element whose children to check
    * @private
    */
-  function checkChildren(element) {
+  static #checkChildren(element) {
     // console.log("checkChildren() - element=" + (element ? element.nodeName : ""));
     if (!element || !element.children || element.children.length <= 0) {
       return;
@@ -214,11 +195,11 @@ const AutoDetectPageElement = (() => {
       classNames: new Map(),
       classLists: new Map()
     }
-    elements.set(element, data);
+    AutoDetectPageElement.elements.set(element, data);
     // Iffy on: IFRAME, LABEL, LEGEND, MENU (Alternative to UL/OL)
     const BANNED_NODES = ["ASIDE", "B", "BR", "CANVAS", "DATALIST", "DIALOG", "EM", "FOOTER", "H1", "H2", "H3", "H4", "H5", "H6", "HEADER", "HR", "I", "INPUT", "LINK", "NAV", "OPTGROUP", "OPTION", "NOSCRIPT", "PROGRESS", "SELECT", "SCRIPT", "STYLE", "TEMPLATE"];
-    // Iffy on: "top"
-    const BANNED_ATTRIBUTES = ["ads", "aside", "carousel", "dropdown", "footer", "header", "jumpbox", "menu", "menubar", "menu-bar", "nav", "navbar", "navigation", "navigation-list", "nav-bar", "paginate", "pagination", "paginator", "sidebar", "side-bar", "tooltips"];
+    // Iffy on: top
+    const BANNED_ATTRIBUTES = ["ads", "aside", "carousel", "dropdown", "footer", "header", "jumpbox", "menu", "menubar", "menu-bar", "nav", "navbar", "navigation", "navigation-list", "nav-bar", "paginate", "pagination", "paginator", "sidebar", "side-bar", "slider", "tooltips"];
     // Note: We shouldn't ban attributes that merely "include" any of the banned words in them. For example, consider a page that uses an outer div with the class "sidebar-content" that encapsulates both "sidebar" and "content"
     first:for (let child of element.children) {
       try {
@@ -265,22 +246,22 @@ const AutoDetectPageElement = (() => {
           console.log(e);
         }
         // nodeName can't possibly be null or empty
-        const nodeNameCount = elements.get(element).nodeNames.get(nodeName) || 0;
-        elements.get(element).nodeNames.set(nodeName, nodeNameCount + 1);
+        const nodeNameCount = AutoDetectPageElement.elements.get(element).nodeNames.get(nodeName) || 0;
+        AutoDetectPageElement.elements.get(element).nodeNames.set(nodeName, nodeNameCount + 1);
         // className might be null or empty since we still want the nodeName for this element, but we won't add it to the classNames map
         const className = (!!child.className && typeof child.className.toLowerCase === "function" ? child.className.toLowerCase() : "").trim();
         if (className) {
-          const classCount = elements.get(element).classNames.get(className) || 0;
-          elements.get(element).classNames.set(className, classCount + 1);
+          const classCount = AutoDetectPageElement.elements.get(element).classNames.get(className) || 0;
+          AutoDetectPageElement.elements.get(element).classNames.set(className, classCount + 1);
           // Element Class List (Not Child)
           // const elementClassList = element.classList;
           // For each class that this child has, we will put it in the classLists map and keep doing this for the remaining children as we loop
           for (const clazz of classList) {
-            const clazzCount = elements.get(element).classLists.get(clazz) || 0;
-            elements.get(element).classLists.set(clazz, clazzCount + 1);
+            const clazzCount = AutoDetectPageElement.elements.get(element).classLists.get(clazz) || 0;
+            AutoDetectPageElement.elements.get(element).classLists.set(clazz, clazzCount + 1);
           }
         }
-        checkChildren(child);
+        AutoDetectPageElement.#checkChildren(child);
       } catch (e) {
         console.log("checkChildren() - Error:");
         console.log(e);
@@ -294,104 +275,78 @@ const AutoDetectPageElement = (() => {
    *
    * @private
    */
-  function parseMap() {
+  static #parseMap() {
     console.log("parseResults()");
     // This is a bit hacky, but we never want the body. We always start out with it in the beginning.
     // TODO: Find a way to start out without using the body?
-    elements.delete(document.body);
+    AutoDetectPageElement.elements.delete(document.body);
     // Remove elements with no nodeNames (e.g. no children) and that have a width or height of less than 500 px (some have 0 on eiter, so we do an OR check here, not AND)
     // If we don't do this then we will have the ones with no children return -Infinity when we sort, but they'll still be at the bottom, so it's not necessary maybe?
-    elements = new Map(
-      [...elements].filter(function ([k,v]) {
-        // Important: We must be using the top-level document in order to use functions like getBoundingClientRect
-        const position = DOMNode.getElementPosition(k);
-        const rect = position?.rect;
-        // TODO: Check element (k).children's positions and get the topmost and bottommost to determine the height of the content instead of rect.height?
-        // TODO: Decide on overflowing as a potential ban, e.g. Google Search Results Page 1 sidebar content
-        // let overflowing = false;
-        // try {
-        //   // Important: We must be using the top-level document in order to use functions like getBoundingClientRect
-        //   if (k && typeof k.getBoundingClientRect === "function") {
-        //     rect = k.getBoundingClientRect();
-        //     const position = DOMNode.getElementPosition(k);
-        //   }
-        //   // overflowing = getTotalWidth(document) < rect.right;
-        // } catch (e) {
-        //   console.log("parseMap() - error calling getBoundingClientRect()");
-        // }
-        return v.nodeNames.size > 0 && (rect && typeof rect.height === "number" && typeof rect.width === "number" ? rect.height > 500 || rect.width > 500 : true);
-        // return v.nodeNames.size > 0 && (height > 500 || height === 0);
-        // return v.nodeNames.size > 0 && (rect && typeof rect.height === "number" && rect.height > 0 ? rect.height > 500 : typeof rect.width === "number" && rect.width > 0 ? rect.width > 500 : true);
-        // return v.nodeNames.size > 0 && (rect && typeof rect.right === "number" ? !overflowing : true) && (rect && typeof rect.height === "number" && typeof rect.width === "number" ? rect.height > 500 || rect.width > 500 : true);
-      })
-    );
-    // // This is a bit hacky but sometimes with the getBoundingClientRect we get an empty map so we have to do it without...
-    // if (elements2 && elements2.size > 0) {
-    //   elements = elements2;
-    // } else {
-    //   elements = new Map([...elements].filter(function ([k,v]) { return v.nodeNames.size > 0; }));
-    // }
+    AutoDetectPageElement.elements = new Map([...AutoDetectPageElement.elements].filter(function ([k,v]) {
+      // Important: We must be using the top-level document in order to use functions like getBoundingClientRect
+      const position = DOMNode.getElementPosition(k);
+      const rect = position?.rect;
+      // TODO: Check element (k).children's positions and get the topmost and bottommost to determine the height of the content instead of rect.height?
+      // TODO: Decide on overflowing as a potential ban, e.g. Google Search Results Page 1 sidebar content
+      // let overflowing = false;
+      // try {
+      //   // Important: We must be using the top-level document in order to use functions like getBoundingClientRect
+      //   if (k && typeof k.getBoundingClientRect === "function") {
+      //     rect = k.getBoundingClientRect();
+      //     const position = DOMNode.getElementPosition(k);
+      //   }
+      //   // overflowing = getTotalWidth(document) < rect.right;
+      // } catch (e) {
+      //   console.log("parseMap() - error calling getBoundingClientRect()");
+      // }
+      return v.nodeNames.size > 0 && (rect && typeof rect.height === "number" && typeof rect.width === "number" ? rect.height > 500 || rect.width > 500 : true);
+      // return v.nodeNames.size > 0 && (height > 500 || height === 0);
+      // return v.nodeNames.size > 0 && (rect && typeof rect.height === "number" && rect.height > 0 ? rect.height > 500 : typeof rect.width === "number" && rect.width > 0 ? rect.width > 500 : true);
+      // return v.nodeNames.size > 0 && (rect && typeof rect.right === "number" ? !overflowing : true) && (rect && typeof rect.height === "number" && typeof rect.width === "number" ? rect.height > 500 || rect.width > 500 : true);
+    }));
     // Wanted to use 10, but Google Search seems to top out at 9 for id rso search results
     const similarityThreshold = 9;
-    // Compare the maps. If there is an element that has at least 10 children with the same className, use that element.
-    // 1st Choice: Use the element with the most children that have the same exact className
-    const classNames = sortMap("classNames");
-    if (classNames && classNames.size > 0) {
-      let classNamesMax = Math.max(...[...classNames.entries().next().value[1]["classNames"].values()])
-      console.log("parseMap() - classNamesMax=" + classNamesMax);
-      if (classNamesMax >= similarityThreshold) {
-        elements = classNames;
-        return;
+    // Compare the maps. If there is an element that has at least similarityThreshold amount of children with the same class, use that element, otherwise move to next choice (node name)
+    // TODO: Not using 1st Choice for now: "classNames",
+    for (const choice of ["classLists", "nodeNames"]) {
+      const map = AutoDetectPageElement.#sortMap(choice);
+      const o = AutoDetectPageElement.#sortSubmap(map.entries().next().value[1][choice])?.entries().next();
+      const key = o?.value[0];
+      const value = o?.value[1];
+      // Stop this loop and use this choice if the similarityThreshold test passes
+      if (value >= similarityThreshold || choice === "nodeNames") {
+        AutoDetectPageElement.elements = map;
+        AutoDetectPageElement.details = chrome.i18n.getMessage("autodetect_result_tooltip_" + choice.substring(0, 1)).replace("?1", value?.toString()).replace("?2", key);
+        break;
       }
     }
-    // 2nd Choice: Use the element with the most children that have the same single class (in classLists)
-    const classLists = sortMap("classLists");
-    if (classLists && classLists.size > 0) {
-      let classListsMax = Math.max(...[...classLists.entries().next().value[1]["classLists"].values()])
-      console.log("parseMap() - classListsMax=" + classListsMax);
-      if (classListsMax >= similarityThreshold) {
-        elements = classLists;
-        return;
-      }
-    }
-    // Otherwise use the element with the most children that have the same nodeName
-    elements = sortMap("nodeNames");
   }
 
   /**
-   * Sorts the elements map out by a specific property, either the max number of the same classNames or nodeNames.
-   * This is needed for the algorithm.
+   * Sorts the elements map out by a specific property, either the max number of the same class names or node names.
    *
    * @param {string} property - the property to examine
    * @returns {Map<Element, Object>} the sorted map by the most number of children with the property to examine
    * @see Use Map.reduce to make this simpler? https://medium.com/poka-techblog/simplify-your-javascript-use-map-reduce-and-filter-bd02c593cc2d
    * @private
    */
-  function sortMap(property) {
+  static #sortMap(property) {
     console.log("sortMap() - property=" + property);
-    // a[0] is the key (element) and a[1] is the value (object, containing nodeNames and classNames)
-    return new Map([...elements.entries()].sort((a, b) => {
-      // Note the double ... ..., Math.max takes in an arguments in parenthesis, NOT arrays
-      // so we convert the map to an array (first ...) then we convert the array [1,2,3] to arguments in parenthesis (1,2,3) for the second ...
-      const amax = Math.max(...[...a[1][property].values()]) || 0;
-      const bmax = Math.max(...[...b[1][property].values()]) || 0;
-      // console.log("a=" + amax + " b=" + bmax);
-      return bmax - amax;
-    }));
+    // This used to be multiple lines long but we were able to make it a one liner. Reminder: a[0] is the key (element) and a[1] is the value (object, containing nodeNames and classNames)
+    // Note the double ... ...: Math.max takes in an arguments in parenthesis, NOT arrays so we convert the map to an array (first ...) then we convert the array [1,2,3] to arguments in parenthesis (1,2,3) for the second ...
+    return new Map([...AutoDetectPageElement.elements].sort((a, b) => Math.max(...[...[...b[1][property].values()]]) - Math.max(...[...[...a[1][property].values()]])));
   }
 
-  // Holding off on this for now
-  // function getTotalWidth(doc) {
-  //   const html = doc.documentElement;
-  //   const body = doc.body;
-  //   console.log("getTotalWidth() - hcw="  + html.clientWidth + ", hsw=" + html.scrollWidth + ", how=" + html.offsetWidth + ", bcw=" + body.clientWidth + ", bsw=" + body.scrollWidth + ", bow=" + body.offsetWidth);
-  //   return Math.max(html.clientWidth, html.scrollWidth, html.offsetWidth, body.clientWidth, body.scrollWidth, body.offsetWidth);
-  // }
+  /**
+   * Sorts the submap by their values from highest to lowest. A submap consists of the key being the property
+   * (e.g. class name or node name) and the value being the count/number of them.
+   *
+   * @param {Map<string, number>} map - the map to sort
+   * @returns {Map<string, number>} the sorted map
+   * @private
+   */
+  static #sortSubmap(map) {
+    return new Map([...map].sort((a, b) => b[1] - a[1]));
+  }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    debug,
-    detect
-  };
-
-})();
+}

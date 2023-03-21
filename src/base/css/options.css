@@ -17,6 +17,13 @@ header#options-header {
   font-weight: 500;
 }
 
+#options-header-label {
+  color: var(--mdc-theme-primary);
+  font-size: 1.15rem;
+  vertical-align: text-top;
+  text-transform: uppercase;
+}
+
 #options-header-icon {
   width: 64px;
   height: 64px;
@@ -176,10 +183,6 @@ input[type="image"]:focus {
   width: 78px;
 }
 
-#button-size-div {
-  margin-bottom: 24px;
-}
-
 #button-size-label {
   display: block;
   margin-bottom: 5px;
@@ -198,12 +201,8 @@ input[type="image"]:focus {
 
 /* Next Prev */
 
-#next-path-textarea, #prev-path-textarea {
+#next-link-path-textarea, #prev-link-path-textarea {
   width: 500px;
-}
-
-#next-property-text-field, #prev-property-text-field {
-  width: 80px;
 }
 
 /* Increment Decrement */
@@ -266,13 +265,61 @@ input[type="image"]:focus {
 }
 
 #version {
-  margin-top: -8px;
   display: inline-block;
+  margin-top: -8px;
 }
 
 #version-number {
-  display: block;
+  display: inline-block;
   margin-bottom: 4px;
+  color: inherit;
+  font-weight: inherit;
+  text-decoration: none;
+}
+
+#version-name {
+  color: var(--mdc-theme-primary);
+}
+
+#version-theme-tagline {
+  position: absolute;
+  top: 30px;
+  left: 580px;
+  font-weight: 900;
+  font-size: 1.75rem;
+  transform: rotate(0deg);
+}
+
+#version-tagline {
+  position: absolute;
+  top: 10px;
+  left: 90px;
+  width: 115px;
+  font-size: 1rem;
+}
+
+#version-theme-number {
+  bottom: 40px;
+  font-size: 2.9rem;
+}
+
+#version-theme-icon {
+  fill: var(--mdc-theme-primary);
+  width: 46px;
+  height: 42px;
+  cursor: pointer;
+}
+
+#version-theme-name-subname {
+  margin-top: -8px;
+}
+
+#version-name-edition-name {
+  color: var(--mdc-theme-primary);
+}
+
+#version-subname {
+  font-size: 1rem;
 }
 
 #website {
@@ -464,17 +511,26 @@ table tbody .url-cell .saves-dialog-opener, table tbody .database-dialog-opener 
   width: 80%;
 }
 
+.list-examples td, .list-examples th {
+  padding: 4px;
+}
+
+/* Override browser user-agent centered styling */
+.list-examples th {
+  text-align: left;
+}
+
 /* Scroll */
 
-#scroll-append-threshold-pages-text-field, #scroll-append-threshold-pixels-text-field, #scroll-append-delay-text-field, #scroll-maximum-pages-text-field {
+#append-threshold-text-field, #append-delay-text-field, #maximum-pages-text-field {
   width: 78px;
 }
 
-#scroll-divider-select .mdc-select__anchor {
+#page-divider-select .mdc-select__anchor {
   width: 310px;
 }
 
-#scroll-maximum-pages {
+#maximum-pages {
   margin-left: 2rem;
 }
 

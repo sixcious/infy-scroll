@@ -8,7 +8,7 @@
  * Saves handles all save specific logic, such as adding a new save, deleting a save (by URL), and determining if a
  * URL matches an existing save. Editing saves is done by deleting the existing save and adding a new save.
  */
-const Saves = (() => {
+class Saves {
 
   /**
    * Adds a new save. Saved URLs can either be Exact URLs, Patterns, or Regular Expressions.
@@ -20,10 +20,10 @@ const Saves = (() => {
    * @returns {Object} the newly added save with the generated ID
    * @public
    */
-  async function addSave(instance) {
+  static async addSave(instance) {
     console.log("addSave() - adding a new saved url, type=" + instance.saveType + ", url=" + instance.saveURL);
     // Get the saves and checks if this ID or URL has already been saved. If it has, deletes the existing save
-    const saves = await deleteSave(instance.saveID, instance.saveURL, false);
+    const saves = await Saves.deleteSave(instance.saveID, instance.saveURL, false);
     // Generates a new ID by finding the the save with the highest ID and incrementing it by 1 (or 1 if no save exists)
     const id = saves.length > 0 ? Math.max.apply(Math, saves.map(s => s.id)) + 1 : 1;
     // Create the save object
@@ -35,6 +35,9 @@ const Saves = (() => {
     save.date = new Date().toJSON();
     save.action = instance.action;
     save.append = instance.append;
+    if (instance.comment) {
+      save.comment = instance.comment;
+    }
     // Only Page, Iframe, and Element append modes utilize lazyLoad so we shouldn't bother saving lazyLoad properties for Media, None, and AJAX
     // In Iframe mode, we only do lazyLoad if it's manual (not auto, which is the default)
     if (instance.lazyLoad && (instance.append === "page" || (instance.append === "iframe" && instance.lazyLoad === "manual") || instance.append === "element")) {
@@ -122,6 +125,9 @@ const Saves = (() => {
       if (instance.iframePageOne) {
         save.iframePageOne = instance.iframePageOne;
       }
+      if (!instance.iframeResize) {
+        save.iframeResize = instance.iframeResize;
+      }
     }
     if (instance.append === "element") {
       save.pageElementPath = instance.pageElementPath;
@@ -130,6 +136,9 @@ const Saves = (() => {
       }
       if (instance.pageElementIframe) {
         save.pageElementIframe = instance.pageElementIframe;
+        if (instance.pageElementIframe === "trim" && !instance.iframeResize) {
+          save.iframeResize = instance.iframeResize;
+        }
       }
     }
     if (instance.append === "media") {
@@ -150,6 +159,9 @@ const Saves = (() => {
     // These settings below are technically only needed for Element Iframe and AJAX Iframe
     if (instance.append === "ajax" && instance.ajaxMode !== "native" && instance.mirrorPage) {
       save.mirrorPage = instance.mirrorPage;
+      if (instance.mirrorPage === "puppet") {
+        save.puppet = instance.puppet;
+      }
     }
     if (instance.loadElementPath) {
       save.loadElementPath = instance.loadElementPath;
@@ -161,7 +173,7 @@ const Saves = (() => {
       save.transferNode = instance.transferNode;
     }
     // Scroll Options
-    for (const key of Instance.getInstanceOptionKeys()) {
+    for (const key of Instance.OPTION_KEYS) {
       if (instance.hasOwnProperty("_" + key)) {
         save[key] = instance["_" + key];
       }
@@ -198,7 +210,7 @@ const Saves = (() => {
    * @returns {Object[]} the new saves array after deleting the save
    * @public
    */
-  async function deleteSave(id, url, writeToStorage) {
+  static async deleteSave(id, url, writeToStorage) {
     console.log("deleteSave() - id=" + id + ", url=" + url + ", writeToStorage=" + writeToStorage);
     let saves = await Promisify.storageGet("saves");
     // Filter out saves with this URL; this also removes duplicate saves with the same URL (e.g. overwriting an existing save with this url)
@@ -229,7 +241,7 @@ const Saves = (() => {
    * @returns {{matches: boolean}} the matches
    * @public
    */
-  function matchesSave(url, save) {
+  static matchesSave(url, save) {
     // console.log("matchesSave() - url=" + url +", save=");
     // console.log(save);
     let result = { matches: false };
@@ -237,15 +249,15 @@ const Saves = (() => {
       try {
         switch (save.type) {
           case "exact":
-            result = matchesExact(url, save);
+            result = Saves.#matchesExact(url, save);
             break;
           case "pattern":
-            result = matchesPattern(url, save);
+            result = Saves.#matchesPattern(url, save);
             break;
           // The default will be regex so we don't have to have a type for Save / Database IS sources
           case "regex":
           default:
-            result = matchesRegularExpression(url, save);
+            result = Saves.#matchesRegularExpression(url, save);
             break;
         }
       } catch (e) {
@@ -279,26 +291,26 @@ const Saves = (() => {
    * @returns {{type: string, matches: boolean, url: string}} the matches
    * @public
    */
-  function matchesList(url, altURL, list, listName) {
-    console.log("matchesList() - url=" + url + ", altURL=" + altURL + ", listName=" + listName);
+  static matchesList(url, altURL, list, listName) {
+    console.log("matchesList() - url=" + url + ", altURL=" + altURL + ", list=" + list + ", listName=" + listName);
     const result = { matches: false, url: "", type: "" };
     for (let item of list) {
       // TODO: In the case of Exact, Regex, and Alt, Make result.url = item.slice(1,-1)? But we need to save the "type" when reporting the URL in the Popup Hover/Title Icon (for possibly database white/blacklists?)
       try {
         // Exact "url"
-        if (item.startsWith("\"") && item.endsWith("\"") && matchesExact(url, {url: item.slice(1,-1)}).matches) {
+        if (item.startsWith("\"") && item.endsWith("\"") && Saves.#matchesExact(url, {url: item.slice(1,-1)}).matches) {
           result.type = "exact";
         }
         // Alt (url)
-        else if (item.startsWith("(") && item.endsWith(")") && matchesExact(altURL, {url: item.slice(1,-1)}).matches) {
+        else if (item.startsWith("(") && item.endsWith(")") && Saves.#matchesExact(altURL, {url: item.slice(1,-1)}).matches) {
           result.type = "alt";
         }
         // Regex /url/
-        else if (item.startsWith("/") && item.endsWith("/") && matchesRegularExpression(url, {url: item.slice(1,-1)}).matches) {
+        else if (item.startsWith("/") && item.endsWith("/") && Saves.#matchesRegularExpression(url, {url: item.slice(1,-1)}).matches) {
           result.type = "regex";
         }
         // Pattern
-        else if (matchesPattern(url, {url: item}).matches) {
+        else if (Saves.#matchesPattern(url, {url: item}).matches) {
           result.type = "pattern";
         }
         if (result.type) {
@@ -323,7 +335,7 @@ const Saves = (() => {
    * @returns {{selection: {selectionStart: *, selection: *}, matches: boolean}} the matches with selection
    * @private
    */
-  function matchesExact(url, save) {
+  static #matchesExact(url, save) {
     let matches = false;
     let selectionObject = { selection: "", selectionStart: -1 };
     if (url && save) {
@@ -353,7 +365,7 @@ const Saves = (() => {
    * @returns {{matches: boolean}} the matches
    * @private
    */
-  function matchesPattern(url, save) {
+  static #matchesPattern(url, save) {
     let matches = false;
     if (url && save) {
       const pattern = save.url;
@@ -374,7 +386,7 @@ const Saves = (() => {
    * @returns {{matches: boolean}} the matches
    * @private
    */
-  function matchesRegularExpression(url, save) {
+  static #matchesRegularExpression(url, save) {
     let matches = false;
     if (url && save) {
       const regex = save.url;
@@ -383,12 +395,4 @@ const Saves = (() => {
     return { matches: matches };
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    addSave,
-    deleteSave,
-    matchesSave,
-    matchesList
-  };
-
-})();
+}

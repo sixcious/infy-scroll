@@ -15,7 +15,7 @@
  * 3. Roman Numeral Incrementing: incrementing roman numerals like vii
  * 4. Arrays: stepping through arrays (e.g. increment steps forward, decrement steps backward)
  */
-const Increment = (() => {
+class Increment {
 
   /**
    * Finds a selection in the url to increment or decrement depending on the preference:
@@ -28,7 +28,7 @@ const Increment = (() => {
    * @returns {*} - {selection, selectionStart} or an empty selection if no selection found
    * @public
    */
-  function findSelection(url, strategy, selectionCustom, previousException) {
+  static findSelection(url, strategy, selectionCustom, previousException) {
     console.log("findSelection() - url=" + url + ", preference=" + strategy + ", selectionCustom=" + selectionCustom + ", previousException=" + previousException);
     try {
       if (strategy === "custom" && selectionCustom) {
@@ -56,11 +56,12 @@ const Increment = (() => {
         const first = /\d+/.exec(url);
         if (first) { return {selection: first[0], selectionStart: first.index}; }
       }
-      throw new Error("no selection was found, preference=" + strategy);
+      throw new Error("Locally Thrown Error: no selection was found, preference=" + strategy);
     } catch (e) {
-      console.log("findSelection() - exception encountered. Error:");
-      console.log(e);
-      if (!previousException) { return findSelection(url, "lastnumber", selectionCustom, true); }
+      // Don't want to see these messages anymore, e.g. if a save or instance isn't using increment as its action
+      console.log(!e.message.startsWith("Locally Thrown Error:") ? "findSelection() - exception encountered. Error:" : "");
+      console.log(!e.message.startsWith("Locally Thrown Error:") ? e : "");
+      if (!previousException) { return Increment.findSelection(url, "lastnumber", selectionCustom, true); }
     }
     return {selection: "", selectionStart: -1};
   }
@@ -78,7 +79,7 @@ const Increment = (() => {
    * @returns {string} an empty string if validation passed, or an error message if validation failed
    * @public
    */
-  function validateSelection(selection, base, baseCase, baseDateFormat, baseRoman, baseCustom, leadingZeros) {
+  static validateSelection(selection, base, baseCase, baseDateFormat, baseRoman, baseCustom, leadingZeros) {
     let error = "";
     switch (base) {
       case "date":
@@ -105,7 +106,7 @@ const Increment = (() => {
         }
         break;
       case "custom":
-        const selectionCustom = incrementBaseCustom("increment", selection, 0, baseCustom, leadingZeros);
+        const selectionCustom = Increment.#incrementBaseCustom("increment", selection, 0, baseCustom, leadingZeros);
         console.log("validateSelection() - base=custom, selection=" + selection +", selectionCustom=" + selectionCustom);
         if (selectionCustom === "SELECTION_TOO_LARGE!") {
           error = "selection_toolarge_error";
@@ -144,7 +145,7 @@ const Increment = (() => {
    * @param {Object} instance - the instance containing the URL and parameters used to increment or decrement
    * @public
    */
-  function increment(action, instance) {
+  static increment(action, instance) {
     // If there is a urls array, step thru it, don't increment the URL (list, shuffle, multi range will have a urls array)
     if (instance.urls && instance.urls.length > 0) {
       IncrementArray.stepThruURLs(action, instance);
@@ -152,12 +153,12 @@ const Increment = (() => {
     // Else If multi is enabled and doing a main action (no number), simultaneously increment multiple parts of the URL:
     else if (instance.multiEnabled && !instance.multiRangeEnabled && !/\d/.test(action)) {
       for (let i = 1; i <= instance.multiCount; i++) {
-        incrementURL(action + i, instance);
+        Increment.#incrementURL(action + i, instance);
       }
     }
     // All Other Cases: Increment Decrement URL
     else {
-      incrementURL(action, instance);
+      Increment.#incrementURL(action, instance);
     }
   }
 
@@ -168,7 +169,7 @@ const Increment = (() => {
    * @param {Object} instance - the instance containing the URL and parameters used to increment or decrement
    * @private
    */
-  function incrementURL(action, instance) {
+  static #incrementURL(action, instance) {
     IncrementMulti.multiPre(action, instance);
     let selectionmod;
     // Perform the increment or decrement operation depending on the base type
@@ -177,17 +178,17 @@ const Increment = (() => {
         selectionmod = IncrementDate.incrementDate(action, instance.selection, instance.interval, instance.baseDateFormat);
         break;
       case "decimal":
-        selectionmod = incrementDecimal(action, instance.selection, instance.interval, instance.leadingZeros);
+        selectionmod = Increment.#incrementDecimal(action, instance.selection, instance.interval, instance.leadingZeros);
         break;
       case "roman":
         selectionmod = IncrementRoman.incrementRoman(action, instance.selection, instance.interval, instance.baseRoman);
         break;
       case "custom":
-        selectionmod = incrementBaseCustom(action, instance.selection, instance.interval, instance.baseCustom, instance.leadingZeros);
+        selectionmod = Increment.#incrementBaseCustom(action, instance.selection, instance.interval, instance.baseCustom, instance.leadingZeros);
         break;
       // Base 2-36
       default:
-        selectionmod = incrementAlphanumeric(action, instance.selection, instance.interval, instance.base, instance.baseCase, instance.leadingZeros);
+        selectionmod = Increment.#incrementAlphanumeric(action, instance.selection, instance.interval, instance.base, instance.baseCase, instance.leadingZeros);
         break;
     }
     // Append: part 1 of the URL + modified selection + part 2 of the URL. (Note: We can't cache part1 and part2 at the beginning due to multi)
@@ -209,7 +210,7 @@ const Increment = (() => {
    * @returns {string} the modified selection after incrementing or decrementing it
    * @private
    */
-  function incrementAlphanumeric(action, selection, interval, base, baseCase, leadingZeros) {
+  static #incrementAlphanumeric(action, selection, interval, base, baseCase, leadingZeros) {
     let selectionmod;
     // parseInt base range is 2-36
     const selectionint = parseInt(selection, base);
@@ -238,7 +239,7 @@ const Increment = (() => {
    * @returns {string} the modified selection after incrementing or decrementing it
    * @private
    */
-  function incrementDecimal(action, selection, interval, leadingZeros) {
+  static #incrementDecimal(action, selection, interval, leadingZeros) {
     let selectionmod;
     const selectionfloat = parseFloat(selection);
     // Increment or decrement the selection; if increment is above Number.MAX_SAFE_INTEGER or decrement is below 0, set to upper or lower bounds
@@ -268,7 +269,7 @@ const Increment = (() => {
    * @see https://medium.com/@harpermaddox/how-to-build-a-custom-url-shortener-5e8b454c58ae
    * @private
    */
-  function incrementBaseCustom(action, selection, interval, alphabet, leadingZeros) {
+  static #incrementBaseCustom(action, selection, interval, alphabet, leadingZeros) {
     let selectionmod = "";
     let base = alphabet.length;
     let base10num = 0;
@@ -306,21 +307,14 @@ const Increment = (() => {
     return selectionmod;
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    findSelection,
-    validateSelection,
-    increment
-  };
-
-})();
+}
 
 /**
  * IncrementMulti handles incrementing multiple parts of a URL individually, simultaneously, or in ranges.
  * The actual increment is handled individually by the respective object (e.g. Increment for Base 2-36).
  * However, there are "pre" and "post" functions in order to pre-handle and post-handle the increment properly.
  */
-const IncrementMulti = (() => {
+class IncrementMulti {
 
   /**
    * Pre-handles a multi-incrementing instance before incrementURL().
@@ -331,7 +325,7 @@ const IncrementMulti = (() => {
    * @param {Object} instance - the instance containing the URL and parameters used to increment or decrement
    * @public
    */
-  function multiPre(action, instance) {
+  static multiPre(action, instance) {
     if (instance && instance.multiEnabled) {
       // Set the current instance properties with the multi part's properties for incrementURL()
       const match = /\d+/.exec(action);
@@ -358,7 +352,7 @@ const IncrementMulti = (() => {
    * @param {Object} instance - the instance containing the URL and parameters used to increment or decrement
    * @public
    */
-  function multiPost(selectionmod, urlmod, instance) {
+  static multiPost(selectionmod, urlmod, instance) {
     if (instance && instance.multiEnabled) {
       // Update the multi selection part's to the new selection
       instance.multi[instance.multiPart].selection = selectionmod;
@@ -385,13 +379,7 @@ const IncrementMulti = (() => {
     }
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    multiPre,
-    multiPost
-  };
-
-})();
+}
 
 /**
  * IncrementDate handles incrementing dates and times.
@@ -400,10 +388,16 @@ const IncrementMulti = (() => {
  * 1. Date Formats - year, month, day
  * 2. Time Formats - hours, minutes, seconds, and milliseconds
  */
-const IncrementDate = (() => {
+class IncrementDate {
 
-  const mmm =  ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
-  const mmmm = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+  /**
+   * Fields
+   *
+   * @param {string[]} mmm - the list of short month names
+   * @param {string[]} mmmm - the list of long month names
+   */
+  static #mmm =  ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  static #mmmm = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
 
   /**
    * Performs an increment decrement operation on the date selection string.
@@ -419,14 +413,14 @@ const IncrementDate = (() => {
    * @returns {string | *} the modified selection after incrementing or decrementing it
    * @public
    */
-  function incrementDate(action, selection, interval, dateFormat) {
+  static incrementDate(action, selection, interval, dateFormat) {
     console.log("incrementDate() - action=" + action + ", selection=" + selection + ", interval=" + interval + ", dateFormat=" + dateFormat);
-    let selection2 = "";
+    let selection2;
     try {
-      const parts = splitDateParts(selection, dateFormat);
-      const date = strToDate(parts.strParts, parts.dateFormatParts);
-      const date2 = incDecDate(action, date, dateFormat, interval);
-      selection2 = dateToStr(date2, dateFormat, parts.dateFormatParts);
+      const parts = IncrementDate.#splitDateParts(selection, dateFormat);
+      const date = IncrementDate.#strToDate(parts.strParts, parts.dateFormatParts);
+      const date2 = IncrementDate.#incDecDate(action, date, dateFormat, interval);
+      selection2 = IncrementDate.#dateToStr(date2, dateFormat, parts.dateFormatParts);
     } catch (e) {
       console.log("incrementDate() - Error:");
       console.log(e);
@@ -443,7 +437,7 @@ const IncrementDate = (() => {
    * @returns {{strParts: Array, dateFormatParts: (*|Array)}} the date string and format parts as arrays
    * @private
    */
-  function splitDateParts(str, dateFormat) {
+  static #splitDateParts(str, dateFormat) {
     const regexp = /(y+)|(m+)|(Mm+)|(M+)|(d+)|(h+)|(i+)|(l+)|([^ymMdhisl]+)/g;
     const matches = dateFormat.match(regexp);
     let delimiters = "";
@@ -452,7 +446,8 @@ const IncrementDate = (() => {
         delimiters += (delimiters ? "|" : "") + match;
       }
     }
-    let dateFormatParts = [], strParts = [];
+    let dateFormatParts;
+    let strParts = [];
     if (delimiters !== "") {
       const delimitersregexp = new RegExp(delimiters, "g");
       dateFormatParts = dateFormat.split(delimitersregexp).filter(Boolean);
@@ -476,15 +471,15 @@ const IncrementDate = (() => {
    * @returns {Date} the date representation of the string
    * @private
    */
-  function strToDate(strParts, dateFormatParts) {
+  static #strToDate(strParts, dateFormatParts) {
     const now = new Date();
     const mapParts = new Map([["y", now.getFullYear()], ["m", now.getMonth() + 1], ["d", 15], ["h", 12], ["i", 0], ["s", 0], ["l", 0]]);
     for (let i = 0; i < dateFormatParts.length; i++) {
       switch (dateFormatParts[i]) {
         case "yyyy": mapParts.set("y", strParts[i]); break;
         case "yy":   mapParts.set("y", parseInt(strParts[i]) >= 70 ? "19" + strParts[i] : "20" + strParts[i]); break;
-        case "mmmm": case "Mmmm": case"MMMM": mapParts.set("m", mmmm.findIndex(m => m === strParts[i].toLowerCase()) + 1); break;
-        case "mmm":  case"Mmm": case"MMM": mapParts.set("m", mmm.findIndex(m => m === strParts[i].toLowerCase()) + 1); break;
+        case "mmmm": case "Mmmm": case"MMMM": mapParts.set("m", IncrementDate.#mmmm.findIndex(m => m === strParts[i].toLowerCase()) + 1); break;
+        case "mmm":  case"Mmm": case"MMM": mapParts.set("m", IncrementDate.#mmm.findIndex(m => m === strParts[i].toLowerCase()) + 1); break;
         case "mm":   mapParts.set("m", strParts[i]); break;
         case "m":    mapParts.set("m", strParts[i]); break;
         case "dd":   mapParts.set("d", strParts[i]); break;
@@ -513,7 +508,7 @@ const IncrementDate = (() => {
    * @returns {Date} the date after incrementing or decrementing
    * @private
    */
-  function incDecDate(action, date, dateFormat, interval) {
+  static #incDecDate(action, date, dateFormat, interval) {
     interval = action.startsWith("increment") ? interval : -interval;
     const lowestregexp = /(l|(s|i|h|d|M|m|y(?!.*m))(?!.*M)(?!.*d)(?!.*h)(?!.*i)(?!.*s)(?!.*l))/;
     const lowestmatch = lowestregexp.exec(dateFormat)[0];
@@ -539,18 +534,18 @@ const IncrementDate = (() => {
    * @returns {String} the string representation of the date
    * @private
    */
-  function dateToStr(date, dateFormat, dateFormatParts) {
+  static #dateToStr(date, dateFormat, dateFormatParts) {
     let str = dateFormat;
     for (let i = 0; i < dateFormatParts.length; i++) {
       switch (dateFormatParts[i]) {
         case "yyyy": str = str.replace(dateFormatParts[i], date.getFullYear()); break;
         case "yy":   str = str.replace(dateFormatParts[i], (date.getFullYear() + "").substring(2)); break;
-        case "mmmm": str = str.replace(dateFormatParts[i], mmmm[date.getMonth()]); break;
-        case "Mmmm": str = str.replace(dateFormatParts[i], mmmm[date.getMonth()][0].toUpperCase() + mmmm[date.getMonth()].substring(1)); break;
-        case "MMMM": str = str.replace(dateFormatParts[i], mmmm[date.getMonth()].toUpperCase()); break;
-        case "mmm":  str = str.replace(dateFormatParts[i], mmm[date.getMonth()]); break;
-        case "Mmm":  str = str.replace(dateFormatParts[i], mmm[date.getMonth()][0].toUpperCase() + mmm[date.getMonth()].substring(1)); break;
-        case "MMM":  str = str.replace(dateFormatParts[i], mmm[date.getMonth()].toUpperCase()); break;
+        case "mmmm": str = str.replace(dateFormatParts[i], IncrementDate.#mmmm[date.getMonth()]); break;
+        case "Mmmm": str = str.replace(dateFormatParts[i], IncrementDate.#mmmm[date.getMonth()][0].toUpperCase() + IncrementDate.#mmmm[date.getMonth()].substring(1)); break;
+        case "MMMM": str = str.replace(dateFormatParts[i], IncrementDate.#mmmm[date.getMonth()].toUpperCase()); break;
+        case "mmm":  str = str.replace(dateFormatParts[i], IncrementDate.#mmm[date.getMonth()]); break;
+        case "Mmm":  str = str.replace(dateFormatParts[i], IncrementDate.#mmm[date.getMonth()][0].toUpperCase() + IncrementDate.#mmm[date.getMonth()].substring(1)); break;
+        case "MMM":  str = str.replace(dateFormatParts[i], IncrementDate.#mmm[date.getMonth()].toUpperCase()); break;
         case "mm":   str = str.replace(dateFormatParts[i], (date.getMonth() + 1) < 10 ? "0" + (date.getMonth() + 1) : (date.getMonth() + 1)); break;
         case "m":    str = str.replace(dateFormatParts[i], date.getMonth() + 1); break;
         case "dd":   str = str.replace(dateFormatParts[i], date.getDate() < 10 ? "0" + date.getDate() : date.getDate()); break;
@@ -569,12 +564,7 @@ const IncrementDate = (() => {
     return str;
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    incrementDate
-  };
-
-})();
+}
 
 /**
  * IncrementRoman handles incrementing roman numerals like vii.
@@ -584,11 +574,17 @@ const IncrementDate = (() => {
  * 2. u216x - the Unicode 216 character set, e.g. Ⅶ
  * 3. u217x - the Unicode 217 character set, e.g. ⅶ
  */
-const IncrementRoman = (() => {
+class IncrementRoman {
 
-  // Latin handles both upper and lowercase. U+216x and U+217x handle both forms of unicode. The XI and XII single-character unicodes are removed so they can be compatible with the algorithm (based on the latin alphabet)
-  // https://en.wikipedia.org/wiki/Numerals_in_Unicode#Roman_numerals
-  const alphabets = {
+  /**
+   * Fields
+   *
+   * @param {Object} alphabets - the roman numeral alphabets in latin and unicode formats
+   * @see https://en.wikipedia.org/wiki/Numerals_in_Unicode#Roman_numerals
+   */
+  static #alphabets = {
+    // Latin handles both upper and lowercase
+    // U+216x and U+217x handle both forms of unicode. The XI and XII single-character unicodes are removed so they can be compatible with the algorithm (based on the latin alphabet)
     latin: new Map([["I",1], ["IV",4], ["V",5], ["IX",9], ["X",10], ["XL",40], ["L",50], ["XC",90], ["C",100], ["CD",400], ["D",500], ["CM",900], ["M",1000]]),
     u216x: new Map([["Ⅰ",1],["Ⅱ",2], ["Ⅲ",3], ["Ⅳ",4], ["Ⅴ",5], ["Ⅵ",6], ["Ⅶ",7], ["Ⅷ",8], ["Ⅸ",9], ["Ⅹ",10], ["ⅩⅬ",40], ["Ⅼ",50], ["ⅩⅭ",90], ["Ⅽ",100], ["ⅭⅮ",400], ["Ⅾ",500], ["ⅭⅯ",900], ["Ⅿ",1000]]),
     u217x: new Map([["ⅰ",1],["ⅱ",2], ["ⅲ",3], ["ⅳ",4], ["ⅴ",5], ["ⅵ",6], ["ⅶ",7], ["ⅷ",8], ["ⅸ",9], ["ⅹ",10], ["ⅹⅼ",40], ["ⅼ",50], ["ⅹⅽ",90], ["ⅽ",100], ["ⅽⅾ",400],	["ⅾ",500], ["ⅽⅿ",900], ["ⅿ",1000]])
@@ -607,15 +603,15 @@ const IncrementRoman = (() => {
    * @returns {string} the roman numeral after incrementing or decrementing
    * @public
    */
-  function incrementRoman(action, roman, interval, type) {
+  static incrementRoman(action, roman, interval, type) {
     console.log("incrementDecremenRoman() - action=" + action + ", roman=" + roman + ", interval=" + interval, ", type=" + type);
     const latinCase = type === "latin" ? /[A-Z]/.test(roman[0]) ? "uppercase" : /[a-z]/.test(roman[0]) ? "lowercase" : "unknown" : undefined;
     if (latinCase) {
       roman = roman.toUpperCase();
     }
-    let arabic = deromanize(roman, alphabets[type]);
+    let arabic = IncrementRoman.#deromanize(roman, IncrementRoman.#alphabets[type]);
     arabic += action.startsWith("increment") ? interval : -interval;
-    roman = romanize(arabic, new Map(Array.from(alphabets[type]).reverse()));
+    roman = IncrementRoman.#romanize(arabic, new Map(Array.from(IncrementRoman.#alphabets[type]).reverse()));
     if (latinCase === "lowercase") {
       roman = roman.toLowerCase();
     }
@@ -631,7 +627,7 @@ const IncrementRoman = (() => {
    * @see http://blog.stevenlevithan.com/archives/javascript-roman-numeral-converter#comment-16129
    * @private
    */
-  function deromanize(roman, alphabet) {
+  static #deromanize(roman, alphabet) {
     let arabic = 0;
     for (let i = roman.length - 1; i >= 0; i--) {
       if (i !== roman.length - 1 && alphabet.get(roman[i]) < alphabet.get(roman[i+1])) {
@@ -652,7 +648,7 @@ const IncrementRoman = (() => {
    * @see http://blog.stevenlevithan.com/archives/javascript-roman-numeral-converter#comment-16107
    * @private
    */
-  function romanize(arabic, alphabet) {
+  static #romanize(arabic, alphabet) {
     let roman = "";
     for (let i of alphabet.keys()) {
       while (arabic >= alphabet.get(i)) {
@@ -663,19 +659,14 @@ const IncrementRoman = (() => {
     return roman;
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    incrementRoman
-  };
-
-})();
+}
 
 /**
  * IncrementArray handles stepping through arrays (e.g. increment steps forward, decrement steps backward).
  * This is called whenever we need to build out an array in advance, such as when Shuffle is enabled, or when
  * multi-range incrementing.
  */
-const IncrementArray = (() => {
+class IncrementArray {
 
   /**
    * Shuffles an array into random indices using the Durstenfeld shuffle, a computer-optimized version of Fisher-Yates.
@@ -689,7 +680,7 @@ const IncrementArray = (() => {
    * @see https://stackoverflow.com/a/12646864
    * @public
    */
-  function shuffle(array) {
+  static shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [array[i], array[j]] = [array[j], array[i]];
@@ -707,7 +698,7 @@ const IncrementArray = (() => {
    * @param {Object} instance - the instance containing the URL and parameters used to increment or decrement
    * @public
    */
-  function stepThruURLs(action, instance) {
+  static stepThruURLs(action, instance) {
     let urlProps;
     if (instance.scrollEnabled || (instance.downloadEnabled && (action === "increment" || action === "list"))) {
       // If scrolling or downloading, we increment the index AFTER setting urlProps so that we don't skip over the very first item in the list
@@ -738,7 +729,7 @@ const IncrementArray = (() => {
    * @returns {{urls: Array, currentIndex: number}} the URLs array and the current index to start from
    * @public
    */
-  function precalculateURLs(instance) {
+  static precalculateURLs(instance) {
     console.log("precalculateURLs() - precalculating URLs for an instance that is " + (instance.toolkitEnabled ? "toolkitEnabled" : instance.autoEnabled ? "autoEnabled" : "normal"));
     let urls = [];
     let currentIndex = 0;
@@ -748,24 +739,24 @@ const IncrementArray = (() => {
       const action = instance.listEnabled ? "increment" : instance.action;
       // List and Multi Range don't use a quantity (undefined), everything else uses its own quantity. Note that autoTimes has higher priority over the other quantities
       const quantity = instance.toolkitEnabled ? instance.toolkitQuantity :instance.autoEnabled ? instance.autoTimes : instance.shuffleEnabled ? instance.shuffleURLs : undefined;
-      urls = buildURLs(instance, action, quantity);
+      urls = IncrementArray.#buildURLs(instance, action, quantity);
       // if (instance.listEnabled) {
-      //   urls = buildURLs(instance, "increment", null);
+      //   urls = IncrementArray.#buildURLs(instance, "increment", null);
       // } else if (instance.toolkitEnabled) {
-      //   urls = buildURLs(instance, instance.action, instance.toolkitQuantity);
+      //   urls = IncrementArray.#buildURLs(instance, instance.action, instance.toolkitQuantity);
       // } else if (instance.autoEnabled) {
-      //   urls = buildURLs(instance, instance.action, instance.autoTimes);
+      //   urls = IncrementArray.#buildURLs(instance, instance.action, instance.autoTimes);
       // } else if (instance.multiRangeEnabled) {
-      //   urls = buildURLs(instance, instance.action);
+      //   urls = IncrementArray.#buildURLs(instance, instance.action);
       // } else if (instance.shuffleEnabled) {
-      //   urls = buildURLs(instance, instance.action, instance.shuffleURLs);
+      //   urls = IncrementArray.#buildURLs(instance, instance.action, instance.shuffleURLs);
       //   // No longer doing the bi-direction for shuffle, just use the one direction so we can double the max amount of URLs to shuffle. If decrementing, the user can enter a negative interval
       //   // // If scroll enabled, only need to build urls array in one direction (increment or decrement)
       //   // if (instance.scrollEnabled) {
-      //   //   urls = buildURLs(instance, instance.action, shuffleAmount);
+      //   //   urls = IncrementArray.#buildURLs(instance, instance.action, shuffleAmount);
       //   // } else {
-      //   //   const urlsIncrement = buildURLs(instance, "increment", shuffleAmount);
-      //   //   const urlsDecrement = buildURLs(instance, "decrement", shuffleAmount);
+      //   //   const urlsIncrement = IncrementArray.#buildURLs(instance, "increment", shuffleAmount);
+      //   //   const urlsDecrement = IncrementArray.#buildURLs(instance, "decrement", shuffleAmount);
       //   //   const urlOriginal = [{"urlmod": instance.url, "selectionmod": instance.selection}];
       //   //   currentIndex = urlsDecrement.length;
       //   //   urls = [...urlsDecrement, ...urlOriginal, ...urlsIncrement];
@@ -785,7 +776,7 @@ const IncrementArray = (() => {
    * @returns {string[]} the urls array
    * @private
    */
-  function buildURLs(instance, action, quantity) {
+  static #buildURLs(instance, action, quantity) {
     console.log("buildURLs() - instance.url=" + instance.url + ", instance.selection=" + instance.selection + ", action=" + action + ", quantity=" + quantity);
     const urls = [];
     const url = instance.url;
@@ -801,7 +792,7 @@ const IncrementArray = (() => {
         urls.push({"urlmod": instance.list[i], "selectionmod": ""});
       }
     } else if (instance.multiEnabled && instance.multiRangeEnabled) {
-      buildMultiRangeURLs(instance, action, urls);
+      IncrementArray.#buildMultiRangeURLs(instance, action, urls);
     } else {
       for (let i = 0; i < quantity; i++) {
         Increment.increment(action, instance);
@@ -816,7 +807,7 @@ const IncrementArray = (() => {
       }
     }
     if (instance.shuffleEnabled) {
-      shuffle(urls);
+      IncrementArray.shuffle(urls);
     }
     // Reset instance url and selection after calling increment():
     instance.url = url;
@@ -832,7 +823,7 @@ const IncrementArray = (() => {
    * @param {string[]} urls - the urls array to build from
    * @private
    */
-  function buildMultiRangeURLs(instance, action, urls) {
+  static #buildMultiRangeURLs(instance, action, urls) {
     // Change each multi part's selectionStart to the non-range URL, then update the instance's url to the final non-range URL
     for (let i = 1; i <= instance.multiCount; i++) {
       const urlmod = instance.url.replace(instance.multi[i].range[0], instance.multi[i].range[1]);
@@ -878,11 +869,4 @@ const IncrementArray = (() => {
     instance.url = preurl1;
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    shuffle,
-    stepThruURLs,
-    precalculateURLs
-  };
-
-})();
+}

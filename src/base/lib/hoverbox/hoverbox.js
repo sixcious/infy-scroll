@@ -1,7 +1,7 @@
 /**
  * HoverBox
- * @copyright (c) 2020 Roy Six
  * @copyright (c) 2019 Kevin Li
+ * @copyright (c) 2020 Roy Six
  * @preserve
  */
 
@@ -27,6 +27,8 @@ var HoverBox = class HoverBox {
    * @param {string} selectors - the selector string that must match for the hovered element (via Element.matches() method)
    * @param {string} background - the hover box background color
    * @param {number} borderWidth - the hover box borderWidth
+   * @param {string} cursor - the mouse cursor to use (e.g. "crosshair")
+   * @param {string} transition - the css transition style to use when moving between elements (e.g. "all 150ms ease")
    * @param {Element[]} ignoreElements - the elements to ignore when hovered (e.g. document.body)
    * @param {Object} action - the action to trigger
    * @param {Set} shadows - the shadow roots on the page to add listeners and styles to

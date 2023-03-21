@@ -39,12 +39,13 @@ const Popup = (() => {
   let checks = {};
 
   /**
-   * Gets the declared variables. This can be used by other parts of the app or for debugging purposes.
+   * Gets all the declared variables for debugging purposes.
    *
    * @returns {*} the variables
    * @public
+   * @debug
    */
-  function get() {
+  function debug() {
     return {
       DOM, _, instance, items, tabs, timeouts, checks
     };
@@ -93,12 +94,12 @@ const Popup = (() => {
       if (!tabs || tabs.length < 0) {
         throw new Error(chrome.i18n.getMessage("popup_error_reason_tabs"));
       }
-      instance = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "getInstance"});
+      instance = await Promisify.tabsSendMessage(tabs[0].id, {sender: "popup", receiver: "contentscript", greeting: "getInstance"});
       if (!instance || Object.keys(instance).length <= 0) {
         // Infy Scroll only: We try a second time to manually inject the content script via our activeTab permission
         // This will only work in Production, which will have infy-scroll.js defined
         await Promisify.tabsExecuteScript(tabs[0].id, {file: "/js/infy-scroll.js", runAt: "document_end"});
-        instance = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "getInstance"});
+        instance = await Promisify.tabsSendMessage(tabs[0].id, {sender: "popup", receiver: "contentscript", greeting: "getInstance"});
         if (!instance || Object.keys(instance).length <= 0) {
           throw new Error(chrome.i18n.getMessage("popup_error_reason_instance"));
         }
@@ -107,6 +108,8 @@ const Popup = (() => {
       if (!instance.tabId || instance.tabId === 0) {
         instance.tabId = tabs[0].id;
       }
+      // Can technically omit this sendMessage in favor of when we sendMessage for getInstance above, but just for neatness/separation:
+      chrome.tabs.sendMessage(tabs[0].id, {sender: "popup", receiver: "contentscript", greeting: "popupOpened", popupOpened: true});
     } catch (e) {
       console.log("init() - error initializing 1-time only objects (tabs, items, or instance). Error:");
       console.log(e);
@@ -152,7 +155,7 @@ const Popup = (() => {
         // element.classList.remove("tooltip", "tooltip-without-underline");
       }
     }
-    DOM["#version-theme"].className = items.versionTheme ? "display-block" : "display-none";
+    DOM["#theme-version"].className = items.themeVersion ? "display-block" : "display-none";
     // Initialization that requires the instance
     MDC.lists.get("action-list").selectedIndex = instance.action === "next" || instance.action === "prev" ? 0 : instance.action === "click" ? 1 : instance.action === "increment" || instance.action === "decrement" ? 2 : instance.action === "list" ? 3 : -1;
     MDC.lists.get("append-list").selectedIndex = instance.append === "page" ? 0 : instance.append === "iframe" ? 1 : instance.append === "element" ? 2 : instance.append === "media" ? 3 : instance.append === "none" ? 4 : instance.append === "ajax" ? 5 : -1;
@@ -174,7 +177,7 @@ const Popup = (() => {
     // If Auto is on, pause Auto when Popup is first opened for convenience
     if (instance.autoEnabled && !instance.autoPaused) {
       console.log("init() - pausing auto on popup startup");
-      chrome.tabs.sendMessage(tabs[0].id, {receiver: "contentscript", greeting: "executeWorkflow", action: "auto", caller: "popupClickActionButton"});
+      chrome.tabs.sendMessage(tabs[0].id, {sender: "popup", receiver: "contentscript", greeting: "executeWorkflow", action: "auto", caller: "popupClickActionButton"});
     }
     // Show "Found" snackbar only if it hasn't been viewed yet and instance isn't enabled and if save/database found
     if (!instance.viewedFoundSnackbar && !instance.enabled && (instance.saveFound || instance.databaseFound)) {
@@ -186,7 +189,7 @@ const Popup = (() => {
       setTimeout(() => {
         const one = !instance.saveFound && instance.databaseFound ? items.databaseMode === "blacklist" && instance.databaseBlacklisted ? chrome.i18n.getMessage("blacklisted_label") : items.databaseMode === "whitelist" && !instance.databaseWhitelisted ? chrome.i18n.getMessage("unwhitelisted_label") : "" : "";
         const two = chrome.i18n.getMessage("popup_found_" + instance.via);
-        MDC.openSnackbar(chrome.i18n.getMessage("popup_found_snackbar_label").replace("?1", one).replace("?2", two));
+        MDC.openSnackbar(chrome.i18n.getMessage("popup_found_snackbar_label").replace("?1", one).replace("?2", two), 8000);
       }, 100);
     }
     // The drawer can be expanded or collapsed; we always save the last choice the user made and initialize the drawer with that choice
@@ -222,8 +225,8 @@ const Popup = (() => {
     DOM["#element-picker-remove-button"].addEventListener("click", clickElementPicker);
     DOM["#auto-detect-page-element-button"].addEventListener("click", clickAutoDetectPageElement);
     // Change Type Label
-    DOM["#next-type-label"].addEventListener("click", changeType);
-    DOM["#prev-type-label"].addEventListener("click", changeType);
+    DOM["#next-link-type-label"].addEventListener("click", changeType);
+    DOM["#prev-link-type-label"].addEventListener("click", changeType);
     DOM["#button-type-label"].addEventListener("click", changeType);
     DOM["#page-element-type-label"].addEventListener("click", changeType);
     // Toggle the drawer by first always closing it and then listening to see when it has finished closing to re-open it with the new collapsed state
@@ -287,7 +290,7 @@ const Popup = (() => {
     DOM["#list-button-yes"].addEventListener("click", function () { DOM["#list-options-input"].checked = true; DOM["#list-button-icon"].className.baseVal = ""; });
     DOM["#list-button-no"].addEventListener("click", function () { DOM["#list-options-input"].checked = false; DOM["#list-button-icon"].className.baseVal = "disabled"; });
     // Element
-    DOM["#element"].addEventListener("input", function (event) { if (event.target.id !== "page-element-iframe-input") { checkPageElement(true, true, false, "element input listener"); } });
+    DOM["#element"].addEventListener("input", function (event) { if (event.target.id !== "page-element-iframe-input") { checkPageElement(true, true, "", "element input listener"); } });
     DOM["#page-element-iframe-input"].addEventListener("change", function () { DOM["#page-element-iframe-mode"].className = this.checked ? "chip-set chip-set-absolute fade-in" : "display-none"; });
     MDC.chipsets.get("page-element-iframe-mode-chip-set").chips.forEach(chip => chip.listen("click", function () {
       console.log("MDCChip:() page-element-iframe-mode-chip-set - clicked " + this.id + ", value=" + this.dataset.value);
@@ -312,6 +315,7 @@ const Popup = (() => {
     DOM["#lazy-load-input"].addEventListener("change", function () { DOM["#lazy-load-settings"].className = this.checked ? "display-inline fade-in" : "display-none"; MDC.layout(); });
     DOM["#lazy-load-mode"].addEventListener("change", function () { DOM["#lazy-load-attribute"].className = event.target.value === "manual" ? "display-block fade-in" : "display-none"; MDC.layout();  });
     DOM["#mirror-page-input"].addEventListener("change", function () { DOM["#mirror-page-settings"].className = this.checked ? "display-inline fade-in" : "display-none"; MDC.layout(); });
+    DOM["#mirror-page-mode"].addEventListener("change", function () { DOM["#puppet"].className = event.target.value === "puppet" ? "display-block fade-in" : "display-none"; MDC.layout();  });
     // Help
     DOM["#debug-copy-button"].addEventListener("click", async () => {
       // Decided not to include the storage items as they contain too many sensitive things; if they're really needed to help debug, the user can copy them from the Options Manual Backup/Restore
@@ -462,7 +466,7 @@ const Popup = (() => {
     if (action === "next" || action === "prev") {
       DOM["#next"].className = action === "next" ? "display-block" : "display-none";
       DOM["#prev"].className = action === "prev" ? "display-block" : "display-none";
-      DOM["#next-prev-url-label"].textContent = chrome.i18n.getMessage(action + "_url_label");
+      DOM["#next-prev-link-label"].textContent = chrome.i18n.getMessage(action + "_link_label");
       if (!checks.checkNextPrev) {
         checkNextPrev(action, false, false, true, "changeAction()");
       }
@@ -501,12 +505,15 @@ const Popup = (() => {
     DOM["#insert-before-path-text-field"].style.display = append === "element" ? "" : "none"
     DOM["#page-element-iframe"].style.display = append === "element" ? "" : "none";
     if (!checks.checkPageElement && (_.append === "element" || _.append === "ajax")) {
-      const shouldAutoDetect = !DOM["#page-element-path-textarea"].value;
-      if (shouldAutoDetect) {
-        DOM["#page-element-path-textarea"].value = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "autoDetectPageElement", instance: _, algorithm: items.pathAlgorithm, quote: items.pathQuote, optimized: items.pathOptimized, highlight: false });
+      // If there is no page element path already, auto detect it for the user
+      let autoDetectDetails = "";
+      if (!DOM["#page-element-path-textarea"].value) {
+        const result = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "autoDetectPageElement", instance: _, algorithm: items.pathAlgorithm, quote: items.pathQuote, optimized: items.pathOptimized, highlight: false });
+        DOM["#page-element-path-textarea"].value = result.path;
+        autoDetectDetails = result.details;
         MDC.layout();
       }
-      checkPageElement(false, false, shouldAutoDetect, "changeAppend()");
+      checkPageElement(false, false, autoDetectDetails, "changeAppend()");
     }
     MDC.layout();
   }
@@ -598,21 +605,21 @@ const Popup = (() => {
     // Type Setup
     if (all) {
       // for (let type of ["nextLinkType", "prevLinkType", "buttonType", "pageElementType"]) {
-      for (const type of ["next", "prev", "button", "page-element"]) {
-        DOM["#" + type + "-type-label"].dataset.mode = instance[(type === "next" ? "nextLink" : type === "prev" ? "prevLink" : type === "page-element" ? "pageElement" : type) + "TypeMode"];
+      for (const type of ["next-link", "prev-link", "button", "page-element"]) {
+        DOM["#" + type + "-type-label"].dataset.mode = instance[(type === "next-link" ? "nextLink" : type === "prev-link" ? "prevLink" : type === "page-element" ? "pageElement" : type) + "TypeMode"];
         changeType(undefined, DOM["#" + type + "-type-label"]);
       }
     }
     // Next Prev Setup
     if (all || instance.action === "next") {
-      DOM["#next-path-textarea"].value = instance.nextLinkPath;
-      DOM["#next-property-textarea"].value = instance.nextLinkProperty ? instance.nextLinkProperty.join(".") : "";
-      DOM["#next-keywords-enabled-input"].checked = instance.nextLinkKeywordsEnabled;
+      DOM["#next-link-path-textarea"].value = instance.nextLinkPath;
+      DOM["#next-link-property-textarea"].value = instance.nextLinkProperty ? instance.nextLinkProperty.join(".") : "";
+      DOM["#next-link-keywords-enabled-input"].checked = instance.nextLinkKeywordsEnabled;
     }
     if (all || instance.action === "prev") {
-      DOM["#prev-path-textarea"].value = instance.prevLinkPath;
-      DOM["#prev-property-textarea"].value = instance.prevLinkProperty ? instance.prevLinkProperty.join(".") : "";
-      DOM["#prev-keywords-enabled-input"].checked = instance.prevLinkKeywordsEnabled;
+      DOM["#prev-link-path-textarea"].value = instance.prevLinkPath;
+      DOM["#prev-link-property-textarea"].value = instance.prevLinkProperty ? instance.prevLinkProperty.join(".") : "";
+      DOM["#prev-link-keywords-enabled-input"].checked = instance.prevLinkKeywordsEnabled;
     }
     // Increment Setup
     if (all || instance.action === "increment" || instance.action === "decrement") {
@@ -641,6 +648,7 @@ const Popup = (() => {
     // Append Setup (Page, Iframe, Media)
     if (all) {
       DOM["#iframe-page-one-input"].checked = instance.iframePageOne;
+      DOM["#iframe-resize-input"].checked = instance.iframeResize;
     }
     // Append Element
     if (all || instance.append === "element" || instance.append === "ajax") {
@@ -668,7 +676,9 @@ const Popup = (() => {
       DOM["#mirror-page-input"].checked = !!instance.mirrorPage;
       DOM["#mirror-page-settings"].className = !!instance.mirrorPage ? "display-inline" : "display-none";
       DOM["#mirror-page-mode-import"].checked = instance.mirrorPage !== "adopt";
-      DOM["#mirror-page-mode-adopt"].checked = instance.mirrorPage === "adopt";
+      DOM["#mirror-page-mode-puppet"].checked = instance.mirrorPage === "puppet";
+      DOM["#puppet"].className = instance.mirrorPage === "puppet" ? "display-block" : "display-none";
+      DOM["#puppet-textarea"].value = instance.puppet ? instance.puppet.split(";\n").join(";\n") : "";
       DOM["#spa-input"].checked = !!instance.spa;
     }
     // Convert number base to string just in case (can't set number as value, e.g. 10 instead of "10")
@@ -824,12 +834,12 @@ const Popup = (() => {
       DOM["#next-prev-result-success"].style.display = "none";
       DOM["#next-prev-result-error"].style.display = "none";
       timeouts.checkNextPrev2 = setTimeout(async function () {
-        const path = DOM["#" + action + "-path-textarea"].value;
-        const typeMode = DOM ["#" + action + "-type-label"].dataset.mode;
+        const path = DOM["#" + action + "-link-path-textarea"].value;
+        const typeMode = DOM ["#" + action + "-link-type-label"].dataset.mode;
         const type = ["selector", "xpath", "js"].includes(typeMode) ? typeMode :  await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "determinePathType", path: path, type: _[action + "LinkType"] });
-        const property = DOM["#" + action + "-property-textarea"].value ? DOM["#" + action + "-property-textarea"].value.split(".").filter(Boolean) : [];
+        const property = DOM["#" + action + "-link-property-textarea"].value ? DOM["#" + action + "-link-property-textarea"].value.split(".").filter(Boolean) : [];
         // If the keywordsEnabled hasn't been decided yet (it's undefined), we will not use the checkbox value and instead pass in undefined to NextPrev so it tries to use the keywords
-        const keywordsEnabled = _[action + "LinkKeywordsEnabled"] === undefined ? undefined : DOM["#" + action + "-keywords-enabled-input"].checked;
+        const keywordsEnabled = _[action + "LinkKeywordsEnabled"] === undefined ? undefined : DOM["#" + action + "-link-keywords-enabled-input"].checked;
         const keywords = items[action + "LinkKeywords"];
         const keywordObject = _[action + "LinkKeyword"];
         console.log("checkNextPrev() - sending message to check: type=" + type + ", path=" + path + ", property=" + property + ", keywordsEnabled=" + keywordsEnabled);
@@ -841,17 +851,17 @@ const Popup = (() => {
         // This is the only opportunity to store the new type if the path changes
         _[action + "LinkType"] = type;
         _[action + "LinkTypeMode"] = typeMode;
-        DOM["#" + action + "-type-label"].textContent = chrome.i18n.getMessage(type + "_abbreviated_label");
+        DOM["#" + action + "-link-type-label"].textContent = chrome.i18n.getMessage(type + "_abbreviated_label");
         // If the keywordsEnabled hasn't been decided yet (it's undefined), we will manually decide it after getting the response from NextPrev and set it for the temporary instance  _
         if (_[action + "LinkKeywordsEnabled"] === undefined) {
-          _[action + "LinkKeywordsEnabled"] = DOM["#" + action + "-keywords-enabled-input"].checked = (response.method === "keyword" || response.method === "keyword-alternate");
+          _[action + "LinkKeywordsEnabled"] = DOM["#" + action + "-link-keywords-enabled-input"].checked = (response.method === "keyword" || response.method === "keyword-alternate");
         }
         DOM["#next-prev-result-loading"].style.display = "none";
         DOM["#next-prev-result-success"].style.display = success ? "block" : "none";
         DOM["#next-prev-result-error"].style.display = success ? "none" : "block";
-        const details = chrome.i18n.getMessage(action + "_path_label");
+        const details = chrome.i18n.getMessage(action + "_link_path_label");
         if (success) {
-          DOM["#next-prev-result-message-success"].textContent = chrome.i18n.getMessage("next_prev_result_message_success").replace("?", chrome.i18n.getMessage(action + "_label"));
+          DOM["#next-prev-result-message-success"].textContent = chrome.i18n.getMessage("next_prev_result_message_success").replace("?", chrome.i18n.getMessage(action + "_link_label"));
           if (["selector", "xpath", "js", "shadow", "iframe"].includes(response.method)) {
             DOM["#next-prev-result-details-success"].textContent = details;
             // Some paths can be very lengthy, and if they're too long the balloon tooltip will cause a vertical scrollbar to appear. An alternative is to set break-word: break-all in the CSS
@@ -864,18 +874,18 @@ const Popup = (() => {
             DOM["#next-prev-result-details-success"].setAttribute("aria-label", response.element + " " + (ko[0] !== "self" ? ko[0] + " " : "") + (response.property || ko[1]) + " " + ko[2] + " " + ko[3]);
             _[action + "LinkKeyword"] = response.keywordObject;
           }
-          DOM["#next-prev-url-textarea"].value = response.url;
+          DOM["#next-prev-link-textarea"].value = response.url;
         } else {
-          DOM["#next-prev-result-message-error"].textContent = chrome.i18n.getMessage("next_prev_result_message_" + (response.duplicate ? "duplicate" : "error")).replace("?", chrome.i18n.getMessage(action + "_label"));
+          DOM["#next-prev-result-message-error"].textContent = chrome.i18n.getMessage("next_prev_result_message_" + (response.duplicate ? "duplicate" : "error")).replace("?", chrome.i18n.getMessage(action + "_link_label"));
           DOM["#next-prev-result-details-error"].textContent = details;
           // DOM["#next-prev-result-details-error"].setAttribute("aria-label", response && response.error ? response.error : "(" + chrome.i18n.getMessage(type + "_label") + ") " + chrome.i18n.getMessage("no_result_tooltip_error"));
-          DOM["#next-prev-result-details-error"].setAttribute("aria-label", response?.error ? (typeMode === "js" ? chrome.i18n.getMessage("jspath_result_tooltip_error") : "") + response.error : response?.duplicate ? chrome.i18n.getMessage("duplicate_result_tooltip_error") : chrome.i18n.getMessage("no_result_tooltip_error"));
-          DOM["#next-prev-url-textarea"].value = response.url || "";
+          DOM["#next-prev-result-details-error"].setAttribute("aria-label", response?.error ? ((typeMode === "js" ? chrome.i18n.getMessage("jspath_result_tooltip_error") : "") + response.error).substring(0, 500) : response?.duplicate ? chrome.i18n.getMessage("duplicate_result_tooltip_error") : chrome.i18n.getMessage("no_result_tooltip_error"));
+          DOM["#next-prev-link-textarea"].value = response.url || "";
         }
         MDC.linearProgresses.get("next-prev-linear-progress").foundation_.setDeterminate(true);
         MDC.layout();
         if (focus && success) {
-          DOM["#next-prev-url-textarea"].focus();
+          DOM["#next-prev-link-textarea"].focus();
         }
       }, delay ? 1000 : 0);
     }, delay ? 1000 : 0);
@@ -939,12 +949,12 @@ const Popup = (() => {
    *
    * @param {boolean} delay - whether to add a small timeout delay when re-checking; we enforce a delay if the user is typing, otherwise there is no delay when the extension calls this explicitly
    * @param {boolean} highlight - whether to highlight the element (true) or not (false)
-   * @param {boolean} autoDetected - true if this check was called by Auto Detect Page Element, false otherwise
+   * @param {string} autoDetect - the auto detect result details if called by Auto Detect Page Element (an empty string otherwise)
    * @param {string} caller - the caller who called this function
    * @private
    */
-  function checkPageElement(delay = false, highlight = false, autoDetected = false, caller) {
-    console.log("checkPageElement() - delay=" + delay + ", highlight=" + highlight + ", autoDetected=" + autoDetected + ", caller=" + caller);
+  function checkPageElement(delay = false, highlight = false, autoDetect = false, caller) {
+    console.log("checkPageElement() - delay=" + delay + ", highlight=" + highlight + ", autoDetect=" + autoDetect + ", caller=" + caller);
     checks.checkPageElement = true;
     // TODO: This "double timeout" is so we don't show the "Loading" as soon as the user starts typing, but this is confusing and should be refactored into a better event listener
     MDC.linearProgresses.get("page-element-linear-progress").foundation_.setDeterminate(false);
@@ -959,7 +969,7 @@ const Popup = (() => {
         const typeMode = DOM ["#page-element-type-label"].dataset.mode;
         const pageElementType = ["selector", "xpath", "js"].includes(typeMode) ? typeMode : await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "determinePathType", path: pageElementPath, type: _.pageElementType });
         console.log("checkPageElement() - sending message to check: pageElementType=" + pageElementType + ", pageElementPath=" + pageElementPath + ", insertBeforePath="+ insertBeforePath);
-        const response = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "checkPageElement", pageElementType: pageElementType, pageElementPath: pageElementPath, insertBeforePath: insertBeforePath, highlight: highlight, autoDetected: autoDetected});
+        const response = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "checkPageElement", pageElementType: pageElementType, pageElementPath: pageElementPath, insertBeforePath: insertBeforePath, highlight: highlight, autoDetected: autoDetect});
         console.log("checkPageElement() - response received from check:");
         console.log(response);
         const success = response && response.found;
@@ -976,9 +986,9 @@ const Popup = (() => {
         DOM["#page-element-result-error"].style.display = success ? "none" : "inline-block";
         const details = chrome.i18n.getMessage("page_element_path_label");
         if (success) {
-          DOM["#page-element-result-message-success"].textContent = chrome.i18n.getMessage("page_element_result_message_" + (autoDetected ? "autodetect" : "success")).replace("?", response.elementsLength);
+          DOM["#page-element-result-message-success"].textContent = chrome.i18n.getMessage("page_element_result_message_" + (autoDetect ? "autodetect" : "success")).replace("?", response.elementsLength);
           DOM["#page-element-result-details-success"].textContent = details;
-          DOM["#page-element-result-details-success"].setAttribute("aria-label", chrome.i18n.getMessage("page_element_result_tooltip_success").replace("?1", response.parentNode).replace("?2", response.insertDetails));
+          DOM["#page-element-result-details-success"].setAttribute("aria-label", chrome.i18n.getMessage("page_element_result_tooltip_success").replace("?1", response.parentNode).replace("?2", response.insertDetails) + (autoDetect || ""));
         } else {
           DOM["#page-element-result-details-error"].textContent = details;
           DOM["#page-element-result-details-error"].setAttribute("aria-label", response?.error ? (typeMode === "js" ? chrome.i18n.getMessage("jspath_result_tooltip_error") : "") + response.error : chrome.i18n.getMessage("no_result_tooltip_error"));
@@ -1009,8 +1019,8 @@ const Popup = (() => {
     // Before we send off the temporary instance, we need to make sure we store the current keywordsEnabled state.
     // If we don't do this, when they return to the popup, the keywords wont be enabled anymore
     // Note: We have to always do this, not just when it's the action next or prev
-    _.nextLinkKeywordsEnabled = DOM["#next-keywords-enabled-input"].checked;
-    _.prevLinkKeywordsEnabled = DOM["#prev-keywords-enabled-input"].checked;
+    _.nextLinkKeywordsEnabled = DOM["#next-link-keywords-enabled-input"].checked;
+    _.prevLinkKeywordsEnabled = DOM["#prev-link-keywords-enabled-input"].checked;
     // Execute scripts to get the Picker ready to be opened:
     // Already including dompath.js in the content script so we don't need this in Infy Scroll:
     // await Promisify.tabsExecuteScript(tabs[0].id, {file: "/lib/dompath/dompath.js", runAt: "document_end"});
@@ -1044,9 +1054,9 @@ const Popup = (() => {
     // If not calling this manually, need to check the path again based on the new mode type
     if (!el) {
       switch (element.id) {
-        case "next-type-label": case "prev-type-label": checkNextPrev(element.dataset.action, false, false, false, "changeType"); break;
+        case "next-link-type-label": case "prev-link-type-label": checkNextPrev(element.dataset.action, false, false, false, "changeType"); break;
         case "button-type-label": checkButton(false, false, "changeType"); break;
-        case "page-element-type-label": checkPageElement(false, false, false, "changeType"); break;
+        case "page-element-type-label": checkPageElement(false, false, "", "changeType"); break;
       }
     }
   }
@@ -1060,10 +1070,11 @@ const Popup = (() => {
   async function clickAutoDetectPageElement(event) {
     await Promisify.tabsExecuteScript(tabs[0].id, {file: "/lib/hoverbox/hoverbox.js", runAt: "document_end"});
     // Note: The reason why we're passing the Popup's items path properties is because Scroll's items may be out of date
-    DOM["#page-element-path-textarea"].value = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "autoDetectPageElement", instance: _, algorithm: items.pathAlgorithm, quote: items.pathQuote, optimized: items.pathOptimized, highlight: true });
+    const result = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "autoDetectPageElement", instance: _, algorithm: items.pathAlgorithm, quote: items.pathQuote, optimized: items.pathOptimized, highlight: true });
+    DOM["#page-element-path-textarea"].value = result.path;
     MDC.layout();
     // We don't highlight because we already highlight in autoDetect (scroll). pageElement uses currentDocument for highlighting, so we can't use it for highlighting autoDetect unfortunately
-    checkPageElement(true, false, true, "clickAutoDetectPageElement()");
+    checkPageElement(true, false, result.details, "clickAutoDetectPageElement()");
   }
 
   /**
@@ -1166,7 +1177,7 @@ const Popup = (() => {
     // Ask the content script to start (or re-start again):
     await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "start", caller: "popup"});
     // We need to get the instance back from the content script after it's been set to get the updated started property (after start() is called). Can't just set _ to the instance
-    instance = await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "getInstance"});
+    instance = await Promisify.tabsSendMessage(tabs[0].id, {sender: "popup", receiver: "contentscript", greeting: "getInstance"});
     _ = instance;
     // Update the controls after we get the instance back
     updateControls();
@@ -1226,7 +1237,8 @@ const Popup = (() => {
    */
   function setupInputs(caller) {
     if (caller === "accept" || caller === "multi" || caller === "toolkit") {
-      // Tab ID: This is the only time we can set this
+      // PopupOpened and Tab ID: This is the only time we can set these
+      _.popupOpened = true;
       _.tabId = tabs[0] && tabs[0].id ? tabs[0].id : _.tabId;
       // Save:
       _.saveFound = DOM["#save-input"].checked;
@@ -1234,12 +1246,12 @@ const Popup = (() => {
       _.saveURL = DOM["#save-url-textarea"].value;
       _.saveType = DOM["#save-type-pattern"].checked ? DOM["#save-type-pattern"].value : DOM["#save-type-regex"].checked ? DOM["#save-type-regex"].value : DOM["#save-type-exact"].checked ? DOM["#save-type-exact"].value : "";
       // Next:
-      _.nextLinkPath = DOM["#next-path-textarea"].value;
-      _.nextLinkProperty = DOM["#next-property-textarea"].value ? DOM["#next-property-textarea"].value.split(".").filter(Boolean) : [];
-      _.nextLinkKeywordsEnabled = DOM["#next-keywords-enabled-input"].checked;
-      _.prevLinkPath = DOM["#prev-path-textarea"].value;
-      _.prevLinkProperty = DOM["#prev-property-textarea"].value ? DOM["#prev-property-textarea"].value.split(".").filter(Boolean) : [];
-      _.prevLinkKeywordsEnabled = DOM["#prev-keywords-enabled-input"].checked;
+      _.nextLinkPath = DOM["#next-link-path-textarea"].value;
+      _.nextLinkProperty = DOM["#next-link-property-textarea"].value ? DOM["#next-link-property-textarea"].value.split(".").filter(Boolean) : [];
+      _.nextLinkKeywordsEnabled = DOM["#next-link-keywords-enabled-input"].checked;
+      _.prevLinkPath = DOM["#prev-link-path-textarea"].value;
+      _.prevLinkProperty = DOM["#prev-link-property-textarea"].value ? DOM["#prev-link-property-textarea"].value.split(".").filter(Boolean) : [];
+      _.prevLinkKeywordsEnabled = DOM["#prev-link-keywords-enabled-input"].checked;
       // Increment:
       _.url = _.startingURL = DOM["#url-textarea"].value;
       _.selection = _.startingSelection = DOM["#selection-input"].value;
@@ -1269,8 +1281,9 @@ const Popup = (() => {
       // Append
       // Make the threshold be 100 for click button, including both ajax modes; in the case of iframe, this also buys us extra time to scroll
       // the iframe, and in the case of native, if some of the bottom content hasn't loaded before the button has been clicked, this is necessary
-      _.scrollAppendThresholdPixels = _.action === "click" ? 100 : items.scrollAppendThresholdPixels;
+      _.appendThreshold = _.action === "click" ? 100 : instance.appendThreshold;
       _.iframePageOne = DOM["#iframe-page-one-input"].checked;
+      _.iframeResize = DOM["#iframe-resize-input"].checked;
       _.pageElementPath = DOM["#page-element-path-textarea"].value;
       _.insertBeforePath = DOM["#insert-before-path-textarea"].value;
       _.pageElementIframe = _.append === "element" && DOM["#page-element-iframe-input"].checked ? MDC.chips.get("page-element-iframe-mode-trim-chip").selected ? MDC.chips.get("page-element-iframe-mode-trim-chip").root_.dataset.value : MDC.chips.get("page-element-iframe-mode-import-chip").root_.dataset.value : undefined;
@@ -1281,10 +1294,11 @@ const Popup = (() => {
       _.lazyLoad = DOM["#lazy-load-input"].checked ? DOM["#lazy-load-mode-manual"].checked ? DOM["#lazy-load-mode-manual"].value : DOM["#lazy-load-mode-auto"].value : undefined;
       _.lazyLoadSource = DOM["#lazy-load-source-input"].value;
       _.lazyLoadDestination = DOM["#lazy-load-destination-input"].value;
-      _.mirrorPage = _.action === "click" && _.append === "ajax" && _.ajaxMode !== "native" && DOM["#mirror-page-input"].checked ? DOM["#mirror-page-mode-adopt"].checked ? DOM["#mirror-page-mode-adopt"].value : DOM["#mirror-page-mode-import"].value : undefined;
+      _.mirrorPage = _.action === "click" && _.append === "ajax" && _.ajaxMode !== "native" && DOM["#mirror-page-input"].checked ? DOM["#mirror-page-mode-puppet"].checked ? DOM["#mirror-page-mode-puppet"].value : DOM["#mirror-page-mode-import"].value : undefined;
       // Note the || here, this allows us to re-save a regex SPA for a save object instead of always defaulting to locationOrigin if a spa already exists for the instance
       // _.spa = DOM["#spa-input"].checked ? _.spa || _.locationOrigin : undefined;
       _.spa = DOM["#spa-input"].checked ? _.spa || ("^" + Util.escapeRegularExpression(_.locationOrigin)) : undefined;
+      _.puppet = DOM["#puppet-textarea"].value;
       // Miscellaneous
       _.transferNodeMode = _.transferNode || (_.append === "ajax" ? "import" : "adopt");
       // Document Type depends on append mode and action combination.
@@ -1339,7 +1353,7 @@ const Popup = (() => {
     // Next Errors
     // TODO: Commenting out this validation check for the time being in case the user wants to override saving a URL
     // if (_.action === "next" || _.action === "prev") {
-    //   if (!DOM["#next-prev-url-textarea"].value) { errors.push(chrome.i18n.getMessage("next_prev_empty_error")) }
+    //   if (!DOM["#next-prev-link-textarea"].value) { errors.push(chrome.i18n.getMessage("next_prev_empty_error")) }
     // }
     // Increment Errors
     if (_.action === "increment" || _.action === "decrement") {
@@ -1466,6 +1480,10 @@ const Popup = (() => {
           updateSetup(false);
         }
         break;
+      // case "themeChanged":
+      //   // Only need to change the icon, the page's css will auto-adjust dynamically
+      //   document.querySelector("link[rel='icon']").href = request.theme === "dark" ? "../img/icon-light.png" : "../img/icon-dark.png";
+      //   break;
       default:
         break;
     }
@@ -1479,12 +1497,19 @@ const Popup = (() => {
   // Gotcha Note: See Tab ID note in init() when getting the instance
   chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) { if (!request || request.receiver !== "popup") { return; } messageListener(request, sender, sendResponse); if (request && request.async) { return true; } });
 
+  // Note: This is the only way to detect when the popup has closed aside from keeping a port connection open
+  // Also note that window.addEventListener "beforeunload" and "unload" won't fire
+  // @see https://bugs.chromium.org/p/chromium/issues/detail?id=225917#c16
+  document.addEventListener("visibilitychange", (e) => {
+    chrome.tabs.sendMessage(tabs[0].id, {sender: "popup", receiver: "contentscript", greeting: "popupOpened", popupOpened: false});
+  }, false);
+
   // Initialize Popup
   init();
 
   // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
   return {
-    get
+    debug
   };
 
 })();

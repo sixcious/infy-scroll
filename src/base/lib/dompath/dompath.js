@@ -16,7 +16,7 @@
  *
  * Note: var is used for declaration because this script can get executed multiple times on the page.
  */
-var DOMPath = (() => {
+var DOMPath = class DOMPath {
 
   /**
    * Generates a DOM Path (CSS Selector, XPath expression, or JS Path) for a node that takes its context into account.
@@ -36,7 +36,7 @@ var DOMPath = (() => {
    * @returns {{path: string, meta: string}} the path along with metadata (e.g. "error")
    * @public
    */
-  function generateContextPath(node, type = "selector", algorithm = "internal", quote = "single", optimized =  true, target = "generic",  js = false) {
+  static generateContextPath(node, type = "selector", algorithm = "internal", quote = "single", optimized =  true, target = "generic",  js = false) {
     console.log("generateContextPath()");
     const contexts = DOMNode.getAncestorContexts(node);
     // If this is the top-level document context (i.e. only one context), just return the regular path
@@ -46,11 +46,11 @@ var DOMPath = (() => {
         console.log("generateContextPath() - changing type from " + type + " to selector because this node has one context and is no longer a js path type");
         type = "selector";
       }
-      return generatePath(node, type, algorithm, quote, optimized, target, js);
+      return DOMPath.generatePath(node, type, algorithm, quote, optimized, target, js);
     }
     let contextPath = { path: "", meta: "" };
     for (let i = 0; i < contexts.length; i++) {
-      contextPath = generatePath(contexts[i].node, contexts[i].context, algorithm, quote, optimized, target, true, contextPath.path);
+      contextPath = DOMPath.generatePath(contexts[i].node, contexts[i].context, algorithm, quote, optimized, target, true, contextPath.path);
     }
     return contextPath;
   }
@@ -74,7 +74,7 @@ var DOMPath = (() => {
    * @returns {{path: string, meta: string}} the path along with metadata (e.g. "error")
    * @public
    */
-  function generatePath(node, type = "selector", algorithm = "internal", quote = "single", optimized =  true, target = "generic",  js = false, contextPath = "") {
+  static generatePath(node, type = "selector", algorithm = "internal", quote = "single", optimized =  true, target = "generic",  js = false, contextPath = "") {
     console.log("generatePath() - type=" + type + ", algorithm=" + algorithm + ", quote=" + quote + ", optimized=" + optimized + ", target=" + target + ", contextPath=" + contextPath + ", node=");
     console.log(node);
     if (!node || node.nodeType !== Node.ELEMENT_NODE) {
@@ -107,7 +107,7 @@ var DOMPath = (() => {
       chromiumPath = ChromiumPath.generatePath(node, type, quote, optimized);
       finalPath = contextPath + jsPrefix + chromiumPath + jsSuffix;
       // if (evaluatePath(context ? finalPath + jsQuote + ")" : chromiumPath, type) === node) {
-      if (evaluatePath(context ? finalPath : chromiumPath, type) === node) {
+      if (DOMPath.#evaluatePath(context ? finalPath : chromiumPath, type) === node) {
         console.log("generatePath() - returning chromiumPath");
         return { path: finalPath, meta: "" };
       }
@@ -116,26 +116,26 @@ var DOMPath = (() => {
     // algorithm = "internal"
     internalPath = InternalPath.generatePath(node, type, quote, optimized, target, false, false);
     finalPath = contextPath + jsPrefix + internalPath + jsSuffix;
-    if (evaluatePath(context ? finalPath : internalPath, type) === node) {
+    if (DOMPath.#evaluatePath(context ? finalPath : internalPath, type) === node) {
       console.log("generatePath() - returning internalPath");
       return { path: finalPath, meta: algorithm === "chromium" ? "fallback" : ""};
     }
     internalPath = InternalPath.generatePath(node, type, quote, optimized, target, true, false);
     finalPath = contextPath + jsPrefix + internalPath + jsSuffix;
-    if (evaluatePath(context ? finalPath : internalPath, type) === node) {
+    if (DOMPath.#evaluatePath(context ? finalPath : internalPath, type) === node) {
       console.log("generatePath() - returning internalPath (fallback)");
       return { path: finalPath, meta: algorithm === "chromium" ? "fallback" : ""};
     }
     internalPath = InternalPath.generatePath(node, type, quote, optimized, target, true, true);
     finalPath = contextPath + jsPrefix + internalPath + jsSuffix;
-    if (evaluatePath(context ? finalPath : internalPath, type) === node) {
+    if (DOMPath.#evaluatePath(context ? finalPath : internalPath, type) === node) {
       console.log("generatePath() - returning internalPath (fallback2)");
       return { path: finalPath, meta: algorithm === "chromium" ? "fallback" : "" };
     }
     if (algorithm === "internal") {
       chromiumPath = ChromiumPath.generatePath(node, type, quote, optimized);
       finalPath = contextPath + jsPrefix + chromiumPath + jsSuffix;
-      if (evaluatePath(context ? finalPath : chromiumPath, type) === node) {
+      if (DOMPath.#evaluatePath(context ? finalPath : chromiumPath, type) === node) {
         console.log("generatePath() - returning chromiumPath (fallback because internalPath failed)");
         return { path: finalPath, meta: "fallback" };
       }
@@ -157,7 +157,7 @@ var DOMPath = (() => {
    * @see https://www.brainkart.com/article/XPath--Operators,-Special-Characters-and-Syntax_8668/
    * @public
    */
-  function determinePathType(path, type, history = {types: [], errors: []}) {
+  static determinePathType(path, type, history = {types: [], errors: []}) {
     let error = "";
     try {
       // If we want to always prioritize the preferred type, we can do this check at the second attempt instead
@@ -178,7 +178,7 @@ var DOMPath = (() => {
         // }
       }
       // history.types.push(type);
-      evaluatePath(path, type, true);
+      DOMPath.#evaluatePath(path, type, true);
       // We actually can't do the below commented out code; for example, if we are checking for an element during
       // activation time and it doesn't exist yet on the page (AJAX/SPA late activation) it will default to the
       // preferred type, which may not be what this type is
@@ -193,8 +193,8 @@ var DOMPath = (() => {
       history.types.push(type);
       // If we still haven't checked a type in our history, keep checking (ignore js to avoid weird false positives due to context e.g. ('abc') > a
       if (["selector", "xpath"].some(type => !history.types.includes(type))) {
-        return determinePathType(path, type === "selector" ? "xpath" : "selector", history);
-        // return determinePathType(path, ["selector", "xpath"].every(type => history.types.includes(type)) ? "js" : type === "selector" ? "xpath" : "selector", history);
+        return DOMPath.determinePathType(path, type === "selector" ? "xpath" : "selector", history);
+        // return DOMPath.determinePathType(path, ["selector", "xpath"].every(type => history.types.includes(type)) ? "js" : type === "selector" ? "xpath" : "selector", history);
       }
       // Else if we failed all type attempts, use the first type attempt's results (usually the preferred type, but not always due to us overriding the type in the beginning)
       else {
@@ -216,7 +216,7 @@ var DOMPath = (() => {
    * @returns {Node} the evaluated node
    * @private
    */
-  function evaluatePath(path, type, throwError = false) {
+  static #evaluatePath(path, type, throwError = false) {
     let node = undefined;
     try {
       const result = DOMNode.getElement(path, type, "first", document);
@@ -235,19 +235,12 @@ var DOMPath = (() => {
     return node;
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    generateContextPath,
-    generatePath,
-    determinePathType
-  };
-
-})();
+}
 
 /**
  * InternalPath is the custom-made internal DOMPath implementation for both CSS Selectors and XPath.
  */
-var InternalPath = (() => {
+var InternalPath = class InternalPath {
 
   /**
    * Generates a DOM Path (CSS Selector or XPath expression) for a node using a custom-made internal algorithm.
@@ -268,7 +261,7 @@ var InternalPath = (() => {
    * @see originally derived from https://stackoverflow.com/a/5178132 by @stijn de ryck
    * @public
    */
-  function generatePath(element, type, quote, optimized, target, fallback, fallback2) {
+  static generatePath(element, type, quote, optimized, target, fallback, fallback2) {
     // console.log("InternalPath.generatePath() - fallback=" + fallback + ", fallback2=" + fallback2);
     const separator = type === "xpath" ? "/" : " > ";
     // TODO: Decide between getElementsByTagName("*") and querySelectorAll("*"). gEBTN returns a live list of nodes that keeps updating as the document changes, whereas qSA return a static list of nodes
@@ -289,7 +282,7 @@ var InternalPath = (() => {
       // XPath only: svg elements belong to a different namespace and need to be handled via name() or local-name()
       // Note: There are an abundance of SVG elements (e.g. path, use) but we'll only check for the popular ones for brevity
       // @see https://developer.mozilla.org/docs/Web/SVG/Element
-      if ((tag === "svg" || tag === "path" || tag === "use") && type === "xpath") {
+      if (["svg", "path", "use"].includes(tag) && type === "xpath") {
         tag = "*[name()=" + quote + tag + quote + "]";
       }
       // id() or [@id] - if the id is unique among all the nodes, we'll stop and return. otherwise, we continue on below
@@ -308,10 +301,10 @@ var InternalPath = (() => {
         // Else, we'll need to save the ID and continue on and look at the parent elements in the outer for loop
         if (isUniqueId && optimized) {
           // Note: We can only do the id("abc") format with xpath if it's the root node in the path (hence, it must be optimized, as we are stopping and returning here)
-          segments.unshift(type === "xpath" ? "id(" + quote + element.getAttribute("id") + quote + ")" : "#" + escapeCSS(element.getAttribute("id")));
+          segments.unshift(type === "xpath" ? "id(" + quote + element.getAttribute("id") + quote + ")" : "#" + InternalPath.#escapeCSS(element.getAttribute("id")));
           return segments.join(separator);
         } else {
-          id = type === "xpath" ? "[@id=" + quote + element.getAttribute("id") + quote + "]" : "#" + escapeCSS(element.getAttribute("id"));
+          id = type === "xpath" ? "[@id=" + quote + element.getAttribute("id") + quote + "]" : "#" + InternalPath.#escapeCSS(element.getAttribute("id"));
           if (isUniqueId) {
             segments.unshift(tag + id);
             continue;
@@ -327,7 +320,7 @@ var InternalPath = (() => {
         // Note: CSS Selector's equivalent of XPath's [#] is :nth-of-type(), not nth-child() because the latter doesn't require the nodes to be the same type
         if (sibling.localName === element.localName) {
           index = type === "xpath" ? "[" + (++j) + "]" : ":nth-of-type(" + (++j) + ")";
-          if (hasSiblingWithSameClass(element, sibling, type)) {
+          if (InternalPath.#hasSiblingWithSameClass(element, sibling, type)) {
             elementHasSiblingWithSameClass = true;
           }
         }
@@ -341,7 +334,7 @@ var InternalPath = (() => {
             index = type === "xpath" ? "[1]" : ":nth-of-type(1)";
           }
           // TODO: We technically don't need to check the next siblings' classes, as the selector/xpath will always match the first one (this node) over them
-          if (elementHasSiblingWithSameClass || hasSiblingWithSameClass(element, sibling, type)) {
+          if (elementHasSiblingWithSameClass || InternalPath.#hasSiblingWithSameClass(element, sibling, type)) {
             elementHasSiblingWithSameClass = true;
             // When checking next siblings, we only need to check one time for the index (unlike previous siblings)
             break;
@@ -354,8 +347,8 @@ var InternalPath = (() => {
       if (!elementHasSiblingWithSameClass && element.hasAttribute("class") && element.getAttribute("class").trim() !== "") {
         // TODO: Should we also check and make sure class.trim() === class to avoid issues with leading/trailing spaces in the attribute?
         // This used to get the class attribute even if it was empty, but we probably shouldn't use this for "robust" paths:
-        // clazz = type === "xpath" ? "[@class" + (node.getAttribute("class") === "" ? "]" : "=\"" + node.getAttribute("class") + "\"]") : node.getAttribute("class").trim() === "" || !node.classList ? "" : "." + [...node.classList].map(c => escapeCSS(c)).join(".");
-        clazz = type === "xpath" ? "[@class=" + quote + element.getAttribute("class") + quote + "]" : !element.classList ? "" : "." + [...element.classList].map(c => escapeCSS(c)).join(".");
+        // clazz = type === "xpath" ? "[@class" + (node.getAttribute("class") === "" ? "]" : "=\"" + node.getAttribute("class") + "\"]") : node.getAttribute("class").trim() === "" || !node.classList ? "" : "." + [...node.classList].map(c => InternalPath.#escapeCSS(c)).join(".");
+        clazz = type === "xpath" ? "[@class=" + quote + element.getAttribute("class") + quote + "]" : !element.classList ? "" : "." + [...element.classList].map(c => InternalPath.#escapeCSS(c)).join(".");
       }
       // [.="textContent"] - @see https://stackoverflow.com/a/29401875
       // TODO: We technically aren't checking the siblings if they also have the same textContent / text attribute like we do with the classes, but we do have fallback so it's OK to take this risk for now
@@ -408,7 +401,7 @@ var InternalPath = (() => {
    * @returns {boolean} true if this element has the same class attribute as its sibling, false otherwise
    * @private
    */
-  function hasSiblingWithSameClass(element, sibling, type) {
+  static #hasSiblingWithSameClass(element, sibling, type) {
     let same = false;
     if (element.hasAttribute("class") && sibling.hasAttribute("class")) {
       if (type === "xpath") {
@@ -436,7 +429,7 @@ var InternalPath = (() => {
    * @see https://developer.mozilla.org/docs/Web/API/CSS/escape
    * @private
    */
-  function escapeCSS(str) {
+  static #escapeCSS(str) {
     let escape;
     try {
       escape = CSS.escape(str);
@@ -447,16 +440,12 @@ var InternalPath = (() => {
     return escape || str;
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    generatePath
-  };
-
-})();
+}
 
 /**
  * ChromiumPath is Chromium's DOMPath implementation for both CSS Selectors and XPath.
  * Note: This was from an old chromium build in 2018, so we ought to try and find a newer one.
+ * Important: Keeping this as an IIFE instead of converting it to a class to keep the modifications low.
  *
  * Modifications Required
  * ----------------------

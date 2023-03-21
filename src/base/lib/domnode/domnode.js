@@ -8,7 +8,7 @@
  *
  * Note: var is used for declaration because this script can get executed multiple times on the page.
  */
-var DOMNode = (() => {
+var DOMNode = class DOMNode {
 
   /**
    * Gets a single element based on a path.
@@ -22,7 +22,7 @@ var DOMNode = (() => {
    * @returns {{Element,string}} the object containing the element returned from the path and error message if applicable
    * @public
    */
-  function getElement(path, type, preference = "first", doc = document) {
+  static getElement(path, type, preference = "first", doc = document) {
     let element;
     let error;
     try {
@@ -30,7 +30,7 @@ var DOMNode = (() => {
         case "shadow":
         case "iframe":
         case "js":
-          element = getElementsFromContextPath(path, "single", doc);
+          element = DOMNode.#getElementsFromContextPath(path, "single", doc);
           break;
         case "xpath":
           // Note: XPathEvaluator.evaluate() and document.evaluate() appear to both be identical in function
@@ -74,7 +74,7 @@ var DOMNode = (() => {
    * @returns {{Element[],string}} the object containing the elements returned from the path and error message if applicable
    * @public
    */
-  function getElements(path, type, doc = document) {
+  static getElements(path, type, doc = document) {
     let elements = [];
     let error;
     try {
@@ -82,7 +82,7 @@ var DOMNode = (() => {
         case "shadow":
         case "iframe":
         case "js":
-          elements = getElementsFromContextPath(path, "multiple", doc);
+          elements = DOMNode.#getElementsFromContextPath(path, "multiple", doc);
           break;
         case "xpath":
           // TODO: Investigate XPath resolver. Is null always OK?
@@ -116,16 +116,16 @@ var DOMNode = (() => {
    * @returns {Element|undefined} the parent element or undefined if none exists
    * @public
    */
-  function getParentElement(element) {
+  static getParentElement(element) {
     const DFElement = element.ownerDocument?.defaultView?.Element || Element;
     if (element.parentElement instanceof DFElement) {
       return element.parentElement;
     }
-    const shadow = getParentShadowRoot(element);
+    const shadow = DOMNode.getParentShadowRoot(element);
     if (shadow?.host) {
       return shadow.host;
     }
-    const iframe = getParentIframe(element);
+    const iframe = DOMNode.getParentIframe(element);
     if (iframe) {
       return iframe;
     }
@@ -139,16 +139,16 @@ var DOMNode = (() => {
    * @returns {Element|undefined} the first child element or undefined if none exists
    * @public
    */
-  function getChildElement(element) {
+  static getChildElement(element) {
     const DFElement = element.ownerDocument?.defaultView?.Element || Element;
     if (element.firstElementChild instanceof DFElement) {
       return element.firstElementChild;
     }
-    const shadowRoot = getShadowRoot(element);
+    const shadowRoot = DOMNode.getShadowRoot(element);
     if (shadowRoot?.firstElementChild instanceof DFElement) {
       return shadowRoot.firstElementChild;
     }
-    const iframeDocument = getIframeDocument(element);
+    const iframeDocument = DOMNode.getIframeDocument(element);
     if (iframeDocument?.firstElementChild instanceof (iframeDocument?.defaultView?.Element || Element)) {
       return iframeDocument.firstElementChild;
     }
@@ -162,7 +162,7 @@ var DOMNode = (() => {
    * @returns {ShadowRoot|undefined} the element's shadow root or undefined if none exists
    * @public
    */
-  function getShadowRoot(element) {
+  static getShadowRoot(element) {
     let shadowRoot;
     try {
       // Important: We can't just use instanceof ShadowRoot because if the element is in an iframe, that will always
@@ -196,7 +196,7 @@ var DOMNode = (() => {
    * @returns {ShadowRoot|undefined} the node's parent shadow root or undefined if none exists
    * @public
    */
-  function getParentShadowRoot(node) {
+  static getParentShadowRoot(node) {
     const root = node?.getRootNode();
     // @see https://stackoverflow.com/a/63225241/988713 to see how to check that a node's root node is a shadow root
     if (root && root instanceof node?.ownerDocument?.defaultView?.ShadowRoot) {
@@ -212,7 +212,7 @@ var DOMNode = (() => {
    * @returns {Document|undefined} the iframe's document or undefined if the element isn't an iframe or no document exists
    * @see https://developer.mozilla.org/docs/Web/API/HTMLIFrameElement/contentDocument
    */
-  function getIframeDocument(element) {
+  static getIframeDocument(element) {
     let iframeDocument;
     if (element && element.nodeName?.toUpperCase() === "IFRAME" && element.contentDocument &&
         element.contentDocument instanceof element.contentDocument.defaultView?.Document) {
@@ -228,7 +228,7 @@ var DOMNode = (() => {
    * @returns {Element|undefined} the node's parent iframe element or undefined if none exists
    * @public
    */
-  function getParentIframe(node) {
+  static getParentIframe(node) {
     // Note: This commented out code doesn't work if the root is a ShadowRoot inside an iframe; we must get the ownerDocument instead
     // return node.getRootNode()?.defaultView?.frameElement;
     // @see https://stackoverflow.com/a/11199144/988713
@@ -248,7 +248,7 @@ var DOMNode = (() => {
    * @returns {Object[]} an array of objects; each object contains the context root node and the string naming the context
    * @public
    */
-  function getAncestorContexts(node) {
+  static getAncestorContexts(node) {
     const contexts = [];
     // For loop to ensure we don't go down lower than 10 levels
     for (let i = 0; i < 10; i++) {
@@ -258,12 +258,12 @@ var DOMNode = (() => {
       }
       let ancestor;
       let context;
-      const shadow = getParentShadowRoot(node);
+      const shadow = DOMNode.getParentShadowRoot(node);
       if (shadow) {
         ancestor = shadow.host;
         context = "shadow";
       } else {
-        const iframe = getParentIframe(node);
+        const iframe = DOMNode.getParentIframe(node);
         if (iframe) {
           ancestor = iframe;
           context = "iframe";
@@ -297,7 +297,7 @@ var DOMNode = (() => {
    * @returns {Element|Element[]} either a single element or an array of multiple elements depending on the quantity requested
    * @private
    */
-  function getElementsFromContextPath(path, quantity, doc) {
+  static #getElementsFromContextPath(path, quantity, doc) {
     // We have two arrays. paths separates all the individual paths in the JS Path. contexts separates all the contexts (for example, this lets us support mixed iframe and shadow root contexts)
     // The map is to remove the quotes; if we can make a regex that doesn't capture them then we don't need to map the array
     const paths = path.match(/\(["|'](.*?)["|']\)/g)?.map((p) => p.substring(2, p.length - 2));
@@ -306,7 +306,7 @@ var DOMNode = (() => {
     if (contexts) {
       for (let i = 0; i < contexts.length; i++) {
         // console.log("getElementsFromContextPath() - i=" + i + ", context=" + contexts[i] + ", path=" + paths[i]);
-        context = contexts[i] === "contentDocument" ? context.querySelector(paths[i]).contentDocument : getShadowRoot(context.querySelector(paths[i]));
+        context = contexts[i] === "contentDocument" ? context.querySelector(paths[i]).contentDocument : DOMNode.getShadowRoot(context.querySelector(paths[i]));
       }
     }
     console.log("getElementsFromContextPath() - paths, contexts, chosen context=");
@@ -329,7 +329,7 @@ var DOMNode = (() => {
    * @see https://stackoverflow.com/a/44516001
    * @public
    */
-  function getNodesByTreeWalker(root, whatToShow) {
+  static getNodesByTreeWalker(root, whatToShow) {
     console.log("getNodesByTreeWalker() - root=" + root + ", whatToShow=" + whatToShow);
     const nodes = [];
     try {
@@ -354,7 +354,7 @@ var DOMNode = (() => {
    * @see https://stackoverflow.com/a/1461143
    * @public
    */
-  function getElementPosition(element) {
+  static getElementPosition(element) {
     let position = { top: 0, bottom: 0, left: 0, right: 0, rect: null };
     try {
       if (typeof element?.getBoundingClientRect === "function") {
@@ -387,18 +387,18 @@ var DOMNode = (() => {
    * test the different methods here.
    *
    * There are multiple ways to insert an element before another element:
-   * 1. Node.insertBefore
-   * 2. Element.before
+   * 1. Element.before
+   * 2. Node.insertBefore
    * 3. Element.insertAdjacentElement
    *
    * @param {Node} node - the node to insert
    * @param {Element} position - the element position where to insert the node before
-   * @see https://developer.mozilla.org/docs/Web/API/Node/insertBefore
    * @see https://developer.mozilla.org/docs/Web/API/Element/before
+   * @see https://developer.mozilla.org/docs/Web/API/Node/insertBefore
    * @see https://developer.mozilla.org/docs/Web/API/Element/insertAdjacentElement
    * @public
    */
-  function insertBefore(node, position) {
+  static insertBefore(node, position) {
     console.log("insertBefore() - typeof position=" + (position instanceof Node ? "Node" : position instanceof Element ? "Element" : "?") + ", typeof position.before()=" + typeof position?.before);
     if (typeof position?.before === "function") {
       // The before method is from the Element interface, but for some reason this works even if the position is a text node...
@@ -409,7 +409,6 @@ var DOMNode = (() => {
       // insertAdjacentElement is an alternative method, but only if node is Element (can't use DocumentFragments?)
       position?.insertAdjacentElement("beforebegin", node);
     }
-    // position?.before(node);
   }
 
   /**
@@ -430,9 +429,9 @@ var DOMNode = (() => {
    * @see https://stackoverflow.com/a/41322735
    * @see https://lists.w3.org/Archives/Public/www-dom/2010JulSep/0111.html
    * @see https://paul.kinlan.me/creating-a-popout-iframe-with-adoptnode-and-magic-iframes/
-   * @private
+   * @public
    */
-  function transferNode(node, mode) {
+  static transferNode(node, mode) {
     // There are 3 ways to transfer the node from the nextDocument/iframeDocument to this document: importNode, adoptNode, and a standard appendChild
     // importNode doesn't work with some websites (p), so we should only use either the standard appendChild or adoptNode
     // console.log("transferNode() - before transferring, node.ownerDocument === document=" + (node.ownerDocument === document));
@@ -443,8 +442,6 @@ var DOMNode = (() => {
       // Also note that in Firefox, it throws a DeadObject error if we don't import or clone the node, so always import the nodes in AJAX mode
       // In the other iframe modes, it's okay to adopt the node because the next page will be loaded in a new iframe
       // AJAX Exception: Some websites only work if we adopt the node, not import it, so we have a special hidden setting for these sites (e.g. manga readers)
-      // The only reason this function is in Scroll is due to the below line. If we want to move this to DOMNode, we would have to always pass this mode as a parameter
-      // const mode = instance.transferNode || (instance.append === "ajax" ? "import" : "adopt");
       switch (mode) {
         case "import":
           transferredNode = document.importNode(node, true);
@@ -466,21 +463,4 @@ var DOMNode = (() => {
     return transferredNode;
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    getElement,
-    getElements,
-    getParentElement,
-    getChildElement,
-    getShadowRoot,
-    getParentShadowRoot,
-    getIframeDocument,
-    getParentIframe,
-    getAncestorContexts,
-    getNodesByTreeWalker,
-    getElementPosition,
-    insertBefore,
-    transferNode
-  };
-
-})();
+}

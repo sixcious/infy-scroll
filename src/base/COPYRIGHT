@@ -24,12 +24,12 @@ Copyright (c) 2020, Kiril Vatev
 License: ISC
 https://github.com/catdad/canvas-confetti/blob/master/LICENSE
 
-DOM Node
+DOMNode
 Copyright (c) 2020 Roy Six
 License: See LICENSE File
 https://github.com/sixcious/infy-scroll/blob/main/LICENSE
 
-DOM Paths
+DOMPath (ChromiumPath)
 Copyright (c) 2015 The Chromium Authors
 License: BSD 3-Clause
 https://github.com/chromium/chromium/blob/main/LICENSE

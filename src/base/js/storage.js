@@ -5,23 +5,23 @@
  */
 
 /**
- * Storage handles all storage-specific tasks, such as updating data between versions and backing up and restoring data.
+ * Storage is a class that handles all storage-specific tasks, such as updating data between versions and backing up and restoring data.
  * It features additional helper methods, such as getting the browser name.
  *
  * TODO: Rename this because "Storage" is a reserved interface name. ("Store"?)
  */
-const Storage = (() => {
+class Storage {
 
   /**
-   * Variables
+   * Fields
    *
    * @param {string} ID_CHROME - the chrome extension id (used to help determine what browser this is)
    * @param {string} ID_EDGE - the edge extension id (used to help determine what browser this is)
    * @param {string} ID_FIREFOX - the firefox extension id (used to help determine what browser this is)
    */
-  const ID_CHROME = "gdnpnkfophbmbpcjdlbiajpkgdndlino";
-  const ID_EDGE = "fmdemgjiipojpgemeljnbaabjeinicba";
-  const ID_FIREFOX = "infy-scroll@webextensions";
+  static #ID_CHROME = "gdnpnkfophbmbpcjdlbiajpkgdndlino";
+  static #ID_EDGE = "fmdemgjiipojpgemeljnbaabjeinicba";
+  static #ID_FIREFOX = "infy-scroll@webextensions";
 
   /**
    * Gets the storage default values (SDV) of the extension.
@@ -32,12 +32,12 @@ const Storage = (() => {
    * @returns {Object} the storage default values object
    * @public
    */
-  function getStorageDefaultValues() {
+  static getStorageDefaultValues() {
     console.log("getStorageDefaultValues()");
     const version = chrome.runtime.getManifest().version;
     const date = new Date().toJSON();
-    const platformName = getPlatformName();
-    const browserName = getBrowserName();
+    const platformName = Storage.#getPlatformName();
+    const browserName = Storage.#getBrowserName();
     const _ = {};
     _.version = version;
     _.installVersion = version;
@@ -47,10 +47,10 @@ const Storage = (() => {
     _.browserName = browserName;
     _.platformName = platformName;
     _.on = true;
-    _.icon = "dark";
-    _.theme = "default";
+    _.icon = "system";
+    _.theme = "system";
+    _.themeVersion = false;
     _.buttonSize = 40;
-    _.versionTheme = false;
     _.tooltipsEnabled = true;
     _.extraInputs = false;
     _.preferredPathType = "selector";
@@ -90,20 +90,18 @@ const Storage = (() => {
     _.autoStart = false;
     _.lazyLoad = "auto";
     _.scrollDetection = "io";
-    _.scrollDetectionThrottle = 200;
     _.scrollBehavior = "auto";
     _.scrollUpdateAddress = platformName !== "mobile";
     _.scrollUpdateTitle = platformName !== "mobile";
-    _.scrollAppendThresholdPages = 0;
-    _.scrollAppendThresholdPixels = 500;
-    _.scrollAppendDelay = 2000;
-    _.scrollMaximumPages = 0;
-    _.scrollDivider = "element";
-    _.scrollDividerAlign = "center";
-    _.scrollDividerButtons = false;
-    _.scrollOverlay = false;
+    _.appendThreshold = 500;
+    _.appendDelay = 2000;
+    _.pageDivider = "element";
+    _.pageDividerAlign = "center";
+    _.pageDividerButtons = false;
+    _.pageOverlay = false;
     _.scrollIcon = true;
     _.scrollLoading = true;
+    _.maximumPages = 0;
     _.saves = [];
     _.savesEnabled = true;
     _.savesTemplate = { action: "next", append: "page", nextLink: "[rel='next']", keyword: true, name: "", url: "https://www.example.com", type: "pattern" };
@@ -131,9 +129,9 @@ const Storage = (() => {
     _.linksNewTabEnabled = true;
     _.customEventsEnabled = false;
     _.debugEnabled = false;
-    _.navigationBlacklist = [];
     _.stats = { actions: [0,0,0,0], appends: [0,0,0,0,0,0], elements: [0,0,0,0,0,0] };
-    _.statsEnabled = false;
+    _.statsEnabled = true;
+    _.navigationBlacklist = [];
     return _;
   }
 
@@ -143,13 +141,13 @@ const Storage = (() => {
    * @returns {string} the browser's name in all lowercase letters: "chrome", "edge", "firefox"
    * @private
    */
-  function getBrowserName() {
+  static #getBrowserName() {
     const chromeName = "chrome";
     const edgeName = "edge";
     const firefoxName = "firefox";
     // chrome.runtime.id
     const ID = typeof chrome !== "undefined" && chrome && chrome.runtime && chrome.runtime.id ? chrome.runtime.id : "";
-    let browserName = ID === ID_CHROME ? chromeName : ID === ID_EDGE ? edgeName : ID === ID_FIREFOX ? firefoxName : "";
+    let browserName = ID === Storage.#ID_CHROME ? chromeName : ID === Storage.#ID_EDGE ? edgeName : ID === Storage.#ID_FIREFOX ? firefoxName : "";
     let method = "chrome.runtime.id:" + ID;
     // navigator.userAgent (Note: navigator is still supported in Manifest V3 Service Worker)
     if (!browserName) {
@@ -167,7 +165,7 @@ const Storage = (() => {
    * @returns {string} the platform's name in all lowercase letters: "desktop", "mobile"
    * @private
    */
-  function getPlatformName() {
+  static #getPlatformName() {
     // Detect by examining extension API feature support (works for Firefox, but may not be reliable in unofficial Chromium builds?)
     // return !!(typeof chrome !== "undefined" && chrome.commands) ? "desktop" : "mobile";
     // navigator.userAgent (Note: navigator is still supported in Manifest V3 Service Worker)
@@ -182,9 +180,9 @@ const Storage = (() => {
    *
    * @public
    */
-  async function install() {
+  static async install() {
     console.log("install()");
-    const SDV = getStorageDefaultValues();
+    const SDV = Storage.getStorageDefaultValues();
     SDV.firstRun = true;
     await Promisify.storageClear();
     await Promisify.storageSet(SDV);
@@ -202,23 +200,23 @@ const Storage = (() => {
    * @returns {Promise<boolean>} true if the update/restore was successful, false otherwise
    * @public
    */
-  async function update(previousVersion, jsonData) {
+  static async update(previousVersion, jsonData) {
     console.log("update() - previousVersion=" + previousVersion + ", jsonData=" + jsonData);
     let successful = true;
     // Cache storage items in case of error along the way
     let currentItems;
     try {
       currentItems = await Promisify.storageGet(undefined, undefined, []);
-      await _restoreJson(jsonData);
-      await _02(previousVersion);
-      await _03(previousVersion);
-      await _04(previousVersion);
-      await _05(previousVersion);
-      await _06(previousVersion);
-      await _0606(previousVersion);
-      await _07(previousVersion);
-      await _08(previousVersion);
-      await _firstVersionRun(previousVersion, !!jsonData);
+      await Storage.#_restoreJson(jsonData);
+      await Storage.#_02(previousVersion);
+      await Storage.#_03(previousVersion);
+      await Storage.#_04(previousVersion);
+      await Storage.#_05(previousVersion);
+      await Storage.#_06(previousVersion);
+      await Storage.#_0606(previousVersion);
+      await Storage.#_07(previousVersion);
+      await Storage.#_08(previousVersion);
+      await Storage.#_firstVersionRun(previousVersion, !!jsonData);
     } catch (e) {
       console.log("update() - error encountered, rolling back storage to currentItems. Error:");
       console.log(e);
@@ -236,14 +234,14 @@ const Storage = (() => {
    * @param {Object} jsonData - the JSON data to restore
    * @private
    */
-  async function _restoreJson(jsonData) {
+  static async #_restoreJson(jsonData) {
     if (!jsonData) {
       return;
     }
     console.log("_restoreJson() - restoring JSON data ...");
     // Need to reacquire the browserName and platformName just in case the user is migrating data from a different browser or platform
-    jsonData.browserName = getBrowserName();
-    jsonData.platformName = getPlatformName();
+    jsonData.browserName = Storage.#getBrowserName();
+    jsonData.platformName = Storage.#getPlatformName();
     await Promisify.storageSet(jsonData);
     console.log(JSON.stringify(jsonData));
   }
@@ -256,7 +254,7 @@ const Storage = (() => {
    * @param {string} previousVersion - the previous version that is being updated to this version
    * @private
    */
-  async function _02(previousVersion) {
+  static async #_02(previousVersion) {
     if (previousVersion >= "0.2") {
       return;
     }
@@ -307,7 +305,7 @@ const Storage = (() => {
    * @param {string} previousVersion - the previous version that is being updated to this version
    * @private
    */
-  async function _03(previousVersion) {
+  static async #_03(previousVersion) {
     if (previousVersion >= "0.3") {
       return;
     }
@@ -349,7 +347,7 @@ const Storage = (() => {
    * @param {string} previousVersion - the previous version that is being updated to this version
    * @private
    */
-  async function _04(previousVersion) {
+  static async #_04(previousVersion) {
     if (previousVersion >= "0.4") {
       return;
     }
@@ -387,7 +385,7 @@ const Storage = (() => {
    * @param {string} previousVersion - the previous version that is being updated to this version
    * @private
    */
-  async function _05(previousVersion) {
+  static async #_05(previousVersion) {
     if (previousVersion >= "0.5") {
       return;
     }
@@ -425,7 +423,7 @@ const Storage = (() => {
    * @param {string} previousVersion - the previous version that is being updated to this version
    * @private
    */
-  async function _06(previousVersion) {
+  static async #_06(previousVersion) {
     if (previousVersion >= "0.6") {
       return;
     }
@@ -436,7 +434,7 @@ const Storage = (() => {
     // Storage Items changes - Increase button size if still using default 40px size, make scroll wrap first page false (see certain websites with iframe mode for why)
     await Promisify.storageSet({
       "version": "0.6",
-      "browserName": getBrowserName(),
+      "browserName": Storage.#getBrowserName(),
       "buttonSize": items && items.buttonSize && items.buttonSize !== 40 ? items.buttonSize : 50,
       "interfaceTheme": false,
       "dynamicSettings": false,
@@ -497,7 +495,7 @@ const Storage = (() => {
    * @param {string} previousVersion - the previous version that is being updated to this version
    * @private
    */
-  async function _0606(previousVersion) {
+  static async #_0606(previousVersion) {
     if (previousVersion >= "0.6.0.6") {
       return;
     }
@@ -520,7 +518,7 @@ const Storage = (() => {
    * @param {string} previousVersion - the previous version that is being updated to this version
    * @private
    */
-  async function _07(previousVersion) {
+  static async #_07(previousVersion) {
     if (previousVersion >= "0.7") {
       return;
     }
@@ -568,7 +566,7 @@ const Storage = (() => {
    * @param {string} previousVersion - the previous version that is being updated to this version
    * @private
    */
-  async function _08(previousVersion) {
+  static async #_08(previousVersion) {
     if (previousVersion >= "0.8") {
       return;
     }
@@ -595,24 +593,30 @@ const Storage = (() => {
       "scrollElementRule", "scrollElementType", "scrollElementIframe", "scrollElementInsertRule",
       "scrollLazyLoad", "scrollLazyLoadMode", "scrollLazyLoadAttributeSource", "scrollLazyLoadAttributeDestination",
       "scrollAppendScripts", "scrollAppendStyles",
-      "scrollHeightWait", "shuffleLimit", "shuffleStart", "autoAction", "pickerMinimize",
+      "scrollDetectionThrottle", "scrollAppendThresholdPixels", "scrollAppendThresholdPages", "scrollAppendDelay",
+      "scrollDivider", "scrollDividerAlign", "scrollHeightWait",
+      "shuffleLimit", "shuffleStart", "autoAction", "pickerMinimize",
       "currentVersion"
     ]);
     // Storage Items changes - new platformName property, reset buttonPath to "" as we should never save it (it's always different for every page), button properties
     await Promisify.storageSet({
       "version": "0.8",
-      // Keep the versions three characters for simplicity (e.g. 0.6.0.6 should become 0.6)
-      "installVersion": items.installVersion?.substring(0,3) || "0.8",
-      "platformName": getPlatformName(),
-      "icon": items.toolbarIcon || "dark",
-      "theme": "default",
-      "versionTheme": !!items.interfaceTheme,
+      // // Keep the versions three characters for simplicity (e.g. 0.6.0.6 should become 0.6)
+      // "installVersion": items.installVersion?.substring(0,3) || "0.8",
+      "platformName": Storage.#getPlatformName(),
+      "icon": items.toolbarIcon || "system",
+      "theme": "system",
+      "themeVersion": !!items.interfaceTheme,
       "preferredPathType": ["selector", "xpath"].includes(items.nextType) ? items.nextType : "selector",
       "buttonSize": typeof items.buttonSize !== "number" || items.buttonSize === 50 ? 40 : items.buttonSize,
       "scrollLoading": false,
-      "scrollDividerButtons": false,
-      "scrollDetectionThrottle": 200,
-      "append": items.scrollAppend || "page",
+      "appendThreshold": typeof items.scrollAppendThresholdPixels === "number" ? items.scrollAppendThresholdPixels : 500,
+      "appendDelay": typeof items.scrollAppendDelay === "number" ? items.scrollAppendDelay : 2000,
+      "pageDivider": typeof items.scrollDivider === "string" ? items.scrollDivider : "element",
+      "pageDividerAlign": typeof items.scrollDividerAlign === "string" ? items.scrollDividerAlign : "center",
+      "pageDividerButtons": false,
+      "pageOverlay": typeof items.scrollOverlay === "boolean" ? items.scrollOverlay : false,
+      "append": typeof items.scrollAppend === "string" ? items.scrollAppend : "page",
       "nextLinkProperty": ["href"],
       "prevLinkProperty": ["href"],
       "selectionStrategy": items.selectionPriority || "smart",
@@ -639,7 +643,8 @@ const Storage = (() => {
       "databaseMode": typeof items.databaseAutoActivate === "boolean" && !items.databaseAutoActivate ? "whitelist" : "blacklist",
       "databaseUpdate": typeof items.databaseAutoUpdate === "number" ? items.databaseAutoUpdate : 1,
       "debugEnabled": false,
-      "stats": { actions: [0,0,0,0], appends: [0,0,0,0,0,0], elements: [0,0,0,0,0,0] }
+      "stats": { actions: [0,0,0,0], appends: [0,0,0,0,0,0], elements: [0,0,0,0,0,0] },
+      "statsEnabled": false
     });
     // Next/Prev Selector XPath Double Quote to Single Quote
     if (items.nextSelector === "[rel=\"next\"]") {
@@ -983,7 +988,7 @@ const Storage = (() => {
   //  * @param {string} previousVersion - the previous version that is being updated to this version
   //  * @private
   //  */
-  // async function _09(previousVersion) {
+  // static async #_09(previousVersion) {
   //   if (previousVersion >= "0.9") {
   //     return;
   //   }
@@ -1005,7 +1010,7 @@ const Storage = (() => {
    * @param {boolean} skip - if this function should be skipped
    * @private
    */
-  async function _firstVersionRun(previousVersion, skip) {
+  static async #_firstVersionRun(previousVersion, skip) {
     // Only set firstVersionRun to true if the user is updating from a lower version and if skip is false (e.g. updating from Backup). This will get called every time the extension is reloaded so we don't want to keep setting it to true.
     if ((previousVersion >= chrome.runtime.getManifest().version) || skip) {
       return;
@@ -1014,11 +1019,4 @@ const Storage = (() => {
     await Promisify.storageSet({"firstVersionRun": true});
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    getStorageDefaultValues,
-    install,
-    update
-  };
-
-})();
+}

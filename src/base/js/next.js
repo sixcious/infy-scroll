@@ -11,24 +11,14 @@
  * 1. Path - Using a CSS Selector or XPath expression to find the link directly
  * 2. Keywords - Parsing the page for links that contain common next or prev keywords
  */
-const Next = (() => {
+class Next {
 
   /**
-   * Variables
+   * Fields
    *
    * @param {*} urls - the object of all url candidates for the next or previous link
    */
-  let urls;
-
-  /**
-   * Gets the declared variables. This can be used by other parts of the app or for debugging purposes.
-   *
-   * @returns {*} the variables
-   * @public
-   */
-  function get() {
-    return { urls };
-  }
+  static urls;
 
   /**
    * Finds the next or prev link using an instance and an array of potential documents and pages (convenience function).
@@ -41,9 +31,9 @@ const Next = (() => {
    * @returns {*} the next or prev url (if found) along with extra details used to find it or an error message
    * @public
    */
-  function findLinkWithInstance(instance, items, action, documents , pages ) {
+  static findLinkWithInstance(instance, items, action, documents , pages ) {
     console.log("findLinkWithInstance()");
-    return findLinkWithProperties(
+    return Next.findLinkWithProperties(
       instance[action + "LinkPath"],
       instance[action + "LinkType"],
       instance[action + "LinkProperty"],
@@ -75,7 +65,7 @@ const Next = (() => {
    * @returns {*} the next or prev url (if found) along with extra details used to find it or an error message
    * @public
    */
-  function findLinkWithProperties(path, type, property , keywordsEnabled, keywords, keywordObject, checkOtherKeywords, documents = [document], pages = [], currentURL, highlight = false) {
+  static findLinkWithProperties(path, type, property , keywordsEnabled, keywords, keywordObject, checkOtherKeywords, documents = [document], pages = [], currentURL, highlight = false) {
     console.log("findLinkWithProperties()");
     let result;
     for (const doc of documents) {
@@ -87,7 +77,7 @@ const Next = (() => {
         result = Next.findLink(path, type, property, keywordsEnabled, keywords, keywordObject, checkOtherKeywords, doc, highlight);
         // We purposely only accept the link if it is different than one we've already found
         // TODO: We may be still returning duplicate links sometimes with # params as the only difference, make a decision on this
-        result.duplicate = (result.url === currentURL) || !!(pages && pages.find(p => p.url === result.url));
+        result.duplicate = result.url && ((result.url === currentURL) || !!(pages?.find(p => p.url === result.url)));
         if (result.url && !result.duplicate) {
           break;
         }
@@ -109,20 +99,20 @@ const Next = (() => {
    *
    * @param {string} path - the selector, xpath, or js path
    * @param {string} type - the path type to use ("selector", "xpath") or context ("document", "shadow", "iframe")
-   * @param {string[]} property - the array of properties to use e.g. ["href"] or ["parentNode", "href"] for nested properties like parentNode.href
+   * @param {string} property - the property to use ("href" in most cases, or a dot-delimited string like "parentNode.href" for nested properties)
    * @param {boolean} keywordsEnabled - whether to use the next or prev keywords as a fallback to the selector/xpath expression
    * @param {string[]} keywords - the next or prev keywords list to use, ordered and sorted in priority
-   * @param {Object} keywordObject - the static keyword object to use for this instance's pages
+   * @param {string} keywordStatic - the static keyword object to use for this instance's pages
    * @param {boolean} checkOtherKeywords - if this is the first page or not in order to determine whether we should fallback to other keywords (true or false)
    * @param {Document} doc - (optional) Infy Scroll only: the current document on the page to query
    * @param {boolean} highlight - whether to highlight the next/prev element
    * @returns {*} the next or prev url (if found) along with extra details used to find it or an error message
    * @public
    */
-  function findLink(path, type, property = ["href"], keywordsEnabled, keywords, keywordObject, checkOtherKeywords, doc = document, highlight = false) {
-    console.log("findLink() - path=" + path + ", type=" + type + ", property=" + property + ", keywordsEnabled=" + keywordsEnabled + ", keywords=" + keywords + ", keywordObject=" + keywordObject + ", checkOtherKeywords=" + checkOtherKeywords + ", doc=" + doc + ", highlight=" + highlight);
+  static findLink(path, type, property = ["href"], keywordsEnabled, keywords, keywordStatic, checkOtherKeywords, doc = document, highlight = false) {
+    console.log("findLink() - path=" + path + ", type=" + type + ", property=" + property + ", keywordsEnabled=" + keywordsEnabled + ", keywords=" + keywords + ", keywordStatic=" + keywordStatic + ", checkOtherKeywords=" + checkOtherKeywords + ", doc=" + doc + ", highlight=" + highlight);
     // The urls object stores the Path URL (selector or xpath), and Keywords URLs (self/child/parent attribute and innerText)
-    urls = {
+    Next.urls = {
       "path": undefined,
       "keywords": {
         "self": {
@@ -157,25 +147,25 @@ const Next = (() => {
     ];
     // Stores the exception or error message in order to return it back to the user for feedback (e.g. invalid selector)
     const details = { error: undefined };
-    checkPath(path, type, property, doc, details);
+    Next.#checkPath(path, type, property, doc, details);
     // If a URL was found using the selector or xpath path, return it (minus the element)
-    if (urls.path) {
-      console.log("findLink() - found a URL using the " + urls.path.method + " path " + urls.path.path + ": " + urls.path.url);
-      highlightElement(urls.path.element, highlight);
-      return { "url": urls.path.url, "method": urls.path.method, "path": urls.path.path, "element": urls.path.element.elementName };
+    if (Next.urls.path) {
+      console.log("findLink() - found a URL using the " + Next.urls.path.method + " path " + Next.urls.path.path + ": " + Next.urls.path.url);
+      Next.#highlightElement(Next.urls.path.element, highlight);
+      return { "url": Next.urls.path.url, "method": Next.urls.path.method, "path": Next.urls.path.path, "element": Next.urls.path.element.elementName };
     }
     // keywordsEnabled can be either: true, false, or undefined (we don't store keywordsEnabled in the storage items, so it's undefined there!)
     // If keywordsEnabled is true OR if keywordsEnabled is undefined (i.e. we don't know yet as this is our first time checking), check keywords and return the result if found
     if (keywords && (keywordsEnabled || keywordsEnabled === undefined)) {
-      checkKeywords(keywords, doc, details);
+      Next.#checkKeywords(keywords, doc, details);
       console.log("findLink() - found the following next/prev URLs via keywords (no path match):");
-      console.log(urls);
-      if (keywordObject) {
+      console.log(Next.urls);
+      if (keywordStatic) {
         let value;
         try {
-          // keywordObject Array: 0=relationship, 1=type, 2=subtype, 3=keyword
-          const ko = keywordObject.split(" ");
-          value = urls.keywords[ko[0]][ko[1]][ko[2]].get(ko[3]);
+          // keywordStatic Array: 0=relationship, 1=type, 2=subtype, 3=keyword
+          const ks = keywordStatic.split(" ");
+          value = Next.urls.keywords[ks[0]][ks[1]][ks[2]].get(ks[3]);
         } catch (e) {
           console.log("findLink() - Error parsing keywordObject, Error:");
           console.log(e);
@@ -183,17 +173,17 @@ const Next = (() => {
         if (value) {
           console.log("findLink() - returning keywordObject url:" + value.url);
           console.log(value);
-          highlightElement(value.element, highlight);
-          return { "url": value.url, "method": "keyword", "keywordObject": keywordObject, "element": value.elementName, "attribute": value.attribute };
+          Next.#highlightElement(value.element, highlight);
+          return { "url": value.url, "method": "keyword", "keywordObject": keywordStatic, "element": value.elementName, "attribute": value.attribute };
         }
       }
       // We only want to fallback to other keywords if the keywordObject doesn't exist or if this is the first page in the series
-      if (!keywordObject || checkOtherKeywords) {
+      if (!keywordStatic || checkOtherKeywords) {
         for (const algorithm of algorithms) {
-          const result = traverseURLs(algorithm.relationship, algorithm.type, algorithm.subtypes, keywords, highlight);
+          const result = Next.#traverseURLs(algorithm.relationship, algorithm.type, algorithm.subtypes, keywords, highlight);
           if (result) {
             // If this keyword isn't the same as the original keyword, we need to explicitly mention this by suffixing -alternate to the method
-            if (keywordObject && checkOtherKeywords) {
+            if (keywordStatic && checkOtherKeywords) {
               result.method += "-alternate";
             }
             console.log("findLink() - returning keywordObject url:");
@@ -218,7 +208,7 @@ const Next = (() => {
    * @param {Object} details - the details object that stores details about this action, such as error messages that were caught
    * @private
    */
-  function checkPath(path, type, property, doc, details) {
+  static #checkPath(path, type, property, doc, details) {
     try {
       const result = DOMNode.getElement(path, type, "first", doc);
       if (result.error) {
@@ -258,7 +248,7 @@ const Next = (() => {
       // Fix the Link before testing if it's valid
       url = Util.fixURL(url);
       if (Util.isValidURL(url, "next-prev", details)) {
-        urls.path = { "url": url, "method": type, "path": path + "." + property.join(".") + (defaultProperty ? chrome.i18n.getMessage("next_prev_default_property") : ""), "element": element };
+        Next.urls.path = { "url": url, "method": type, "path": path + "." + property.join(".") + (defaultProperty ? chrome.i18n.getMessage("next_prev_default_property") : ""), "element": element };
       }
     } catch (e) {
       console.log("checkPath() - Exception caught when querying for selector or evaluating xpath. Error:");
@@ -276,7 +266,7 @@ const Next = (() => {
    * @param {Object} details - the details object that stores details about this action, such as error messages that were caught
    * @private
    */
-  function checkKeywords(keywords, doc, details) {
+  static #checkKeywords(keywords, doc, details) {
     // const startTime = performance.now();
     // TODO: Just check [href] regardless of element tag names?
     const elements = doc.querySelectorAll("link[href], a[href], area[href], form[action], button[formaction]");
@@ -290,21 +280,21 @@ const Next = (() => {
         // Make sure we check if this URL has a valid extension when we're checking keywords!
         if (Util.isValidURL(url, "next-prev", details) && Util.isValidExtension(url, "next-prev", details)) {
           // Check the actual element first
-          checkElement(keywords, url, elementName, element, "self");
+          Next.#checkElement(keywords, url, elementName, element, "self");
           // Check the parent element. Sometimes the anchor is wrapped inside another element (like a li) with the keyword
           const parent = element.parentNode;
           if (parent && parent.nodeName) {
             // Don't check super-root parents like html, head, and body
             const parentName = parent.nodeName.toLowerCase();
             if (parentName !== "html" && parentName !== "head" && parentName !== "body") {
-              checkElement(keywords, url, elementName, parent, "parent");
+              Next.#checkElement(keywords, url, elementName, parent, "parent");
             }
           }
           // Check the children (i.e. the element's innerHTML) except for forms (they're much too big and have too many children!)
           // TODO: Use childNodes instead of children? children only looks at elements, whereas childNodes includes text nodes
           const children = element.children;
           if (children && children.length > 0 && elementName !== "form") {
-            checkChildElements(keywords, url, elementName, children, 1);
+            Next.#checkChildElements(keywords, url, elementName, children, 1);
           }
           // TODO: Check element.nextSibling? May be TOO aggressive and error-prone
         }
@@ -329,13 +319,13 @@ const Next = (() => {
    * @param {number} level - the current children depth level, e.g. first-level children, second-level children, ... up to a hard-coded max
    * @private
    */
-  function checkChildElements(keywords, url, elementName, children, level) {
+  static #checkChildElements(keywords, url, elementName, children, level) {
     // console.log("checkChildElements() - elementName=" + elementName + " children.length=" + (children ? children.length : "undefined")  + ", level=" + level);
     for (const child of children) {
-      checkElement(keywords, url, elementName, child, "child");
+      Next.#checkElement(keywords, url, elementName, child, "child");
       // Recursively check only 10 levels down
       if (child && child.children && child.children.length > 0 && level < 10) {
-        checkChildElements(keywords, url, elementName, child.children, level + 1);
+        Next.#checkChildElements(keywords, url, elementName, child.children, level + 1);
       }
     }
   }
@@ -351,18 +341,18 @@ const Next = (() => {
    * @param {string} relationship - the algorithm element relationship to use ("self", "child", or "parent")
    * @private
    */
-  function checkElement(keywords, url, elementName, element, relationship) {
+  static #checkElement(keywords, url, elementName, element, relationship) {
     if (element) {
       for (const attribute of element.attributes) {
         if (attribute && attribute.nodeValue && attribute.nodeName) {
-          parseText(keywords, "attribute", url, attribute.nodeValue.replace(/\s|-|_/g, "").toLowerCase(), elementName, element, attribute.nodeName.toLowerCase(), relationship);
+          Next.#parseText(keywords, "attribute", url, attribute.nodeValue.replace(/\s|-|_/g, "").toLowerCase(), elementName, element, attribute.nodeName.toLowerCase(), relationship);
         }
       }
       if (element.innerText) {
-        parseText(keywords, "innerText", url, element.innerText.replace(/\s|-|_/g, "").toLowerCase(), elementName, element, undefined, relationship);
+        Next.#parseText(keywords, "innerText", url, element.innerText.replace(/\s|-|_/g, "").toLowerCase(), elementName, element, undefined, relationship);
       }
       // TODO: Also check other properties like background-image using window.getComputedStyle()? However, we can't use getComputedStyle() unless the element is already in the DOM...
-      // parseText(keywords, "backgroundImage", url, element.ownerDocument.defaultView.getComputedStyle(element).backgroundImage.replace(/\s/g, "").toLowerCase(), elementName, element, undefined, relationship);
+      // Next.#parseText(keywords, "backgroundImage", url, element.ownerDocument.defaultView.getComputedStyle(element).backgroundImage.replace(/\s/g, "").toLowerCase(), elementName, element, undefined, relationship);
     }
   }
 
@@ -380,18 +370,18 @@ const Next = (() => {
    * @param {string} relationship - the algorithm element relationship to use ("self", "child", or "parent")
    * @private
    */
-  function parseText(keywords, type, url, text, elementName, element, attribute, relationship) {
+  static #parseText(keywords, type, url, text, elementName, element, attribute, relationship) {
     const value = { url: url, element: element, elementName: elementName, attribute: attribute, relationship: relationship };
     for (const keyword of keywords) {
       // Don't bother optimizing this by first checking includes. equals/startsWith/endsWith will all fail early in implementation.
       if (text === keyword) {
-        urls.keywords[relationship][type]["equals"].set(keyword, value);
+        Next.urls.keywords[relationship][type]["equals"].set(keyword, value);
       } else if (text.startsWith(keyword)) {
-        urls.keywords[relationship][type]["startsWith"].set(keyword, value);
+        Next.urls.keywords[relationship][type]["startsWith"].set(keyword, value);
       } else if (text.endsWith(keyword)) {
-        urls.keywords[relationship][type]["endsWith"].set(keyword, value);
+        Next.urls.keywords[relationship][type]["endsWith"].set(keyword, value);
       } else if (text.includes(keyword)) {
-        urls.keywords[relationship][type]["includes"].set(keyword, value);
+        Next.urls.keywords[relationship][type]["includes"].set(keyword, value);
       }
       // Regex:
       // if (keyword.startsWith("/") && keyword.endsWith("/") && new RegExp(keyword.slice(1,-1)).test(text)) {
@@ -411,13 +401,13 @@ const Next = (() => {
    * @returns {*} the next or prev url (if found) along with the subtype and keyword that was used to find it
    * @private
    */
-  function traverseURLs(relationship, type, subtypes, keywords, highlight) {
+  static #traverseURLs(relationship, type, subtypes, keywords, highlight) {
     for (const keyword of keywords) {
       for (const subtype of subtypes) {
-        if (urls.keywords[relationship][type][subtype].has(keyword)) {
-          const value = urls.keywords[relationship][type][subtype].get(keyword);
+        if (Next.urls.keywords[relationship][type][subtype].has(keyword)) {
+          const value = Next.urls.keywords[relationship][type][subtype].get(keyword);
           console.log("traverseResults() - a next/prev link was found:" + relationship + " - " +  type + " - " + subtype + " - " + keyword + " - " + value.elementName + " - " + value.attribute + " - " + value.url);
-          highlightElement(value.element, highlight);
+          Next.#highlightElement(value.element, highlight);
           const keywordObject = relationship + " " + type + " " + subtype + " " + keyword;
           return { url: value.url, method: "keyword", keywordObject: keywordObject, element: value.elementName, attribute: value.attribute };
         }
@@ -433,7 +423,7 @@ const Next = (() => {
    * @param {boolean} highlight - true if this element should be highlighted, false otherwise
    * @private
    */
-  function highlightElement(element, highlight) {
+  static #highlightElement(element, highlight) {
     try {
       if (highlight && typeof HoverBox !== "undefined") {
         new HoverBox().highlightElement(element, true);
@@ -444,12 +434,4 @@ const Next = (() => {
     }
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    get,
-    findLink,
-    findLinkWithProperties,
-    findLinkWithInstance
-  };
-
-})();
+}

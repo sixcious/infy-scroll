@@ -10,7 +10,19 @@
  * An "instance" is simply an object that contains the properties needed for a specific tab. Each tab in the browser
  * has its own instance object.
  */
-const Instance = (() => {
+class Instance {
+
+  /**
+   * Fields
+   *
+   * @param {string[]} - the option screen's keys for the instance (used by Saves and Database items).
+   */
+  static OPTION_KEYS = [
+    "scrollDetection", "scrollBehavior", "scrollUpdateAddress", "scrollUpdateTitle", "appendThreshold", "appendDelay",
+    "pageDivider", "pageDividerAlign", "pageDividerButtons", "pageOverlay",
+    "scrollIcon", "scrollLoading", "color", "maximumPages",
+    "customScriptsEnabled", "resizeMediaEnabled", "linksNewTabEnabled", "customEventsEnabled", "debugEnabled",
+  ];
 
   /**
    * Builds an instance with initial values from a source (either a save, database, or the default storage items).
@@ -21,7 +33,7 @@ const Instance = (() => {
    * @returns {Object} the instance
    * @public
    */
-  async function buildInstance(tab, items, checks) {
+  static async buildInstance(tab, items, checks) {
     console.log("buildInstance() - checks=" + checks);
     // Multiple checks, up to 5 seconds after document.idle
     const CHECK_VALUES = [0, 1000, 2000, 2000];
@@ -34,7 +46,7 @@ const Instance = (() => {
     let spa;
     // Check Saves (Test savesEnabled strictly for false to make sure the key actually exists)
     if (items.saves && Array.isArray(items.saves) && items.saves.length > 0 && items.savesEnabled !== false) {
-      const check = checkSaves(tab, items, source, checks === CHECK_VALUES.length);
+      const check = Instance.#checkSaves(tab, items, source, checks === CHECK_VALUES.length);
       source = check.source;
       items = check.items;
       spa = check.spa;
@@ -42,18 +54,16 @@ const Instance = (() => {
     }
     // Check DatabaseIS (Only if source.via is still items)
     if ((source.via === "items" || source.via === "placeholder") && items.databaseIS && Array.isArray(items.databaseIS) && items.databaseIS.length > 0) {
-      const check = checkDatabaseIS(tab, items, source, checks === CHECK_VALUES.length);
+      const check = Instance.#checkDatabaseIS(tab, items, source, checks === CHECK_VALUES.length);
       source = check.source;
       items = check.items;
       spa = spa || check.spa;
       console.log("buildInstance() - after checking databaseIS, spa=" + spa);
     }
     // Check DatabaseAP (Only if source.via is still items)
-    // Commenting out the below line because I think this was before we started filtering the items.databaseAP from the first check, but we can still check late activation with the filtered items
-    // if (!checks && (source.via === "items" || source.via === "placeholder") && items.databaseAP && Array.isArray(items.databaseAP) && items.databaseAP.length > 0) {
     if ((source.via === "items" || source.via === "placeholder") && items.databaseAP && Array.isArray(items.databaseAP) && items.databaseAP.length > 0) {
       // disregardActivate is always false because there are generic database URLs that are longer than 13 characters e.g. ^https?://(www\.)?.+\.com/
-      const check = checkDatabaseAP(tab, items, source, false);
+      const check = Instance.#checkDatabaseAP(tab, items, source, false);
       source = check.source;
       items = check.items;
       spa = spa || check.spa;
@@ -63,13 +73,13 @@ const Instance = (() => {
     if ((source.via === "items" || source.via === "placeholder") && typeof checks === "number" && checks >= 1 && checks < CHECK_VALUES.length) {
       console.log("buildInstance() - no Saved URL or Database URL found, retrying after " + CHECK_VALUES[checks] + "ms ...");
       await Promisify.sleep(CHECK_VALUES[checks]);
-      return buildInstance(tab, items, checks + 1);
+      return Instance.buildInstance(tab, items, checks + 1);
     }
     // Prepopulate the selection to increment/decrement
     // Note: Saved URL Exact will already have the selection set and Database Found will already have the next object for nextLinkKeywordsEnabled
     // TODO: For better efficiency, we should look at moving this to when we have to activate an instance so that we don't do it on every page load
     source.selection = source.selection || Increment.findSelection(tab.url, source.selectionStrategy, source.selectionCustom);
-    const instance = createInstance(tab, items, source, spa);
+    const instance = Instance.#createInstance(tab, items, source, spa);
     // Store the items in the instance temporarily for callers that need them
     instance.items = items;
     return instance;
@@ -82,7 +92,9 @@ const Instance = (() => {
    * @param {string} direction - either "source>instance" (e.g. when checking a save) or "instance>source" (e.g. when saving an instance)
    * @public
    */
-  function translateInstance(source, direction="source>instance") {
+  static translateInstance(source, direction="source>instance") {
+    // console.log("translateInstance(), before translation, source=");
+    // console.log(source);
     // Step 1: Determine the action and append (these are optional in Database items)
     if (!source.action) {
       let action;
@@ -121,6 +133,12 @@ const Instance = (() => {
       //     source[boolean] = source[boolean] === "true";
       //   }
       // }
+      // const arrays = ["puppet"];
+      // for (const array of arrays) {
+      //   if (typeof source[array] === "string") {
+      //     source[array] = JSON.parse(array);
+      //   }
+      // }
     } catch (e) {
       console.log("translateInstance() - Error converting strings to objects:")
       console.log(e);
@@ -141,7 +159,7 @@ const Instance = (() => {
       ["disableRemoveElement", "disableRemoveElementPath"],
       ["scrollIframe", "scrollIframeEnabled"]
     ]);
-    // Note: We use hasOwnProperty in case the value is truthy (e.g. false) and instead of in because in goes up to the Object prototype properties, which we don't care about
+    // Note: We use hasOwnProperty in case the value is truthy (e.g. false) and "for of" instead of "for in" because in goes up to the Object prototype properties, which we don't care about
     if (direction === "source>instance") {
       for (const [key, value] of translations) {
         if (source.hasOwnProperty(key)) {
@@ -162,22 +180,8 @@ const Instance = (() => {
         }
       }
     }
-  }
-
-  /**
-   * Gets all the option screen's keys for the instance (used by Saves and Database items).
-   *
-   * @returns {string[]} the instance option keys
-   * @public
-   */
-  function getInstanceOptionKeys() {
-    return [
-      "scrollDetection", "scrollBehavior", "scrollUpdateAddress", "scrollUpdateTitle",
-      "scrollAppendThresholdPixels", "scrollAppendThresholdPages", "scrollAppendDelay", "scrollMaximumPages",
-      "scrollDivider", "scrollDividerAlign", "scrollDividerButtons", "scrollOverlay", "scrollIcon", "scrollLoading",
-      "customScriptsEnabled", "resizeMediaEnabled", "linksNewTabEnabled", "customEventsEnabled", "debugEnabled",
-      "color"
-    ];
+    // console.log("translateInstance(), after translation, source=");
+    // console.log(source);
   }
 
   /**
@@ -190,10 +194,10 @@ const Instance = (() => {
    * @returns {Object} the newly built instance
    * @private
    */
-  function createInstance(tab, items, source, spa) {
+  static #createInstance(tab, items, source, spa) {
     // Return the newly built instance using tab, items, and source (scrollEnabled for Infy-specific logic in shared JS)
     const _ = {};
-    _.enabled = items.on && !!(source.saveActivate || source.databaseActivate);
+    _.enabled = items.on && source.activate && (source.via !== "database" || source.databaseActivate);
     _.scrollEnabled = true;
     _.autoEnabled = false;
     _.multiEnabled = false;
@@ -243,12 +247,12 @@ const Instance = (() => {
     _.nextLinkType = source.nextLinkTypeDetected || items.preferredPathType;
     _.nextLinkProperty = source.nextLinkProperty || items.nextLinkProperty;
     _.nextLinkKeywordsEnabled = source.via !== "items" ? !!source.nextLinkKeywordsEnabled : undefined;
-    _.nextLinkKeyword = source.action === "next" ? source.nextLinkKeyword : undefined;
+    _.nextLinkKeyword = source.action === "next" ? source.nextLinkKeywordDetected : undefined;
     _.prevLinkPath = source.prevLinkPath || items.prevLinkPath;
     _.prevLinkType = source.prevLinkTypeDetected || items.preferredPathType;
     _.prevLinkProperty = source.prevLinkProperty || items.prevLinkProperty;
     _.prevLinkKeywordsEnabled = source.via !== "items" ? !!source.prevLinkKeywordsEnabled : undefined;
-    _.prevLinkKeyword = source.action === "prev" ? source.prevLinkKeyword : undefined;
+    _.prevLinkKeyword = source.action === "prev" ? source.prevLinkKeywordDetected : undefined;
     _.buttonPath = source.buttonPath || "";
     _.buttonType = source.buttonTypeDetected || items.preferredPathType;
     _.buttonDetection = typeof source.buttonPosition !== "undefined" && source.via !== "items" ? "manual" : "auto";
@@ -256,6 +260,7 @@ const Instance = (() => {
     _.list = source.list || [];
     // _.listOptions = source.listOptions || false;
     _.iframePageOne = !!source.iframePageOne;
+    _.iframeResize = typeof source.iframeResize === "boolean" ? source.iframeResize : true;
     _.mediaType = source.mediaType || items.mediaType;
     _.pageElementPath = source.pageElementPath || "";
     _.pageElementType = source.pageElementTypeDetected || items.preferredPathType;
@@ -288,16 +293,18 @@ const Instance = (() => {
     _.lazyLoadSource = source.lazyLoadSource || "data-src";
     _.lazyLoadDestination = source.lazyLoadDestination || "src";
     _.mirrorPage = source.mirrorPage;
+    _.puppet = source.puppet;
     // Note: spaf is only used by database sources so we don't need to save it
     _.spa = spa;
     _.transferNode = source.transferNode;
     _.transferNodeMode = _.transferNode || (_.append === "ajax" ? "import" : "adopt");
+    _.comment = source.comment;
     // Types (Auto or Fixed)
     for (const type of ["nextLinkType", "prevLinkType", "buttonType", "pageElementType"]) {
       _[type + "Mode"] = source[type + "Mode"] || "auto";
     }
     // Instance Option Keys
-    for (const key of getInstanceOptionKeys()) {
+    for (const key of Instance.OPTION_KEYS) {
       // If the source isn't the storage items (save/database), we prefix it with "_" and store it in the instance so that we can see them if we re-save it in Saves
       if (source.via !== "items" && source.hasOwnProperty(key)) {
         _["_" + key] = source[key];
@@ -309,10 +316,10 @@ const Instance = (() => {
     _.color = _.color || "#55555F"
     // Make the threshold be 100 for click button, including both ajax modes; in the case of iframe, this also buys us extra time to scroll
     // the iframe, and in the case of native, if some of the bottom content hasn't loaded before the button has been clicked, this is necessary
-    _.scrollAppendThresholdPixels = source.action === "click" ? 100 : _.scrollAppendThresholdPixels;
-    // _.scrollAppendDelay = source.action === "click" ? _.scrollAppendDelay + 1000 : _.scrollAppendDelay;
-    _.scrollDividerGrid = 0;
-    _.scrollDividerGridParentModified = false;
+    _.appendThreshold = source.action === "click" ? 100 : _.appendThreshold;
+    // _.appendDelay = source.action === "click" ? _.appendDelay + 1000 : _.appendDelay;
+    _.pageDividerGrid = 0;
+    _.pageDividerGridParentModified = false;
     _.scrollbarExists = false;
     _.scrollbarAppends = 0;
     _.scrollbarHeight = 0;
@@ -332,6 +339,7 @@ const Instance = (() => {
     _.picker = "";
     _.pickerEnabled = false;
     _.pickerSet = false;
+    _.popupOpened = false;
     // Document Type depends on append mode and action combination.
     _.documentType =
       (_.append === "element" && _.action === "click") || (_.append === "none") || (_.append === "ajax" && _.ajaxMode === "native") ? "top" :
@@ -376,7 +384,7 @@ const Instance = (() => {
       console.log("createInstance() - error generating random number and string. Error:");
       console.log(e);
     }
-    // We need to check Bing Search specifically because it doesn't like us using a li divider in its ol parent (we check this later in Scroll.appendDivider())
+    // We need to check Bing Search specifically because it doesn't like us using a li divider in its ol parent (we check this later in Append.appendDivider())
     try {
       _.isBingSearchURL = new RegExp(String.raw`^https?://(?:www|cnweb)4?\.bing\.com/(?:[^/]+/)*?(?:results\.aspx|search)`).test(tab.url);
     } catch (e) {
@@ -404,7 +412,7 @@ const Instance = (() => {
    * @returns {{source: Object, items: Object, spa: string}} the modified source if it matched this URL, the updated items, and resolved spa
    * @private
    */
-  function checkSaves(tab, items, source, disregardActivate) {
+  static #checkSaves(tab, items, source, disregardActivate) {
     console.log("checkSaves()");
     let spa = undefined;
     for (let i = 0; i < items.saves.length; i++) {
@@ -412,7 +420,7 @@ const Instance = (() => {
       // Check SPA now before the break in for loop if activate passes
       // Note: isSpa gets reset to false on each iteration for each save whereas spa saves the last actual spa URL for all saves checked (needed for the popup in case the user tries to re-save the URL to keep their spa URL)
       let isSpa = false;
-      if (checkSpa(save.spa, save.spaf, items.browserName, tab.url)) {
+      if (Instance.#checkSpa(save.spa, save.spaf, items.browserName, tab.url)) {
         spa = save.spa || save.spaf;
         isSpa = true;
       }
@@ -421,8 +429,8 @@ const Instance = (() => {
         console.log("checkSaves() - save matches this tab's URL, checking for activation... save=");
         console.log(save);
         // Translate the save to the instance keys before checking for activation
-        translateInstance(save);
-        const activate = checkActivate(tab, items, save);
+        Instance.translateInstance(save);
+        const activate = Instance.#checkActivate(tab, items, save);
         // Saves only: We need a placeholder if it fails activation in case the user clicks the Popup early
         // If source.via becomes placeholder, we don't check the other saves unless they have passed activation
         if (activate || disregardActivate || source.via === "items") {
@@ -431,11 +439,11 @@ const Instance = (() => {
           console.log(save);
           source = save;
           source.via = isPlaceholder ? "placeholder" : "save";
+          source.activate = activate;
           source.saveURL = save.url;
           source.saveType = save.type || "regex";
           source.saveID = save.id;
           source.saveName = save.name;
-          source.saveActivate = activate;
           source.saveFound = true;
           // Use Save's selection if this is an exact URL save; otherwise calculate the selection as normal later
           if (save.type === "exact" && result.selection) {
@@ -468,7 +476,7 @@ const Instance = (() => {
    * @returns {{source: Object, items: Object, spa: string}} the modified source if it matched this URL, the updated items, and resolved spa
    * @private
    */
-  function checkDatabaseIS(tab, items, source, disregardActivate) {
+  static #checkDatabaseIS(tab, items, source, disregardActivate) {
     console.log("checkDatabaseIS()");
     let spa = undefined;
     for (let i = 0; i < items.databaseIS.length; i++) {
@@ -476,7 +484,7 @@ const Instance = (() => {
       // Check SPA now before the break in for loop if activate passes
       // Note: isSpa gets reset to false on each iteration for each save whereas spa saves the last actual spa URL for all saves checked (needed for the popup in case the user tries to re-save the URL to keep their spa URL)
       let isSpa = false;
-      if (checkSpa(is.spa, is.spaf, items.browserName, tab.url)) {
+      if (Instance.#checkSpa(is.spa, is.spaf, items.browserName, tab.url)) {
         spa = is.spa || is.spaf;
         isSpa = true;
       }
@@ -485,16 +493,17 @@ const Instance = (() => {
         console.log("checkDatabaseIS() - item matches this tab's URL, checking for activation... item=");
         console.log(is);
         // Translate the database to the instance keys before checking for activation
-        translateInstance(is);
-        const activate = checkActivate(tab, items, is);
+        Instance.translateInstance(is);
+        const activate = Instance.#checkActivate(tab, items, is);
         if (activate || disregardActivate) {
-          console.log("checkDatabaseIS() - item activation passed for this tab's URL, item=");
+          console.log("checkDatabaseIS() - item activation passed for this tab's URL, disregardActivate=" + disregardActivate + ", item=");
           console.log(is);
           source = is;
           source.via = "database";
+          source.activate = activate;
           source.saveURL = is.url;
           source.saveType = is.type || "regex";
-          const check = checkDatabaseActivate(tab, items, is.url);
+          const check = Instance.#checkDatabaseActivate(tab, items, is.url);
           source.databaseActivate = check.databaseActivate;
           source.databaseBlacklisted = check.databaseBlacklisted;
           source.databaseWhitelisted = check.databaseWhitelisted;
@@ -532,7 +541,7 @@ const Instance = (() => {
    * @returns {{source: Object, items: Object, spa: string}} the modified source if it matched this URL, the updated items, and resolved spa
    * @private
    */
-  function checkDatabaseAP(tab, items, source, disregardActivate) {
+  static #checkDatabaseAP(tab, items, source, disregardActivate) {
     console.log("checkDatabaseAP()");
     let spa = undefined;
     for (let i = 0; i < items.databaseAP.length; i++) {
@@ -540,7 +549,7 @@ const Instance = (() => {
       // Check SPA now before the break in for loop if activate passes
       // Note: isSpa gets reset to false on each iteration for each save whereas spa saves the last actual spa URL for all saves checked (needed for the popup in case the user tries to re-save the URL to keep their spa URL)
       let isSpa = false;
-      if (checkSpa(ap.spa, ap.spaf, items.browserName, tab.url)) {
+      if (Instance.#checkSpa(ap.spa, ap.spaf, items.browserName, tab.url)) {
         spa = ap.spa || ap.spaf;
         isSpa = true;
       }
@@ -548,7 +557,7 @@ const Instance = (() => {
         ap.type = "regex";
         const result = Saves.matchesSave(tab.url, ap);
         if (result && result.matches) {
-          console.log("checkDatabaseAP() - item matches this tab's URL, checking for activation... item=");
+          console.log("checkDatabaseAP() - item activation passed for this tab's URL, disregardActivate=" + disregardActivate + ", item=");
           console.log(ap);
           // Disregard activating the nextLink and pageElement requirements if this is the last check to allow the user to see the Database URL (ignore generic URLs whose length is small)
           if (disregardActivate) {
@@ -561,20 +570,24 @@ const Instance = (() => {
           ap.append = "element";
           ap.nextLinkType = "xpath";
           ap.pageElementType = "xpath";
-          ap.nextLinkKeywordsEnabled = false;
+          // ap.nextLinkKeywordsEnabled = false;
           ap.url = items.databaseAP[i].url;
           ap.nextLink = items.databaseAP[i].nextLink;
           ap.pageElement = items.databaseAP[i].pageElement;
           ap.resource_url = items.databaseAP[i].resource_url;
           ap.updated_at = items.databaseAP[i].updated_at;
-          translateInstance(ap);
-          const activate = checkActivate(tab, items, ap);
+          Instance.translateInstance(ap);
+          // // We place the type assignments after translateInstance() to keep them from being Fixed to xpath; they will still be treated as xpath in checkActivate()
+          // ap.nextLinkType = "xpath";
+          // ap.pageElementType = "xpath";
+          const activate = Instance.#checkActivate(tab, items, ap);
           if (activate || disregardActivate) {
             console.log("checkDatabaseAP() - item activation passed for this tab's URL, item=");
             console.log(ap);
             source = ap;
             source.via = "database";
-            const check = checkDatabaseActivate(tab, items, ap.url);
+            source.activate = activate;
+            const check = Instance.#checkDatabaseActivate(tab, items, ap.url);
             source.databaseURL = ap.url;
             source.databaseResourceURL = ap.resource_url;
             source.databaseUpdatedAt = ap.updated_at;
@@ -624,7 +637,7 @@ const Instance = (() => {
    * @returns {boolean} true if this source passes all activation checks, false otherwise
    * @private
    */
-  function checkActivate(tab, items, source) {
+  static #checkActivate(tab, items, source) {
     // We now need to determine whether we should auto-activate based on the action and append mode
     let activate = false;
     const action = source.action;
@@ -635,13 +648,14 @@ const Instance = (() => {
       // Important: We declare a new property for the source called "TypeDetected" instead of overriding its "Type"  with the detected type because
       // in subsequent checks, we don't want the source type to be defined if it wasn't already, or else it will be a considered
       // a fixed type (e.g. late activation, or on checks > 1)
+      // We do the same thing for "KeywordDetected" for the same reason
       source[action + "LinkTypeDetected"] = source[action + "LinkType"] || DOMPath.determinePathType(source[action + "LinkPath"], items.preferredPathType).type;
       // Note that we intentionally convert undefined save[action +"KeywordEnabled"] to false to avoid storing them in the save
       source[action + "LinkKeywordsEnabled"] = !!source[action + "LinkKeyword"];
       const keyword = typeof source[action + "LinkKeyword"] === "object" ? source[action + "LinkKeyword"] : undefined;
       const link = Next.findLink(source[action + "LinkPath"], source[action + "LinkTypeDetected"], source[action + "LinkProperty"], source[action + "LinkKeywordsEnabled"], items[action + "LinkKeywords"], keyword, true, document, false);
       activate = link && link.url;
-      source[action + "LinkKeyword"] = link.method === "keyword" ? link.keywordObject : undefined;
+      source[action + "LinkKeywordDetected"] = link.method === "keyword" ? link.keywordObject : undefined;
     } else if (action === "increment" || action === "decrement") {
       const selection = Increment.findSelection(tab.url, source.selectionStrategy, source.selectionCustom);
       activate = selection && !!selection.selection;
@@ -670,7 +684,7 @@ const Instance = (() => {
    * @returns {{databaseActivate: boolean, databaseBlacklisted: boolean, databaseBlacklistWhitelistURL: string, databaseWhitelisted: boolean}} the database action properties
    * @private
    */
-  function checkDatabaseActivate(tab, items, databaseURL) {
+  static #checkDatabaseActivate(tab, items, databaseURL) {
     // Important: We always use the domain/origin (using window.location.origin)
     // We only use the database URL using parenthesis if we can't use the domain
     // The domain is going to be what the user probably prefers, especially in the case of generic database URLs
@@ -679,7 +693,7 @@ const Instance = (() => {
       databaseBlacklisted: false,
       databaseWhitelisted: false,
       // databaseBlacklistWhitelistURL: "(" + databaseURL + ")"
-      databaseBlacklistWhitelistURL: window && window.location && window.location.origin ? window.location.origin : "(" + databaseURL + ")"
+      databaseBlacklistWhitelistURL: typeof window !== "undefined" && window.location?.origin ? window.location.origin : "(" + databaseURL + ")"
     };
     // Whitelist Mode: Don't auto-activate on a URL unless Whitelisted
     if (items.databaseMode === "whitelist") {
@@ -713,7 +727,7 @@ const Instance = (() => {
    * @param {string} url - the current tab URL to match the regular expression with
    * @returns {*|boolean} the object that contains whether the spa URL matches this URL
    */
-  function checkSpa(spa, spaf, browserName, url) {
+  static #checkSpa(spa, spaf, browserName, url) {
     let matches = false;
     try {
       matches = (spa && new RegExp(spa).test(url)) || (browserName === "firefox" && spaf && new RegExp(spaf).test(url));
@@ -723,11 +737,4 @@ const Instance = (() => {
     return matches;
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    buildInstance,
-    translateInstance,
-    getInstanceOptionKeys
-  };
-
-})();
+}

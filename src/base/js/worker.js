@@ -17,7 +17,7 @@
   console.log("Service Worker Started");
 
   try {
-    importScripts("promisify.js", "util.js", "database.js", "storage.js", "background.js");
+    importScripts("background.js", "database.js", "promisify.js", "storage.js", "util.js");
   } catch (e) {
     console.log(e);
   }

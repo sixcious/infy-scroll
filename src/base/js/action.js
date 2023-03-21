@@ -5,19 +5,17 @@
  */
 
 /**
- * Action handles all business logic involving performing actions.
- *
- * The core function is the perform() function.
+ * Action handles all business logic involving performing actions. The core function is {@link Action.execute}.
  *
  * The following are the main actions:
  * next      - finds the next or previous link
- * increment - increments or decrements a URL
  * click     - clicks a button (like a load more button or next button)
- * list      - uses a custom list of URLs (array) to append
+ * increment - increments or decrements a URL
+ * list      - goes to the next URL in a custom list of URLs
  *
  * The following are the sub actions:
- * down      - moves the instance down one page
- * up        - moves the instance up one page
+ * down      - moves down one page
+ * up        - moves up one page
  * auto      - performs either a "Pause" or "Resume" when Auto is enabled
  * return    - returns the instance to the initial state (e.g. page=1), usually only called when in Auto Slideshow mode when it repeats
  * repeat    - resets the instance in preparation for an auto repeat (e.g. slideshow)
@@ -25,10 +23,10 @@
  * whitelist - whitelists or un-whitelists a URL (toggle), also starting or stopping the instance, respectively
  * power     - turns the extension on or off (toggle), starting and stopping the instance(s), respectively
  */
-const Action = (() => {
+class Action {
 
   /**
-   * Performs an action.
+   * Executes an action.
    *
    * @param {string} action - the action to perform (e.g. "next")
    * @param {string} caller - the caller who called this function (e.g. "popup")
@@ -36,49 +34,49 @@ const Action = (() => {
    * @return {boolean} true if the action was successfully performed, false otherwise
    * @public
    */
-  async function perform(action, caller, extra) {
-    console.log("perform() - action=" + action);
+  static async execute(action, caller, extra) {
+    console.log("Action.execute() - action=" + action);
     let actionPerformed = false;
     switch (action) {
       case "next":
       case "prev":
-        actionPerformed = next(action, caller);
-        break;
-      case "increment":
-      case "decrement":
-        actionPerformed = await increment(action, caller);
+        actionPerformed = Action.#next(action, caller);
         break;
       case "click":
       case "button":
-        actionPerformed = await click(caller);
+        actionPerformed = await Action.#click(caller);
+        break;
+      case "increment":
+      case "decrement":
+        actionPerformed = await Action.#increment(action, caller);
         break;
       // For modes that only have one action like Auto, Toolkit, and Scroll, we treat "list" the same as an "increment" of an array (only one possible direction in list - increment)
       case "list":
-        actionPerformed = await increment(action, caller);
+        actionPerformed = await Action.#increment(action, caller);
         break;
       case "down":
-        actionPerformed = down(caller, extra);
+        actionPerformed = Action.#down(caller, extra);
         break;
       case "up":
-        actionPerformed = up(caller, extra);
+        actionPerformed = Action.#up(caller, extra);
         break;
       case "auto":
-        actionPerformed = auto();
+        actionPerformed = Action.#auto();
         break;
       case "repeat":
-        actionPerformed = repeat();
+        actionPerformed = Action.#repeat();
         break;
       case "return":
-        actionPerformed = returnToStart(caller);
+        actionPerformed = Action.#returnToStart(caller);
         break;
       case "blacklist":
-        actionPerformed = await blacklist(caller);
+        actionPerformed = await Action.#blacklist(caller);
         break;
       case "whitelist":
-        actionPerformed = await whitelist(caller);
+        actionPerformed = await Action.#whitelist(caller);
         break;
       case "power":
-        actionPerformed = await power(caller);
+        actionPerformed = await Action.#power(caller);
         break;
     }
     return actionPerformed;
@@ -92,34 +90,66 @@ const Action = (() => {
    * @return {boolean} true if the action was successfully performed, false otherwise
    * @private
    */
-  function next(action, caller) {
+  static #next(action, caller) {
     console.log("next()");
     let actionPerformed = false;
-    const instance = Scroll.get("instance");
-    const items = Scroll.get("items");
-    const pages = Scroll.get("pages");
-    const currentDocument = Scroll.get("currentDocument");
-    const iframeDocument = Scroll.get("iframe")?.contentDocument;
     // First, try the currentDocument
     // Second, try the iframeDocument if the next link is in the iframe in Element Iframe (Trim) mode
     // Third, try the top-level document (document) if the next link is in Element Iframe mode (Import) and the next link was imported into it
-    const result = Next.findLinkWithInstance(instance, items, action, [currentDocument, iframeDocument, document], pages);
+    const result = Next.findLinkWithInstance(V.instance, V.items, action, [V.currentDocument, V.iframe?.contentDocument, document], V.pages);
     if (result?.url && !result.duplicate) {
       console.log("next() - result=" + JSON.stringify(result));
       actionPerformed = true;
       // TODO: We should refactor the code so that the instance URL is only set after the page has been successfully appended... This is so that if there was an error while appending, we can go back here and not get a duplicate URL error
-      instance.url = result.url;
-      Scroll.set("instance", instance);
+      V.instance.url = result.url;
     } else {
       console.log("next() - " + (result?.duplicate ? ("duplicate result url found:" + result.url) : " no result found"));
-      if (instance.autoEnabled) {
-        Auto.stopAutoTimer(instance, "action");
+      if (V.instance.autoEnabled) {
+        Auto.stopTimer("action");
       }
       // TODO: Should we somehow call stop here or at least get rid of the loading?
       // Scroll.stop();
       // TODO: Or keep retrying...?
-      // instance.isLoading = false;
-      // Scroll.set("instance", instance);
+      // V.instance.isLoading = false;
+    }
+    return actionPerformed;
+  }
+
+  /**
+   * Performs a click action, like clicking a "load more" button.
+   *
+   * @param {string} caller - the caller who called this function (e.g. "popup")
+   * @return {boolean} true if the action was successfully performed, false otherwise
+   * @private
+   */
+  static async #click(caller) {
+    console.log("click()");
+    let actionPerformed = false;
+    // We will either be clicking the top-level document's button or the iframe document's button (AJAX Iframe mode)
+    let doc = V.instance.documentType === "iframe" ? V.iframe?.contentDocument : document;
+    const result = Click.clickButton(V.instance.buttonPath, V.instance.buttonType, doc);
+    if (result.clicked) {
+      actionPerformed = true;
+      // If AJAX or Element, we should wait a second to see if the document's URL will change to a new URL after the button click
+      if (V.instance.append === "ajax" || V.instance.append === "element") {
+        await Promisify.sleep(1000);
+      }
+      // Firefox Dead Object Error: Need to reacquire the iframe document in case the iframe loaded a new document
+      doc = V.instance.documentType === "iframe" ? V.iframe?.contentDocument : document;
+      V.instance.url = result.url || doc?.URL || V.instance.url || V.instance.tabURL;
+      console.log("click() - result.url:" + result.url + "\ndoc.URL: " + doc.URL + "\ninstance.url:" + V.instance.url + "\ninstance.tabURL:" + V.instance.tabURL);
+      // // Firefox Dead Object Error: Need to update currentDocument to the new iframe document in case the iframe loaded a new document
+      // V.currentDocument = V.iframe?.contentDocument ? V.iframe.contentDocument.cloneNode(true) : V.currentDocument;
+    } else {
+      // TODO: Should Auto stop at this point?
+      // if (!actionPerformed && instance.autoEnabled) {
+      //   Auto.stopAutoTimer("action");
+      // }
+      // TODO: If we didn't find/click the button, keep retrying? Risky to do setTimeout and set the instance...
+      // setTimeout(() => {
+      // }, 1000);
+      await Promisify.sleep(1000);
+      V.instance.isLoading = false;
     }
     return actionPerformed;
   }
@@ -132,23 +162,22 @@ const Action = (() => {
    * @return {boolean} true if the action was successfully performed, false otherwise
    * @private
    */
-  async function increment(action, caller) {
+  static async #increment(action, caller) {
     console.log("increment()");
     let actionPerformed = false;
-    const instance = Scroll.get("instance");
     // If can increment/decrement selection or operating on a urls array, continue (can't increment/decrement otherwise)
     // Note: If urlsCurrentIndex is on the last page, we stop here
-    if ((instance.selection !== "" && instance.selectionStart >= 0) || (action === "list" && instance.urls && instance.urls.length > 0 && instance.urlsCurrentIndex < instance.urls.length)) {
+    if ((V.instance.selection !== "" && V.instance.selectionStart >= 0) || (action === "list" && V.instance.urls && V.instance.urls.length > 0 && V.instance.urlsCurrentIndex < V.instance.urls.length)) {
       actionPerformed = true;
       // Error Skipping:
       // Scrolling only: Can't call fetch when it's a local file:// url
-      if (instance.errorSkip > 0 && (instance.errorCodes && instance.errorCodes.length > 0) && (!instance.scrollEnabled || !instance.isLocal)) {
-        await incrementErrorSkip(action, caller, instance, instance.errorSkip, false);
+      if (V.instance.errorSkip > 0 && (V.instance.errorCodes && V.instance.errorCodes.length > 0) && (!V.instance.scrollEnabled || !V.instance.isLocal)) {
+        await Action.#incrementErrorSkip(action, caller, V.instance, V.instance.errorSkip, false);
       }
       // Regular:
       else {
-        Increment.increment(action, instance);
-        Scroll.set("instance", instance);
+        Increment.increment(action, V.instance);
+        // Scroll.set("instance", V.instance);
       }
     }
     return actionPerformed;
@@ -166,7 +195,7 @@ const Action = (() => {
    * @return {boolean} true if the action was successfully performed, false otherwise
    * @private
    */
-  async function incrementErrorSkip(action, caller, instance, errorSkipRemaining, retrying) {
+  static async #incrementErrorSkip(action, caller, instance, errorSkipRemaining, retrying) {
     console.log("incrementErrorSkip() - instance.fetchMethod=" + instance.fetchMethod + ", instance.errorCodes=" + instance.errorCodes + ", instance.errorCodesCustom=" + instance.errorCodesCustom  + ", errorSkipRemaining=" + errorSkipRemaining + ", retrying=" + retrying);
     let response;
     let exception = false;
@@ -177,7 +206,7 @@ const Action = (() => {
     }
     if (errorSkipRemaining <= 0) {
       console.log("incrementErrorSkip() - exhausted the errorSkip attempts. aborting and updating tab");
-      Scroll.set("instance", instance);
+      // Scroll.set("instance", instance);
       // updateTab(caller, instance);
       return;
     }
@@ -208,10 +237,10 @@ const Action = (() => {
       if (response.status === 405 && instance.fetchMethod === "HEAD") {
         console.log("incrementErrorSkip() - switching fetch method from HEAD to GET and retrying because server disallows HEAD (status 405)");
         instance.fetchMethod = "GET";
-        await incrementErrorSkip(action, caller, instance, errorSkipRemaining, true);
+        await Action.#incrementErrorSkip(action, caller, instance, errorSkipRemaining, true);
       } else if (!error && !exception) {
         console.log("incrementErrorSkip() - not attempting to skip this URL because response.status=" + response.status  + " and it was not in errorCodes. aborting and updating tab");
-        Scroll.set("instance", instance);
+        // Scroll.set("instance", instance);
       } else {
         if (!instance.autoEnabled) {
           // If this is running in a content script (scrollEnabled), we need to send a message to the Background; otherwise we just call the Background's setBadge method
@@ -222,51 +251,9 @@ const Action = (() => {
           }
         }
         // Recursively call this function again to perform the action again and skip this URL, decrementing errorSkipRemaining
-        await incrementErrorSkip(action, caller, instance, errorSkipRemaining - 1, false);
+        await Action.#incrementErrorSkip(action, caller, instance, errorSkipRemaining - 1, false);
       }
     }
-  }
-
-  /**
-   * Performs a click action, like clicking a "load more" button.
-   *
-   * @param {string} caller - the caller who called this function (e.g. "popup")
-   * @return {boolean} true if the action was successfully performed, false otherwise
-   * @private
-   */
-  async function click(caller) {
-    console.log("click()");
-    let actionPerformed = false;
-    const instance = Scroll.get("instance");
-    // We will either be clicking the top-level document's button or the iframe document's button (AJAX Iframe mode)
-    let doc = instance.documentType === "iframe" ? Scroll.get("iframe")?.contentDocument : document;
-    const result = Click.clickButton(instance.buttonPath, instance.buttonType, doc);
-    if (result.clicked) {
-      actionPerformed = true;
-      // If AJAX or Element, we should wait a second to see if the document's URL will change to a new URL after the button click
-      if (instance.append === "ajax" || instance.append === "element") {
-        await Promisify.sleep(1000);
-      }
-      // Firefox Dead Object Error: Need to reacquire the iframe document in case the iframe loaded a new document
-      doc = instance.documentType === "iframe" ? Scroll.get("iframe")?.contentDocument : document;
-      instance.url = result.url || doc?.URL || instance.url || instance.tabURL;
-      console.log("click() - result.url:" + result.url + "\ndoc.URL: " + doc.URL + "\ninstance.url:" + instance.url + "\ninstance.tabURL:" + instance.tabURL);
-      Scroll.set("instance", instance);
-      // // Firefox Dead Object Error: Need to update currentDocument to the new iframe document in case the iframe loaded a new document
-      // Scroll.set("currentDocument", Scroll.get("iframe")?.contentDocument);
-    } else {
-      // TODO: Should Auto stop at this point?
-      // if (!actionPerformed && instance.autoEnabled) {
-      //   Auto.stopAutoTimer(instance, "action");
-      // }
-      // TODO: If we didn't find/click the button, keep retrying? Risky to do setTimeout and set the instance...
-      // setTimeout(() => {
-      // }, 1000);
-      await Promisify.sleep(1000);
-      instance.isLoading = false;
-      Scroll.set("instance", instance);
-    }
-    return actionPerformed;
   }
 
   /**
@@ -277,19 +264,16 @@ const Action = (() => {
    * @return {boolean} true if the action was successfully performed, false otherwise
    * @private
    */
-  function down(caller, extra) {
+  static #down(caller, extra) {
     let actionPerformed = false;
-    const instance = Scroll.get("instance");
-    const pages = Scroll.get("pages");
-    const nextPage = extra?.page || instance.currentPage + 1;
-    const page = pages[((nextPage < pages.length && nextPage >= 1) ? nextPage : pages.length) - 1];
+    const nextPage = extra?.page || V.instance.currentPage + 1;
+    const page = V.pages[((nextPage < V.pages.length && nextPage >= 1) ? nextPage : V.pages.length) - 1];
     if (page && page.element && page.number && typeof page.element.scrollIntoView === "function") {
-      instance.currentPage = page.number;
-      Scroll.set("instance", instance);
-      page.element.scrollIntoView({behavior: instance.scrollBehavior, block: "start", inline: "start"});
+      V.instance.currentPage = page.number;
+      page.element.scrollIntoView({behavior: V.instance.scrollBehavior, block: "start", inline: "start"});
       actionPerformed = true;
     }
-    console.log("down() - caller=" + caller + ", currentPage=" + instance.currentPage + ", nextPage=" + nextPage);
+    console.log("down() - caller=" + caller + ", currentPage=" + V.instance.currentPage + ", nextPage=" + nextPage);
     return actionPerformed;
   }
 
@@ -301,24 +285,21 @@ const Action = (() => {
    * @return {boolean} true if the action was successfully performed, false otherwise
    * @private
    */
-  function up(caller, extra) {
+  static #up(caller, extra) {
     let actionPerformed = false;
-    const instance = Scroll.get("instance");
-    const pages = Scroll.get("pages");
-    const nextPage = extra?.page || instance.currentPage - 1;
-    let page = pages[((nextPage < pages.length && nextPage >= 1) ? nextPage : 1) - 1];
+    const nextPage = extra?.page || V.instance.currentPage - 1;
+    let page = V.pages[((nextPage < V.pages.length && nextPage >= 1) ? nextPage : 1) - 1];
     // This is for the page navigation button that goes to page 1. If there is a maximum/limited number of pages, then
     // we won't have page 1 anymore and need to calculate the "new" page 1 (topmost page). (Note: find finds the first.)
     if (!page?.element) {
-      page = pages.find(page => page.element);
+      page = V.pages.find(page => page.element);
     }
     if (page && page.number && page.element && typeof page.element.scrollIntoView === "function") {
-      instance.currentPage = page.number;
-      Scroll.set("instance", instance);
-      page.element.scrollIntoView({behavior: instance.scrollBehavior, block: "start", inline: "start"});
+      V.instance.currentPage = page.number;
+      page.element.scrollIntoView({behavior: V.instance.scrollBehavior, block: "start", inline: "start"});
       actionPerformed = true;
     }
-    console.log("up() - caller=" + caller + ", currentPage=" + instance.currentPage + ", nextPage=" + nextPage);
+    console.log("up() - caller=" + caller + ", currentPage=" + V.instance.currentPage + ", nextPage=" + nextPage);
     return actionPerformed;
   }
 
@@ -328,12 +309,11 @@ const Action = (() => {
    * @return {boolean} true if the action was successfully performed, false otherwise
    * @private
    */
-  function auto() {
+  static #auto() {
     console.log("auto()");
     let actionPerformed = false;
-    const instance = Scroll.get("instance");
-    if (instance.autoEnabled) {
-      Auto.pauseOrResumeAutoTimer(instance);
+    if (V.instance.autoEnabled) {
+      Auto.pauseOrResumeTimer();
       actionPerformed = true;
     }
     return actionPerformed;
@@ -348,30 +328,26 @@ const Action = (() => {
    * @return {boolean} true if the action was successfully performed, false otherwise
    * @private
    */
-  function repeat() {
+  static #repeat() {
     console.log("repeat()");
     // Not an action
     let actionPerformed = true;
-    const instance = Scroll.get("instance");
-    const pages = Scroll.get("pages");
     // Auto Slideshow Mode (Repeat) + Shuffle (this is complicated!)
-    if (instance.shuffleURLs) {
+    if (V.instance.shuffleURLs) {
       // Step 1: Re-shuffle the pages after the repeat
-      IncrementArray.shuffle(pages);
+      IncrementArray.shuffle(V.pages);
       // Step 2: Reset each page's number in the new shuffled order; this is because we set instance.currentPage to page.number later on
-      for (let i = 0; i < pages.length; i++) {
-        pages[i].number = i + 1;
+      for (let i = 0; i < V.pages.length; i++) {
+        V.pages[i].number = i + 1;
       }
     }
-    instance.currentPage = 1;
-    Scroll.set("instance", instance);
-    Scroll.set("pages", pages);
+    V.instance.currentPage = 1;
     // TODO: If instance.scrollBehavior is "smooth", it is possible for the time it takes to scroll back up to the first page might be longer than autoSeconds
-    const page = pages[instance.currentPage - 1];
+    const page = V.pages[V.instance.currentPage - 1];
     if (page && page.element) {
-      page.element.scrollIntoView({behavior: instance.scrollBehavior, block: "start", inline: "start"});
+      page.element.scrollIntoView({behavior: V.instance.scrollBehavior, block: "start", inline: "start"});
     }
-    Auto.autoListener(instance);
+    Auto.autoListener();
     return actionPerformed;
   }
 
@@ -383,45 +359,43 @@ const Action = (() => {
    * @return {boolean} true if the action was successfully performed, false otherwise
    * @private
    */
-  function returnToStart(caller) {
+  static #returnToStart(caller) {
     console.log("returnToStart()");
     let actionPerformed = false;
-    const instance = Scroll.get("instance");
-    if (instance.enabled && instance.startingURL) {
+    if (V.instance.enabled && V.instance.startingURL) {
       actionPerformed = true;
-      instance.url = instance.startingURL;
-      instance.selection = instance.startingSelection;
-      instance.selectionStart = instance.startingSelectionStart;
+      V.instance.url = V.instance.startingURL;
+      V.instance.selection = V.instance.startingSelection;
+      V.instance.selectionStart = V.instance.startingSelectionStart;
       // Multi
-      if (instance.multiEnabled) {
-        for (let i = 1; i <= instance.multiCount; i++) {
-          instance.multi[i].selection = instance.multi[i].startingSelection;
-          instance.multi[i].selectionStart = instance.multi[i].startingSelectionStart;
+      if (V.instance.multiEnabled) {
+        for (let i = 1; i <= V.instance.multiCount; i++) {
+          V.instance.multi[i].selection = V.instance.multi[i].startingSelection;
+          V.instance.multi[i].selectionStart = V.instance.multi[i].startingSelectionStart;
         }
       }
       // Auto
-      if (instance.autoEnabled) {
-        instance.autoRepeating = false;
-        instance.autoTimes = instance.autoTimesOriginal;
+      if (V.instance.autoEnabled) {
+        V.instance.autoRepeating = false;
+        V.instance.autoTimes = V.instance.autoTimesOriginal;
         // Don't update tab, just have scroll return to start and return (append new page, look at refactoring this whole function)
-        if (instance.autoSlideshow) {
-          Scroll.set("instance", instance);
-          repeat();
+        if (V.instance.autoSlideshow) {
+          Action.#repeat();
           return actionPerformed;
         }
       }
       // Array
-      if (instance.urls && instance.urls.length > 0) {
-        instance.urlsCurrentIndex = instance.startingURLsCurrentIndex;
+      if (V.instance.urls && V.instance.urls.length > 0) {
+        V.instance.urlsCurrentIndex = V.instance.startingURLsCurrentIndex;
         // Shuffle
-        if (instance.shuffleURLs) {
-          instance.urls = [];
-          const precalculateProps = IncrementArray.precalculateURLs(instance);
-          instance.urls = precalculateProps.urls;
-          instance.urlsCurrentIndex = precalculateProps.currentIndex;
+        if (V.instance.shuffleURLs) {
+          V.instance.urls = [];
+          const precalculateProps = IncrementArray.precalculateURLs(V.instance);
+          V.instance.urls = precalculateProps.urls;
+          V.instance.urlsCurrentIndex = precalculateProps.currentIndex;
         }
       }
-      Scroll.set("instance", instance);
+      // Scroll.set("instance", V.instance);
     }
     return actionPerformed;
   }
@@ -433,26 +407,25 @@ const Action = (() => {
    * @return {boolean} true if the action was successfully performed, false otherwise
    * @private
    */
-  async function blacklist(caller) {
+  static async #blacklist(caller) {
     console.log("blacklist()");
     let actionPerformed = false;
-    const instance = Scroll.get("instance");
     // If action is blacklist/whitelist, we always need the most current storage items, not the cache in Scroll
     const items = await Promisify.storageGet();
     if (items && Array.isArray(items.databaseBlacklist)) {
       actionPerformed = true;
       let databaseBlacklist = items.databaseBlacklist;
-      const matches = Saves.matchesList(instance.tabURL, instance.databaseURL, databaseBlacklist, "Database Blacklist").matches;
-      console.log("blacklist() - " + (!matches ? "blacklisting" : "un-blacklisting") + " databaseURL:" + instance.databaseURL + " with: " + instance.databaseBlacklistWhitelistURL);
+      const matches = Saves.matchesList(V.instance.tabURL, V.instance.databaseURL, databaseBlacklist, "Database Blacklist").matches;
+      console.log("blacklist() - " + (!matches ? "blacklisting" : "un-blacklisting") + " databaseURL:" + V.instance.databaseURL + " with: " + V.instance.databaseBlacklistWhitelistURL);
       if (!matches) {
-        instance.databaseBlacklisted = true;
-        databaseBlacklist.push(instance.databaseBlacklistWhitelistURL);
+        V.instance.databaseBlacklisted = true;
+        databaseBlacklist.push(V.instance.databaseBlacklistWhitelistURL);
       } else {
-        instance.databaseBlacklisted = false;
-        databaseBlacklist = databaseBlacklist.filter(x => x !== instance.databaseBlacklistWhitelistURL);
+        V.instance.databaseBlacklisted = false;
+        databaseBlacklist = databaseBlacklist.filter(x => x !== V.instance.databaseBlacklistWhitelistURL);
       }
       // We need to update the Scroll's instance with the updated properties we set
-      Scroll.set("instance", instance);
+      // Scroll.set("instance", V.instance);
       // If we're stopping we need to get the updated "disabled" state of the instance after Scroll.stop() for the Popup
       if (!matches) {
         await Scroll.stop("blacklist");
@@ -471,26 +444,25 @@ const Action = (() => {
    * @return {boolean} true if the action was successfully performed, false otherwise
    * @private
    */
-  async function whitelist(caller) {
+  static async #whitelist(caller) {
     console.log("whitelist()");
     let actionPerformed = false;
-    const instance = Scroll.get("instance");
     // If action is blacklist/whitelist, we always need the most current storage items, not the cache in Scroll
     const items = await Promisify.storageGet();
     if (items && Array.isArray(items.databaseWhitelist)) {
       actionPerformed = true;
       let databaseWhitelist = items.databaseWhitelist;
-      const matches = Saves.matchesList(instance.tabURL, instance.databaseURL, databaseWhitelist, "Database Whitelist").matches;
-      console.log("whitelist() - " + (!matches ? "whitelisting" : "un-whitelisting") + " databaseURL:" + instance.databaseURL + " with: " + instance.databaseBlacklistWhitelistURL);
+      const matches = Saves.matchesList(V.instance.tabURL, V.instance.databaseURL, databaseWhitelist, "Database Whitelist").matches;
+      console.log("whitelist() - " + (!matches ? "whitelisting" : "un-whitelisting") + " databaseURL:" + V.instance.databaseURL + " with: " + V.instance.databaseBlacklistWhitelistURL);
       if (!matches) {
-        instance.databaseWhitelisted = true;
-        databaseWhitelist.push(instance.databaseBlacklistWhitelistURL);
+        V.instance.databaseWhitelisted = true;
+        databaseWhitelist.push(V.instance.databaseBlacklistWhitelistURL);
       } else {
-        instance.databaseWhitelisted = false;
-        databaseWhitelist = databaseWhitelist.filter(x => x !== instance.databaseBlacklistWhitelistURL);
+        V.instance.databaseWhitelisted = false;
+        databaseWhitelist = databaseWhitelist.filter(x => x !== V.instance.databaseBlacklistWhitelistURL);
       }
       // We need to update the Scroll's instance with the updated properties we set
-      Scroll.set("instance", instance);
+      // Scroll.set("instance", V.instance);
       // If we're stopping we need to get the updated "disabled" state of the instance after Scroll.stop() for the Popup
       if (matches) {
         await Scroll.stop("whitelist");
@@ -520,7 +492,7 @@ const Action = (() => {
    * @return {boolean} true if the action was successfully performed, false otherwise
    * @private
    */
-  async function power(caller) {
+  static async #power(caller) {
     console.log("power()");
     let actionPerformed = true;
     // Handle on/off state, send message to background to turn off the other instances in all tabs
@@ -537,9 +509,4 @@ const Action = (() => {
     return actionPerformed;
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    perform
-  };
-
-})();
+}

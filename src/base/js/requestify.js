@@ -11,7 +11,7 @@
  *
  * Note: The name "Requestify" is used instead of the reserved interface name, {@link Request}.
  */
-const Requestify = (() => {
+class Requestify {
 
   /**
    * Makes an HTTP request via the specified API and returns its response (document).
@@ -28,17 +28,17 @@ const Requestify = (() => {
    * @return {{doc: Document, api: string}} the response as a document and the api used to get it
    * @public
    */
-  async function request(url, documentCharacterSet, documentContentType, method = "GET", api = "fetch", fallback = true) {
+  static async request(url, documentCharacterSet, documentContentType, method = "GET", api = "fetch", fallback = true) {
     console.log("request() - url=" + url + ", documentCharacterSet=" + documentCharacterSet + ", documentContentType=" + documentContentType + ", method=" + method + ", api=" + api + ", fallback=" + fallback);
     let doc;
     try {
       switch (api) {
         case "xhr":
-          doc = await xhrify(url, method, "document");
+          doc = await Requestify.#xhrify(url, method, "document");
           break;
         // case "fetch":
         default:
-          doc = await fetchify(url, documentCharacterSet, documentContentType, method);
+          doc = await Requestify.#fetchify(url, documentCharacterSet, documentContentType, method);
           break;
       }
     } catch (e) {
@@ -46,7 +46,7 @@ const Requestify = (() => {
       if (fallback) {
         // Wait to avoid making another request so soon
         await Promisify.sleep(1000);
-        return await request(url, documentCharacterSet, documentContentType, method, api === "fetch" ? "xhr" : "fetch", false);
+        return Requestify.request(url, documentCharacterSet, documentContentType, method, api === "fetch" ? "xhr" : "fetch", false);
       }
       // If we failed both times, reset the api back to the original
       api = api === "fetch" ? "xhr" : "fetch";
@@ -71,7 +71,7 @@ const Requestify = (() => {
    * @see https://stackoverflow.com/a/46784830
    * @private
    */
-  async function fetchify(url, documentCharacterSet, documentContentType, method = "GET") {
+  static async #fetchify(url, documentCharacterSet, documentContentType, method = "GET") {
     // Note: Do not check or trust response.ok or response.status === 404 and return assuming there's no next document. Some websites intentionally or mistakenly return bad error codes even though the site is live!
     const response = await fetch(url, {method: method, credentials: "same-origin"});
     const arrayBuffer = await response.arrayBuffer();
@@ -90,7 +90,7 @@ const Requestify = (() => {
    * @returns {Promise<Document>} the response as a document
    * @private
    */
-  function xhrify(url, method = "GET", responseType = "document") {
+  static #xhrify(url, method = "GET", responseType = "document") {
     return new Promise((resolve, reject) => {
       const request = new XMLHttpRequest();
       request.open(method, url);
@@ -107,9 +107,4 @@ const Requestify = (() => {
     });
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    request
-  };
-
-})();
+}

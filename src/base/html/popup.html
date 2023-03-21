@@ -8,6 +8,8 @@
   <head>
     <meta charset="UTF-8">
     <title>Infy Scroll Popup</title>
+    <link rel="icon" href="../img/icon-dark.png" media="(prefers-color-scheme: light)">
+    <link rel="icon" href="../img/icon-light.png" media="(prefers-color-scheme: dark)">
     <link rel="stylesheet" href="../lib/material/material-components-web.min.css">
     <link rel="stylesheet" href="../lib/balloon/balloon.min.css">
     <link rel="stylesheet" href="../lib/hover/hover.css">
@@ -111,8 +113,8 @@
                 </li>
               </ul>
             </div>
-            <div id="version-theme" class="display-none">
-              <span id="version-theme-number" data-id="version-number" data-i18n="textContent"></span><svg id="version-theme-icon"><use href="../img/symbol.svg#icon"></use></svg>
+            <div id="theme-version" class="display-none">
+              <span id="theme-version-number" data-id="version-number" data-i18n="textContent"></span><svg id="theme-version-icon"><use href="../img/symbol.svg#icon"></use></svg>
             </div>
           </div>
         </aside>
@@ -147,61 +149,61 @@
                     <span id="next-prev-result-details-error" class="error-details" aria-describedby="tooltip" aria-label="placeholder" data-balloon-pos="down" data-balloon-length="medium"></span>
                   </div>
                 </header>
-                <div id="next-prev-url" class="section">
+                <div id="next-prev-link" class="section">
                   <div class="text-field-container">
-                    <div id="next-prev-url-text-field" class="mdc-text-field mdc-text-field--fullwidth mdc-text-field--textarea overflow-hidden">
-                      <textarea id="next-prev-url-textarea" class="mdc-text-field__input" spellcheck="false" readonly></textarea>
+                    <div id="next-prev-link-text-field" class="mdc-text-field mdc-text-field--fullwidth mdc-text-field--textarea overflow-hidden">
+                      <textarea id="next-prev-link-textarea" class="mdc-text-field__input" spellcheck="false" readonly></textarea>
                       <div class="mdc-notched-outline mdc-notched-outline--upgraded mdc-notched-outline--notched">
                         <div class="mdc-notched-outline__leading"></div>
                         <div class="mdc-notched-outline__notch">
-                          <label id="next-prev-url-label" for="next-prev-url-textarea" class="mdc-floating-label mdc-floating-label--float-above"></label>
+                          <label id="next-prev-link-label" for="next-prev-link-textarea" class="mdc-floating-label mdc-floating-label--float-above"></label>
                         </div>
                         <div class="mdc-notched-outline__trailing"></div>
                       </div>
                     </div>
                     <div class="mdc-text-field-helper-line">
-                      <p class="mdc-text-field-helper-text mdc-text-field-helper-text--persistent" id="next-prev-url-not-right" data-i18n="textContent"></p>
+                      <p class="mdc-text-field-helper-text mdc-text-field-helper-text--persistent" id="next-prev-link-not-right" data-i18n="textContent"></p>
                     </div>
                   </div>
                 </div>
                 <div id="next-prev-inputs" class="position-relative">
                   <div id="next">
-                    <div id="next-path" class="section">
-                      <div id="next-path-text-field-container" class="text-field-container display-inline-block">
-                        <div id="next-path-text-field" class="mdc-text-field mdc-text-field--textarea path">
-                          <textarea id="next-path-textarea" class="mdc-text-field__input" spellcheck="false" data-action="next"></textarea>
+                    <div id="next-link-path" class="section">
+                      <div id="next-link-path-text-field-container" class="text-field-container display-inline-block">
+                        <div id="next-link-path-text-field" class="mdc-text-field mdc-text-field--textarea path">
+                          <textarea id="next-link-path-textarea" class="mdc-text-field__input" spellcheck="false" data-action="next"></textarea>
                           <div class="mdc-notched-outline mdc-notched-outline--upgraded mdc-notched-outline--notched">
                             <div class="mdc-notched-outline__leading"></div>
                             <div class="mdc-notched-outline__notch">
-                              <label class="mdc-floating-label mdc-floating-label--float-above" for="next-path-textarea" id="next-path-label" data-i18n="textContent"></label>
+                              <label class="mdc-floating-label mdc-floating-label--float-above" for="next-link-path-textarea" id="next-link-path-label" data-i18n="textContent"></label>
                             </div>
                             <div class="mdc-notched-outline__trailing"></div>
                           </div>
                         </div>
                       </div>
-                      <div id="next-type-label" data-action="next" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-auto-label" data-balloon-pos="up"></div>
+                      <div id="next-link-type-label" data-action="next" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-auto-label" data-balloon-pos="up"></div>
                       <div id="element-picker-next-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                         <label class="hvr-grow-2x">
                           <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
                         </label>
                       </div>
-                      <div data-extra id="next-property-text-field-container" class="text-field-container  display-inline-block tooltip-without-underline" aria-describedby="tooltip" aria-label="property-tooltip" data-balloon-pos="left" data-balloon-length="xlarge">
-                        <div id="next-property-text-field" class="mdc-text-field mdc-text-field--textarea path">
-                          <textarea id="next-property-textarea" class="mdc-text-field__input" spellcheck="false"></textarea>
+                      <div data-extra id="next-link-property-text-field-container" class="text-field-container  display-inline-block tooltip-without-underline" aria-describedby="tooltip" aria-label="property-tooltip" data-balloon-pos="left" data-balloon-length="xlarge">
+                        <div id="next-link-property-text-field" class="mdc-text-field mdc-text-field--textarea path">
+                          <textarea id="next-link-property-textarea" class="mdc-text-field__input" spellcheck="false"></textarea>
                           <div class="mdc-notched-outline mdc-notched-outline--upgraded mdc-notched-outline--notched">
                             <div class="mdc-notched-outline__leading"></div>
                             <div class="mdc-notched-outline__notch">
-                              <label class="mdc-floating-label mdc-floating-label--float-above" for="next-property-textarea" data-id="property-label" data-i18n="textContent"></label>
+                              <label class="mdc-floating-label mdc-floating-label--float-above" for="next-link-property-textarea" data-id="property-label" data-i18n="textContent"></label>
                             </div>
                             <div class="mdc-notched-outline__trailing"></div>
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div id="next-keywords-enabled" class="flex-row">
-                      <div id="next-keywords-enabled-form-field" class="mdc-form-field">
+                    <div id="next-link-keywords-enabled" class="flex-row">
+                      <div id="next-link-keywords-enabled-form-field" class="mdc-form-field">
                         <div class="mdc-checkbox">
-                          <input id="next-keywords-enabled-input" type="checkbox" class="mdc-checkbox__native-control" data-action="next"/>
+                          <input id="next-link-keywords-enabled-input" type="checkbox" class="mdc-checkbox__native-control" data-action="next"/>
                           <div class="mdc-checkbox__background">
                             <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
                               <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
@@ -209,47 +211,47 @@
                           </div>
                           <div class="mdc-checkbox__ripple"></div>
                         </div>
-                        <label id="next-keywords-enabled-label" for="next-keywords-enabled-input" data-i18n="textContent"></label>
+                        <label id="next-link-keywords-enabled-label" for="next-link-keywords-enabled-input" data-id="keywords-enabled-label" data-i18n="textContent"></label>
                       </div>
                     </div>
                   </div>
                   <div id="prev">
-                    <div id="prev-path" class="section">
-                      <div id="prev-path-text-field-container" class="text-field-container display-inline-block">
-                        <div id="prev-path-text-field" class="mdc-text-field mdc-text-field--textarea path">
-                          <textarea id="prev-path-textarea" class="mdc-text-field__input" spellcheck="false" data-action="prev"></textarea>
+                    <div id="prev-link-path" class="section">
+                      <div id="prev-link-path-text-field-container" class="text-field-container display-inline-block">
+                        <div id="prev-link-path-text-field" class="mdc-text-field mdc-text-field--textarea path">
+                          <textarea id="prev-link-path-textarea" class="mdc-text-field__input" spellcheck="false" data-action="prev"></textarea>
                           <div class="mdc-notched-outline mdc-notched-outline--upgraded mdc-notched-outline--notched">
                             <div class="mdc-notched-outline__leading"></div>
                             <div class="mdc-notched-outline__notch">
-                              <label class="mdc-floating-label mdc-floating-label--float-above" for="prev-path-textarea" id="prev-path-label" data-i18n="textContent"></label>
+                              <label class="mdc-floating-label mdc-floating-label--float-above" for="prev-link-path-textarea" id="prev-link-path-label" data-i18n="textContent"></label>
                             </div>
                             <div class="mdc-notched-outline__trailing"></div>
                           </div>
                         </div>
                       </div>
-                      <div id="prev-type-label" data-action="prev" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-auto-label" data-balloon-pos="up"></div>
+                      <div id="prev-link-type-label" data-action="prev" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-auto-label" data-balloon-pos="up"></div>
                       <div id="element-picker-prev-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                         <label class="hvr-grow-2x">
                           <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
                         </label>
                       </div>
-                      <div data-extra id="prev-property-text-field-container" class="text-field-container display-inline-block tooltip-without-underline" aria-describedby="tooltip" aria-label="property-tooltip" data-balloon-pos="left" data-balloon-length="xlarge">
-                        <div id="prev-property-text-field" class="mdc-text-field mdc-text-field--textarea path">
-                          <textarea id="prev-property-textarea" class="mdc-text-field__input" spellcheck="false"></textarea>
+                      <div data-extra id="prev-link-property-text-field-container" class="text-field-container display-inline-block tooltip-without-underline" aria-describedby="tooltip" aria-label="property-tooltip" data-balloon-pos="left" data-balloon-length="xlarge">
+                        <div id="prev-link-property-text-field" class="mdc-text-field mdc-text-field--textarea path">
+                          <textarea id="prev-link-property-textarea" class="mdc-text-field__input" spellcheck="false"></textarea>
                           <div class="mdc-notched-outline mdc-notched-outline--upgraded mdc-notched-outline--notched">
                             <div class="mdc-notched-outline__leading"></div>
                             <div class="mdc-notched-outline__notch">
-                              <label class="mdc-floating-label mdc-floating-label--float-above" for="prev-property-textarea" data-id="property-label" data-i18n="textContent"></label>
+                              <label class="mdc-floating-label mdc-floating-label--float-above" for="prev-link-property-textarea" data-id="property-label" data-i18n="textContent"></label>
                             </div>
                             <div class="mdc-notched-outline__trailing"></div>
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div id="prev-keywords-enabled" class="flex-row">
-                      <div id="prev-keywords-enabled-form-field" class="mdc-form-field">
+                    <div id="prev-link-keywords-enabled" class="flex-row">
+                      <div id="prev-link-keywords-enabled-form-field" class="mdc-form-field">
                         <div class="mdc-checkbox">
-                          <input id="prev-keywords-enabled-input" type="checkbox" class="mdc-checkbox__native-control" data-action="prev"/>
+                          <input id="prev-link-keywords-enabled-input" type="checkbox" class="mdc-checkbox__native-control" data-action="prev"/>
                           <div class="mdc-checkbox__background">
                             <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
                               <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
@@ -257,7 +259,7 @@
                           </div>
                           <div class="mdc-checkbox__ripple"></div>
                         </div>
-                        <label id="prev-keywords-enabled-label" for="prev-keywords-enabled-input" data-i18n="textContent"></label>
+                        <label id="prev-link-keywords-enabled-label" for="prev-link-keywords-enabled-input" data-id="keywords-enabled-label" data-i18n="textContent"></label>
                       </div>
                     </div>
                   </div>
@@ -573,7 +575,7 @@
                       </div>
                     </div>
                     &nbsp;
-                    <span data-id="scroll-append-threshold-pixels-bottom-label" data-i18n="textContent"></span>
+                    <span data-id="pixels-bottom-label" data-i18n="textContent"></span>
                   </div>
                   <div id="button-detection" class="chip-set chip-set-absolute">
                     <label class="chip-set-label" data-id="button-detection-label" data-i18n="textContent"></label>
@@ -666,7 +668,7 @@
                 </header>
                 <p id="iframe-description" data-i18n="textContent"></p>
                 <div class="flex-row">
-                  <div id="iframe-page-one-form-field" class="mdc-form-field">
+                  <div id="iframe-page-one-form-field" class="mdc-form-field tooltip-without-underline" aria-describedby="tooltip" aria-label="iframe-page-one-tooltip" data-balloon-pos="up" data-balloon-length="large">
                     <div class="mdc-checkbox">
                       <input id="iframe-page-one-input" type="checkbox" class="mdc-checkbox__native-control"/>
                       <div class="mdc-checkbox__background">
@@ -677,6 +679,18 @@
                       <div class="mdc-checkbox__ripple"></div>
                     </div>
                     <label id="iframe-page-one-label" for="iframe-page-one-input" data-i18n="textContent"></label>
+                  </div>
+                  <div id="iframe-resize-form-field" class="mdc-form-field tooltip-without-underline" aria-describedby="tooltip" aria-label="iframe-resize-tooltip" data-balloon-pos="up" data-balloon-length="medium">
+                    <div class="mdc-checkbox">
+                      <input id="iframe-resize-input" type="checkbox" class="mdc-checkbox__native-control"/>
+                      <div class="mdc-checkbox__background">
+                        <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                          <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                        </svg>
+                      </div>
+                      <div class="mdc-checkbox__ripple"></div>
+                    </div>
+                    <label id="iframe-resize-label" for="iframe-resize-input" data-i18n="textContent"></label>
                   </div>
                 </div>
               </section>
@@ -855,7 +869,7 @@
                           </div>
                         </div>
                       </div>
-                      <div id="remove-element-type-label" class="type-label"></div>
+                      <div id="remove-element-type-label" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-element-label" data-balloon-pos="up"></div>
                       <div id="element-picker-remove-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                         <label class="hvr-grow-2x">
                           <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
@@ -877,7 +891,7 @@
                           </div>
                         </div>
                       </div>
-                      <div id="load-element-type-label" class="type-label"></div>
+                      <div id="load-element-type-label" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-element-label" data-balloon-pos="up"></div>
                       <div id="element-picker-load-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                         <label class="hvr-grow-2x">
                           <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
@@ -1330,6 +1344,7 @@
                       </div>
                       <label for="mirror-page-mode-import" id="mirror-page-mode-import-label" data-i18n="textContent"></label>
                     </div>
+                    <!--
                     <div class="mdc-form-field tooltip-without-underline" aria-describedby="tooltip" aria-label="mirror-page-mode-adopt-tooltip" data-balloon-pos="up" data-balloon-length="medium">
                       <div class="mdc-radio">
                         <input class="mdc-radio__native-control" type="radio" id="mirror-page-mode-adopt" name="mirror-page-mode" value="adopt">
@@ -1340,6 +1355,41 @@
                         <div class="mdc-radio__ripple"></div>
                       </div>
                       <label for="mirror-page-mode-adopt" id="mirror-page-mode-adopt-label" data-i18n="textContent"></label>
+                    </div>
+                    -->
+                    <div class="mdc-form-field tooltip-without-underline" aria-describedby="tooltip" aria-label="mirror-page-mode-puppet-tooltip" data-balloon-pos="up" data-balloon-length="medium">
+                      <div class="mdc-radio">
+                        <input class="mdc-radio__native-control" type="radio" id="mirror-page-mode-puppet" name="mirror-page-mode" value="puppet">
+                        <div class="mdc-radio__background">
+                          <div class="mdc-radio__outer-circle"></div>
+                          <div class="mdc-radio__inner-circle"></div>
+                        </div>
+                        <div class="mdc-radio__ripple"></div>
+                      </div>
+                      <label for="mirror-page-mode-puppet" id="mirror-page-mode-puppet-label" data-i18n="textContent"></label>
+                    </div>
+                  </div>
+                  <div id="puppet">
+                    <div class="text-field-container">
+                      <div id="puppet-text-field" class="mdc-text-field mdc-text-field--fullwidth mdc-text-field--textarea">
+                        <textarea id="puppet-textarea" class="mdc-text-field__input" spellcheck="false"></textarea>
+                        <div class="mdc-notched-outline mdc-notched-outline--upgraded mdc-notched-outline--notched">
+                          <div class="mdc-notched-outline__leading"></div>
+                          <div class="mdc-notched-outline__notch">
+                            <label id="puppet-label" class="mdc-floating-label" for="puppet-textarea" data-i18n="textContent"></label>
+                          </div>
+                          <div class="mdc-notched-outline__trailing"></div>
+                        </div>
+                      </div>
+                      <div class="mdc-text-field-helper-line">
+                        <div class="mdc-text-field-helper-text mdc-text-field-helper-text--persistent">
+                          <span id="puppet-text-field-helper-line" data-i18n="textContent"></span>
+                          <ul>
+                            <li>await page.click("#popup-button");</li>
+                            <li>await page.click("#accordian > .items");</li>
+                          </ul>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1389,7 +1439,7 @@
                 </a>
                 <a href="https://github.com/sixcious/infy-scroll/issues" target="_blank" class="mdc-button mdc-button--outlined mdc-ripple-upgraded">
                   <span class="mdc-button__ripple"></span>
-                  <span class="mdc-button__label" id="report-problem-label" data-i18n="textContent">Report a Problem</span>
+                  <span class="mdc-button__label" id="report-an-issue-label" data-i18n="textContent">Report an Issue</span>
                 </a>
                 <button id="debug-copy-button" class="mdc-button mdc-button--raised mdc-ripple-upgraded">
                   <span class="mdc-button__ripple"></span>
@@ -1479,7 +1529,7 @@
       <img src="../img/infy.png" alt="mascot" class="mascot">
       <div id="errors">
         <p id="popup-error-message" data-i18n="textContent">
-          Oops — Sorry! The extension encountered a major error and couldn't load. Please try refreshing the page or resetting your Options (About section). If this is a Private/Incognito Window, please make sure the extension has permission to run in that context. Click the Help Button for support and to report the problem.
+          Oops — Sorry! The extension encountered a major error and couldn't load. Please try refreshing the page or resetting your Options (About section). If this is a Private/Incognito Window, please make sure the extension has permission to run in that context. Click the Help Button for support and to report the issue.
         </p>
         <div id="popup-error-details" data-i18n="textContent">
           Here's Some More Details:

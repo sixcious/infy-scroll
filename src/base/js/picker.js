@@ -14,10 +14,10 @@
  *
  * Note: var is used for declaration because this script can get executed multiple times on the page.
  */
-var Picker = Picker || (() => {
+var Picker = class Picker {
 
   /**
-   * Variables
+   * Fields
    *
    * @param {HoverBox} hoverBox - the HoverBox object
    * @param {HTMLElement} ui - the Picker UI iframe
@@ -32,45 +32,33 @@ var Picker = Picker || (() => {
    * @param {boolean} js - the path js state for generating JS Paths (true or false)
    * @param {string} property - the property value to get from the element (e.g. "outerHTML or "dataset.src")
    */
-  let hoverBox;
-  let ui;
-  let element;
-  let picker;
-  let data;
-  let meta;
-  let type;
-  let algorithm;
-  let quote;
-  let optimized;
-  let js;
-  let property;
-
-  /**
-   * Gets the declared variables. This can be used by other parts of the app or for debugging purposes.
-   *
-   * @returns {*} the variables
-   * @public
-   */
-  function get() {
-    return {
-      hoverBox, ui, element, picker, data, meta, type, algorithm, quote, optimized, js, property
-    };
-  }
+  static hoverBox;
+  static ui;
+  static element;
+  static picker;
+  static data;
+  static meta;
+  static type;
+  static algorithm;
+  static quote;
+  static optimized;
+  static js;
+  static property;
 
   /**
    * Opens the Picker.
    *
    * @public
    */
-  async function openPicker() {
-    await closePicker();
+  static async openPicker() {
+    await Picker.closePicker();
     console.log("openPicker() - opening the Picker");
-    const instance = await getInstance();
+    const instance = await Picker.#getInstance();
     instance.pickerEnabled = true;
-    await setInstance(instance);
-    hoverBox = new HoverBox();
-    hoverBox.open();
-    addUI();
+    await Picker.#setInstance(instance);
+    Picker.hoverBox = new HoverBox();
+    Picker.hoverBox.open();
+    Picker.#addUI();
   }
 
   /**
@@ -78,16 +66,16 @@ var Picker = Picker || (() => {
    *
    * @public
    */
-  async function closePicker() {
+  static async closePicker() {
     console.log("closePicker() - closing the Picker");
-    const instance = await getInstance();
+    const instance = await Picker.#getInstance();
     instance.pickerEnabled = false;
-    await setInstance(instance);
-    if (hoverBox) {
-      hoverBox.close();
-      hoverBox = undefined;
+    await Picker.#setInstance(instance);
+    if (Picker.hoverBox) {
+      Picker.hoverBox.close();
+      Picker.hoverBox = undefined;
     }
-    removeUI();
+    Picker.#removeUI();
   }
 
   /**
@@ -103,21 +91,21 @@ var Picker = Picker || (() => {
    * @param {string} corner - the corner to initiate with (e.g. "bottom-right")
    * @public
    */
-  async function initPicker(algorithm_, quote_, optimized_, js_, property_, size, corner) {
+  static async initPicker(algorithm_, quote_, optimized_, js_, property_, size, corner) {
     // Send out only the type to the UI so it knows this is just for the opening and to know what to start with (Selector or XPath)
-    const instance = await getInstance();
+    const instance = await Picker.#getInstance();
     // ElementPicky's picker is always just "picky"
-    picker = instance.picker;
+    Picker.picker = instance.picker;
     // Note that element and remove both use pageElementType. Element Picky just uses type, as it could be selector, xpath, or property
-    type = picker === "next" ? instance.nextLinkType : picker === "prev" ? instance.prevLinkType : picker === "button" ? instance.buttonType : picker === "element" || picker === "load" || picker === "remove" ? instance.pageElementType : picker === "picky" ? instance.pickerType : "";
-    algorithm = algorithm_;
-    quote = quote_;
-    optimized = optimized_;
-    js = js_;
-    property = property_ && typeof property_ === "string" ? property_.split(".").filter(Boolean) : [];
-    Promisify.runtimeSendMessage({receiver: "background", greeting: "updatePickerUI", type: type, picker: picker});
-    resizePicker(size);
-    movePicker(corner);
+    Picker.type = Picker.picker === "next" ? instance.nextLinkType : Picker.picker === "prev" ? instance.prevLinkType : Picker.picker === "button" ? instance.buttonType : ["element", "load", "remove"].includes(Picker.picker) ? instance.pageElementType : Picker.picker === "picky" ? instance.pickerType : "";
+    Picker.algorithm = algorithm_;
+    Picker.quote = quote_;
+    Picker.optimized = optimized_;
+    Picker.js = js_;
+    Picker.property = property_ && typeof property_ === "string" ? property_.split(".").filter(Boolean) : [];
+    Promisify.runtimeSendMessage({receiver: "background", greeting: "updatePickerUI", type: Picker.type, picker: Picker.picker});
+    Picker.resizePicker(size);
+    Picker.movePicker(corner);
   }
 
   /**
@@ -131,51 +119,51 @@ var Picker = Picker || (() => {
    * @param {*} value - the value to change to (if applicable)
    * @public
    */
-  function changePicker(change, value) {
+  static changePicker(change, value) {
     console.log("changePicker() - change=" + change + ", value=" + value);
     // In case we're dealing with elements inside iframes, we can't just use instanceof Element; must use the element's defaultView
-    const DFElement = element.ownerDocument?.defaultView?.Element || Element;
-    let newElement = element;
+    const DFElement = Picker.element.ownerDocument?.defaultView?.Element || Element;
+    let newElement = Picker.element;
     switch(change) {
       case "parent":
-        newElement = DOMNode.getParentElement(element) || element;
+        newElement = DOMNode.getParentElement(Picker.element) || Picker.element;
         break;
       case "child":
-        newElement = DOMNode.getChildElement(element) || element;
+        newElement = DOMNode.getChildElement(Picker.element) || Picker.element;
         break;
       case "next":
-        newElement = element.nextElementSibling instanceof DFElement ? element.nextElementSibling : element;
+        newElement = Picker.element.nextElementSibling instanceof DFElement ? Picker.element.nextElementSibling : Picker.element;
         break;
       case "previous":
-        newElement = element.previousElementSibling instanceof DFElement ? element.previousElementSibling : element;
+        newElement = Picker.element.previousElementSibling instanceof DFElement ? Picker.element.previousElementSibling : Picker.element;
         break;
       case "type":
-        type = value;
+        Picker.type = value;
         break;
       case "algorithm":
-        algorithm = value;
+        Picker.algorithm = value;
         break;
       case "quote":
-        quote = value;
+        Picker.quote = value;
         break;
       case "optimized":
-        optimized = value;
+        Picker.optimized = value;
         break;
       case "js":
-        js = value;
+        Picker.js = value;
         break;
       case "property":
-        property = value && typeof value === "string" ? value.split(".").filter(Boolean) : [];
+        Picker.property = value && typeof value === "string" ? value.split(".").filter(Boolean) : [];
         break;
       default:
         break;
     }
     // if (newElement !== hoverBox?.hoverBox) {
     //   updatePicker(newElement);
-    //   hoverBox.highlightElement(newElement);
+    //   Picker.hoverBox.highlightElement(newElement);
     // }
-    updatePicker(newElement);
-    hoverBox.highlightElement(newElement);
+    Picker.updatePicker(newElement);
+    Picker.hoverBox.highlightElement(newElement);
   }
 
   /**
@@ -184,36 +172,36 @@ var Picker = Picker || (() => {
    * @param {Element} newElement - the new element to update the picker with
    * @public
    */
-  function updatePicker(newElement) {
+  static updatePicker(newElement) {
     console.log("updatePicker()");
     if (newElement) {
-      element = newElement;
+      Picker.element = newElement;
     }
-    if (!element) {
+    if (!Picker.element) {
       return;
     }
-    if (type === "property") {
+    if (Picker.type === "property") {
       // Property
-      data = getElementPropertyValue(element);
+      Picker.data = Picker.#getElementPropertyValue(Picker.element);
     } else {
       // Selector XPath or JS Path
-      const target = picker === "next" || picker === "prev" ? "link" : picker === "button" ? "button" : "generic";
+      const target = Picker.picker === "next" || Picker.picker === "prev" ? "link" : Picker.picker === "button" ? "button" : "generic";
       // Note: This is the only time we ever call DOMPath.generateContextPath; in all other parts of the app, we have
       // the current context (e.g. iframe document), but here we're unsure what element the user is trying to pick
-      const domPath = DOMPath.generateContextPath(element, type, algorithm, quote, optimized, target, js);
-      data = domPath.path;
-      meta = domPath.meta;
+      const domPath = DOMPath.generateContextPath(Picker.element, Picker.type, Picker.algorithm, Picker.quote, Picker.optimized, target, Picker.js);
+      Picker.data = domPath.path;
+      Picker.meta = domPath.meta;
     }
     // Build out the element object we will send to the UI to update
     const elementObject = {};
-    elementObject.context = DOMNode.getParentShadowRoot(element) ? "shadow" : DOMNode.getParentIframe(element) ? "iframe" : "";
-    elementObject.current = getElementDetails(element);
-    elementObject.parent = getElementDetails(DOMNode.getParentElement(element));
-    elementObject.child = getElementDetails(DOMNode.getChildElement(element));
-    elementObject.next = getElementDetails(element.nextElementSibling);
-    elementObject.previous = getElementDetails(element.previousElementSibling);
+    elementObject.context = DOMNode.getParentShadowRoot(Picker.element) ? "shadow" : DOMNode.getParentIframe(Picker.element) ? "iframe" : "";
+    elementObject.current = Picker.#getElementDetails(Picker.element);
+    elementObject.parent = Picker.#getElementDetails(DOMNode.getParentElement(Picker.element));
+    elementObject.child = Picker.#getElementDetails(DOMNode.getChildElement(Picker.element));
+    elementObject.next = Picker.#getElementDetails(Picker.element.nextElementSibling);
+    elementObject.previous = Picker.#getElementDetails(Picker.element.previousElementSibling);
     // Note do not send out the type as that is how we differentiate between first-time updates (type only) and successive updates
-    Promisify.runtimeSendMessage({receiver: "background", greeting: "updatePickerUI", data: data, meta: meta, element: elementObject});
+    Promisify.runtimeSendMessage({receiver: "background", greeting: "updatePickerUI", data: Picker.data, meta: Picker.meta, element: elementObject});
     // console.log("parents:");
     // let parent = element.parentNode;
     // while (parent) {
@@ -236,10 +224,10 @@ var Picker = Picker || (() => {
    *
    * @public
    */
-  async function savePicker() {
-    const instance = await getInstance();
-    console.log("savePicker() - saving picker... picker=" + picker);
-    switch (picker) {
+  static async savePicker() {
+    const instance = await Picker.#getInstance();
+    console.log("savePicker() - saving picker... picker=" + Picker.picker);
+    switch (Picker.picker) {
       case "next":
         instance.nextLinkType = type || instance.nextLinkType;
         instance.nextLinkPath =  data || instance.nextLinkPath;
@@ -258,13 +246,13 @@ var Picker = Picker || (() => {
         instance.pageElementType = type || instance.pageElementType;
         instance.pageElementPath = data || instance.pageElementPath;
         break;
-        // Note: For AJAX types, they share the same type with the pageElementType, so we have to override it if they change the type
+        // Note: For AJAX types, they share the same type with the pageElementType, not sure we should override the pageElementType
       case "load":
-        instance.pageElementType = type || instance.pageElementType;
+        // instance.pageElementType = type || instance.pageElementType;
         instance.loadElementPath = data || instance.loadElementPath;
         break;
       case "remove":
-        instance.pageElementType = type || instance.pageElementType;
+        // instance.pageElementType = type || instance.pageElementType;
         instance.removeElementPath = data || instance.removeElementPath;
         break;
       default:
@@ -276,8 +264,8 @@ var Picker = Picker || (() => {
     instance.pickerSet = true;
     // TODO: Sometimes the instance.isLoading is true, which is why sometimes we have to click ACCEPT again; should we reset it to false always?
     // instance.isLoading = false;
-    await setInstance(instance);
-    setTimeout(() => { closePicker(); }, 2000);
+    await Picker.#setInstance(instance);
+    setTimeout(() => { Picker.closePicker(); }, 2000);
   }
 
   /**
@@ -285,7 +273,7 @@ var Picker = Picker || (() => {
    *
    * @public
    */
-  async function copyPicker() {
+  static async copyPicker() {
     console.log("copyPicker() - copying data to clipboard... data=" + data);
     try {
       await navigator.clipboard.writeText(data);
@@ -294,7 +282,7 @@ var Picker = Picker || (() => {
       console.log(e);
     }
     // TODO: Should we also close the picker after copying?
-    // setTimeout(() => { closePicker(); }, 2000);
+    // setTimeout(() => { Picker.closePicker(); }, 2000);
   }
 
   /**
@@ -303,17 +291,17 @@ var Picker = Picker || (() => {
    * @param {string} size - the size to make the picker ("minimize" or "maximize")
    * @public
    */
-  function resizePicker(size) {
+  static resizePicker(size) {
     console.log("resizePicker() - size=" + size);
     switch(size) {
       case "minimize":
-        ui.style.setProperty("width", "256px", "important");
-        ui.style.setProperty("height", "100px", "important");
+        Picker.ui.style.setProperty("width", "256px", "important");
+        Picker.ui.style.setProperty("height", "100px", "important");
         break;
       default:
       case "maximize":
-        ui.style.setProperty("width", "500px", "important");
-        ui.style.setProperty("height", "200px", "important");
+        Picker.ui.style.setProperty("width", "500px", "important");
+        Picker.ui.style.setProperty("height", "200px", "important");
         break;
     }
   }
@@ -324,34 +312,34 @@ var Picker = Picker || (() => {
    * @param {string} corner - the corner to move to
    * @public
    */
-  function movePicker(corner) {
+  static movePicker(corner) {
     console.log("movePicker() - corner=" + corner);
     const margin = "8px";
     switch(corner) {
       default:
       case "bottom-right":
-        ui.style.setProperty("top", "", "important");
-        ui.style.setProperty("bottom", margin, "important");
-        ui.style.setProperty("right", margin, "important");
-        ui.style.setProperty("left", "", "important");
+        Picker.ui.style.setProperty("top", "", "important");
+        Picker.ui.style.setProperty("bottom", margin, "important");
+        Picker.ui.style.setProperty("right", margin, "important");
+        Picker.ui.style.setProperty("left", "", "important");
         break;
       case "top-right":
-        ui.style.setProperty("top", margin, "important");
-        ui.style.setProperty("bottom", "", "important");
-        ui.style.setProperty("right", margin, "important");
-        ui.style.setProperty("left", "", "important");
+        Picker.ui.style.setProperty("top", margin, "important");
+        Picker.ui.style.setProperty("bottom", "", "important");
+        Picker.ui.style.setProperty("right", margin, "important");
+        Picker.ui.style.setProperty("left", "", "important");
         break;
       case "top-left":
-        ui.style.setProperty("top", margin, "important");
-        ui.style.setProperty("bottom", "", "important");
-        ui.style.setProperty("right", "", "important");
-        ui.style.setProperty("left", margin, "important");
+        Picker.ui.style.setProperty("top", margin, "important");
+        Picker.ui.style.setProperty("bottom", "", "important");
+        Picker.ui.style.setProperty("right", "", "important");
+        Picker.ui.style.setProperty("left", margin, "important");
         break;
       case "bottom-left":
-        ui.style.setProperty("top", "", "important");
-        ui.style.setProperty("bottom", margin, "important");
-        ui.style.setProperty("right", "", "important");
-        ui.style.setProperty("left", margin, "important");
+        Picker.ui.style.setProperty("top", "", "important");
+        Picker.ui.style.setProperty("bottom", margin, "important");
+        Picker.ui.style.setProperty("right", "", "important");
+        Picker.ui.style.setProperty("left", margin, "important");
         break;
     }
   }
@@ -361,25 +349,25 @@ var Picker = Picker || (() => {
    *
    * @private
    */
-  function addUI() {
-    // removeUI();
+  static #addUI() {
+    // Picker.#removeUI();
     console.log("addUI()");
     // Note: For the border, we use black no matter the theme. However, if desired, we can have PickerUI send a message back to us to initPicker(), and we can get the theme's border color and override it then
     const UI_STYLE = "background: initial; border: 1px solid black; border-radius: 0; box-shadow: none; clear: both; display: block; float: none; height: 200px; max-width: none; max-height: none; min-height: 0; min-width: 0; margin: 0; opacity: 1; outline: 0; overflow: hidden; padding: 0; pointer-events: auto; position: fixed; visibility: visible;  width: 500px; z-index: 2147483647;";
-    ui = document.createElement("iframe");
-    ui.style = UI_STYLE.replaceAll(";", " !important;");
-    ui.scrolling = "no";
-    ui.frameBorder = "0";
-    ui.allowTransparency = "true";
+    Picker.ui = document.createElement("iframe");
+    Picker.ui.style = UI_STYLE.replaceAll(";", " !important;");
+    Picker.ui.scrolling = "no";
+    Picker.ui.frameBorder = "0";
+    Picker.ui.allowTransparency = "true";
     // We want to append directly to documentElement (html) instead of body so we don't interfere with the DOM's body for path finding
-    (document.documentElement || document.body).append(ui);
+    (document.documentElement || document.body).append(Picker.ui);
     // Important: If we set the onload listener before appending the iframe to the document, the onload will execute twice, so we do it after appending
     // @see https://stackoverflow.com/questions/10781880/dynamically-created-iframe-triggers-onload-event-twice
-    ui.onload = function () {
+    Picker.ui.onload = function () {
       console.log("addUI() - ui iframe loaded");
     }
     // Note: This must be a web_accessible_resource in manifest.json
-    ui.contentWindow.location = chrome.runtime.getURL("/html/picker-ui.html");
+    Picker.ui.contentWindow.location = chrome.runtime.getURL("/html/picker-ui.html");
     // Note: We sometimes get the following extension error after we append the ui, but this only happens on certain websites and does not affect functionality:
     // The source list for the Content Security Policy directive 'script-src' contains an invalid source: ''*''. It will be ignored.
   }
@@ -389,12 +377,12 @@ var Picker = Picker || (() => {
    *
    * @private
    */
-  function removeUI() {
+  static #removeUI() {
     console.log("removeUI()");
-    if (ui && typeof ui.remove === "function") {
-      ui.remove();
+    if (Picker.ui && typeof Picker.ui.remove === "function") {
+      Picker.ui.remove();
     }
-    // ui = undefined;
+    // Picker.ui = undefined;
   }
 
   /**
@@ -407,7 +395,7 @@ var Picker = Picker || (() => {
    * @returns {string|*} the element details
    * @private
    */
-  function getElementDetails(el) {
+  static #getElementDetails(el) {
     let details = "";
     if (el) {
       details += el.nodeName && typeof el.nodeName.toUpperCase === "function" ? el.nodeName.toUpperCase() : "";
@@ -430,12 +418,12 @@ var Picker = Picker || (() => {
    * @returns {*} the value of the element's property
    * @private
    */
-  function getElementPropertyValue(el) {
+  static #getElementPropertyValue(el) {
     let value;
     try {
-      value = el[property[0]];
-      for (let i = 1; i < property.length; i++) {
-        value = data[property[i]];
+      value = el[Picker.property[0]];
+      for (let i = 1; i < Picker.property.length; i++) {
+        value = data[Picker.property[i]];
       }
       // // In case of something ridiculous, like being an element (e.g. via parentNode)
       // value = JSON.stringify(value);
@@ -453,11 +441,11 @@ var Picker = Picker || (() => {
    * @returns {Promise<{}|*>} the instance
    * @private
    */
-  async function getInstance() {
-    if (typeof Scroll !== "undefined" && typeof Scroll.get === "function") {
-      return Scroll.get("instance");
+  static async #getInstance() {
+    if (typeof V !== "undefined" && V.instance) {
+      return V.instance;
     } else {
-      return await Promisify.runtimeSendMessage({receiver: "background", greeting: "getInstance"});
+      return await Promisify.runtimeSendMessage({sender: "picker", receiver: "background", greeting: "getInstance"});
     }
   }
 
@@ -467,26 +455,12 @@ var Picker = Picker || (() => {
    * @param {Object} instance - the instance
    * @private
    */
-  async function setInstance(instance) {
-    if (typeof Scroll !== "undefined" && typeof Scroll.set === "function") {
-      Scroll.set("instance", instance);
+  static async #setInstance(instance) {
+    if (typeof V !== "undefined" && V.instance) {
+      V.instance = instance;
     } else {
       await Promisify.runtimeSendMessage({receiver: "background", greeting: "setInstance", instance: instance});
     }
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    get,
-    openPicker,
-    closePicker,
-    initPicker,
-    changePicker,
-    savePicker,
-    copyPicker,
-    resizePicker,
-    movePicker,
-    updatePicker
-  };
-
-})();
+}

@@ -5,15 +5,15 @@
  */
 
 /**
- * Promisify contains promise-based wrappers for common extension tasks, like getting storage items, getting tabs, and
+ * Promisify is a class that contains promise-based wrappers for common tasks, like getting storage items, getting tabs, and
  * sending messages between different parts of the extension.
  *
- * Because the chrome.* api uses callbacks, this is a convenience object that allows the extension to use async/await
+ * Because the chrome.* api uses callbacks, Promisify was created for convenience and allows us to use async/await
  * and be coded in a simpler fashion.
  *
  * Note: The name "Promisify" is used instead of the reserved object name, {@link Promise}.
  */
-const Promisify = (() => {
+class Promisify {
 
   /**
    * Gets the storage items via a promise-based wrapper for async/await callers.
@@ -24,7 +24,7 @@ const Promisify = (() => {
    * @returns {Promise<{}>} the storage items
    * @public
    */
-  function storageGet(key = null, namespace = "local", deletes = ["databaseAP", "databaseIS", "saves"]) {
+  static storageGet(key = null, namespace = "local", deletes = ["databaseAP", "databaseIS", "saves"]) {
     return new Promise(resolve => {
       chrome.storage[namespace].get(key, items => {
         deletes.forEach(del => { if (del !== key) { delete items[del]; } });
@@ -41,7 +41,7 @@ const Promisify = (() => {
    * @returns {Promise<{}>}
    * @public
    */
-  function storageSet(items, namespace = "local") {
+  static storageSet(items, namespace = "local") {
     return new Promise(resolve => {
       chrome.storage[namespace].set(items, resolve);
     });
@@ -56,7 +56,7 @@ const Promisify = (() => {
    * @returns {Promise<{}>}
    * @public
    */
-  function storageRemove(items, namespace = "local") {
+  static storageRemove(items, namespace = "local") {
     return new Promise(resolve => {
       chrome.storage[namespace].remove(items, resolve);
     });
@@ -69,7 +69,7 @@ const Promisify = (() => {
    * @returns {Promise<{}>}
    * @public
    */
-  function storageClear(namespace = "local") {
+  static storageClear(namespace = "local") {
     return new Promise(resolve => {
       chrome.storage[namespace].clear(resolve);
     });
@@ -81,7 +81,7 @@ const Promisify = (() => {
    * @returns {Promise<{}>}
    * @public
    */
-  function runtimeOpenOptionsPage() {
+  static runtimeOpenOptionsPage() {
     return new Promise(resolve => {
       // chrome.runtime.openOptionsPage(resolve);
       chrome.runtime.openOptionsPage(response => {
@@ -100,7 +100,7 @@ const Promisify = (() => {
    * @returns {Promise<{}>} the response
    * @public
    */
-  function runtimeSendMessage(message) {
+  static runtimeSendMessage(message) {
     return new Promise(resolve => {
       // TODO: Don't assume this is async and handle it in either the sender or receiver's side
       message.async = true;
@@ -121,7 +121,7 @@ const Promisify = (() => {
    * @returns {Promise<{}>} the response
    * @public
    */
-  function tabsSendMessage(tabId, message) {
+  static tabsSendMessage(tabId, message) {
     return new Promise(resolve => {
       // TODO: Don't assume this is async and handle it in either the sender or receiver's side
       message.async = true;
@@ -145,7 +145,7 @@ const Promisify = (() => {
    * @returns {Promise<{}>} the results array of the last statement executed in the content script
    * @public
    */
-  function tabsExecuteScript(tabId, details) {
+  static tabsExecuteScript(tabId, details) {
     return new Promise((resolve, reject) => {
       // MV3 Version:
       if (typeof chrome.scripting?.executeScript === "function") {
@@ -181,7 +181,7 @@ const Promisify = (() => {
    * @returns {Promise<{}>} the tabs
    * @public
    */
-  function tabsQuery(queryInfo = {active: true, lastFocusedWindow: true}) {
+  static tabsQuery(queryInfo = {active: true, lastFocusedWindow: true}) {
     return new Promise(resolve => {
       chrome.tabs.query(queryInfo, tabs => {
         resolve(tabs);
@@ -199,7 +199,7 @@ const Promisify = (() => {
   //  * @returns {Promise<{}>} the downloadId of the downloaded item after successfully commencing, or undefined if an error
   //  * @public
   //  */
-  // function downloadsDownload(options) {
+  // static downloadsDownload(options) {
   //   return new Promise((resolve, reject) => {
   //     chrome.downloads.download(options, downloadId => {
   //       if (chrome.runtime.lastError) {
@@ -219,7 +219,7 @@ const Promisify = (() => {
   //  * @returns {Promise<{}>}
   //  * @public
   //  */
-  // function downloadsCancel(downloadId) {
+  // static downloadsCancel(downloadId) {
   //   return new Promise(resolve => {
   //     chrome.downloads.cancel(downloadId, resolve);
   //   });
@@ -233,7 +233,7 @@ const Promisify = (() => {
   //  * @returns {Promise<{}>} true if granted, false if not granted
   //  * @public
   //  */
-  // function permissionsRequest(permission) {
+  // static permissionsRequest(permission) {
   //   return new Promise(resolve => {
   //     chrome.permissions.request(permission, granted => {
   //       console.log("permissionsRequest() - granted=" + granted);
@@ -249,7 +249,7 @@ const Promisify = (() => {
   //  * @returns {Promise<{}>} true if removed, false if not removed
   //  * @public
   //  */
-  // function permissionsRemove(permission) {
+  // static permissionsRemove(permission) {
   //   return new Promise(resolve => {
   //     chrome.permissions.remove(permission, removed => {
   //       console.log("permissionsRemove() - removed=" + removed);
@@ -263,30 +263,13 @@ const Promisify = (() => {
    *
    * @param {number} ms - the milliseconds to sleep
    * @returns {Promise<>}
+   * @public
    */
-  function sleep(ms) {
+  static sleep(ms) {
     // console.log("Promisify.sleep()");
     return new Promise((resolve) => {
       setTimeout(resolve, ms);
     });
   }
 
-  // Return public members from the Immediately Invoked Function Expression (IIFE, or "Iffy") Revealing Module Pattern (RMP)
-  return {
-    storageGet,
-    storageSet,
-    storageRemove,
-    storageClear,
-    runtimeOpenOptionsPage,
-    runtimeSendMessage,
-    tabsSendMessage,
-    tabsExecuteScript,
-    tabsQuery,
-    // downloadsDownload,
-    // downloadsCancel,
-    // permissionsRequest,
-    // permissionsRemove,
-    sleep
-  };
-
-})();
+}
