@@ -54,7 +54,7 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
 *You can copy and paste these settings using the Add Save feature in the Options. (Tested on December 22, 2022.)*
 
 ## SPA Support
-[SPAs (Single-page Applications)](https://developer.mozilla.org/docs/Glossary/SPA) are tricky to deal with because they update their page content dynamically, and sometimes don't even update the address bar. However, Infy now supports the [Navigation API](https://developer.mozilla.org/docs/Web/API/Navigation_API) (Chrome/Edge 102+ Only) to detect browser navigations and it can also watch for changes on the page and auto-activate and auto-deactivate itself if the website changes its content dynamically. It even works here on GitHub and on Pixiv. Just check the setting in the UI Window (Version 0.8) and save it. No more refreshing the page!
+[SPAs (Single-page Applications)](https://developer.mozilla.org/docs/Glossary/SPA) are tricky to deal with because they update their page content dynamically, and sometimes don't even update the address bar. However, Infy now supports the [Navigation API](https://developer.mozilla.org/docs/Web/API/Navigation_API) (Chrome/Edge 102+ Only) to detect browser navigations and it can also watch for changes on the page and auto-activate and auto-deactivate itself if the website changes its content dynamically. It even works here on GitHub and on Pixiv. Just check the Late Activation setting in the UI Window (Version 0.8) and save it. No more refreshing the page!
 
 ## Installation
 Installing from GitHub is super simple. First, [download the zip](https://github.com/sixcious/infy-scroll/archive/refs/heads/main.zip) and unzip it. Then:
