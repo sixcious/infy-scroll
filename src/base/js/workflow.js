@@ -166,7 +166,7 @@ class Workflow {
     // if (caller === "popupClickActionButton" || ["auto", "power", "blacklist", "whitelist"].includes(action)) {
     if (V.instance.popupOpened || caller === "popupClickActionButton" || ["auto", "power", "blacklist", "whitelist"].includes(action)) {
       // If a new page was appended (action is now a MAIN_ACTION), we need to set current page to total pages in case scrolling is smooth (finishes after sending instance to popup)
-      if (Workflow.#MAIN_ACTIONS.includes(action)) {
+      if (!V.instance.autoEnabled && Workflow.#MAIN_ACTIONS.includes(action)) {
         V.instance.currentPage = V.pages.length;
       }
       Promisify.runtimeSendMessage({receiver: "popup", greeting: "updatePopupInstance", caller: caller, action: action, instance: V.instance});
