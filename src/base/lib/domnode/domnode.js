@@ -66,6 +66,7 @@ var DOMNode = class DOMNode {
 
   /**
    * Gets multiple elements based on a path.
+   *
    * Note: XPath can return Nodes (e.g. text nodes) whereas Selector can only return Elements.
    *
    * @param {string} path - the selector, xpath, or js path

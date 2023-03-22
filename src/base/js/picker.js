@@ -158,7 +158,7 @@ var Picker = class Picker {
       default:
         break;
     }
-    // if (newElement !== hoverBox?.hoverBox) {
+    // if (newElement !== Picker.hoverBox?.hoverBox) {
     //   updatePicker(newElement);
     //   Picker.hoverBox.highlightElement(newElement);
     // }
@@ -203,13 +203,13 @@ var Picker = class Picker {
     // Note do not send out the type as that is how we differentiate between first-time updates (type only) and successive updates
     Promisify.runtimeSendMessage({receiver: "background", greeting: "updatePickerUI", data: Picker.data, meta: Picker.meta, element: elementObject});
     // console.log("parents:");
-    // let parent = element.parentNode;
+    // let parent = Picker.element.parentNode;
     // while (parent) {
     //   console.log(parent.tagName);
     //   parent = parent.parentNode;
     // }
     // console.log("children:");
-    // let child = element.firstElementChild;
+    // let child = Picker.element.firstElementChild;
     // while (child) {
     //   console.log(child.tagName);
     //   child = child.firstElementChild;
@@ -229,31 +229,31 @@ var Picker = class Picker {
     console.log("savePicker() - saving picker... picker=" + Picker.picker);
     switch (Picker.picker) {
       case "next":
-        instance.nextLinkType = type || instance.nextLinkType;
-        instance.nextLinkPath =  data || instance.nextLinkPath;
+        instance.nextLinkType = Picker.type || instance.nextLinkType;
+        instance.nextLinkPath =  Picker.data || instance.nextLinkPath;
         instance.nextLinkKeywordsEnabled = false;
         break;
       case "prev":
-        instance.prevLinkType = type || instance.prevLinkType;
-        instance.prevLinkPath =  data || instance.prevLinkPath;
+        instance.prevLinkType = Picker.type || instance.prevLinkType;
+        instance.prevLinkPath =  Picker.data || instance.prevLinkPath;
         instance.prevLinkKeywordsEnabled = false;
         break;
       case "button":
-        instance.buttonType = type || instance.buttonType;
-        instance.buttonPath = data || instance.buttonPath;
+        instance.buttonType = Picker.type || instance.buttonType;
+        instance.buttonPath = Picker.data || instance.buttonPath;
         break;
       case "element":
-        instance.pageElementType = type || instance.pageElementType;
-        instance.pageElementPath = data || instance.pageElementPath;
+        instance.pageElementType = Picker.type || instance.pageElementType;
+        instance.pageElementPath = Picker.data || instance.pageElementPath;
         break;
         // Note: For AJAX types, they share the same type with the pageElementType, not sure we should override the pageElementType
       case "load":
-        // instance.pageElementType = type || instance.pageElementType;
-        instance.loadElementPath = data || instance.loadElementPath;
+        // instance.pageElementType = Picker.type || instance.pageElementType;
+        instance.loadElementPath = Picker.data || instance.loadElementPath;
         break;
       case "remove":
-        // instance.pageElementType = type || instance.pageElementType;
-        instance.removeElementPath = data || instance.removeElementPath;
+        // instance.pageElementType = Picker.type || instance.pageElementType;
+        instance.removeElementPath = Picker.data || instance.removeElementPath;
         break;
       default:
         break;
@@ -274,9 +274,9 @@ var Picker = class Picker {
    * @public
    */
   static async copyPicker() {
-    console.log("copyPicker() - copying data to clipboard... data=" + data);
+    console.log("copyPicker() - copying data to clipboard... data=" + Picker.data);
     try {
-      await navigator.clipboard.writeText(data);
+      await navigator.clipboard.writeText(Picker.data);
     } catch (e) {
       console.log("copyPicker() - Error");
       console.log(e);
@@ -423,7 +423,7 @@ var Picker = class Picker {
     try {
       value = el[Picker.property[0]];
       for (let i = 1; i < Picker.property.length; i++) {
-        value = data[Picker.property[i]];
+        value = Picker.data[Picker.property[i]];
       }
       // // In case of something ridiculous, like being an element (e.g. via parentNode)
       // value = JSON.stringify(value);

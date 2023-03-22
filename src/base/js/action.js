@@ -496,9 +496,9 @@ class Action {
     console.log("power()");
     let actionPerformed = true;
     // Handle on/off state, send message to background to turn off the other instances in all tabs
-    const items = await Promisify.storageGet();
-    await Promisify.storageSet({"on": !items.on});
-    if (!items.on) {
+    const on = await Promisify.storageGet("on");
+    await Promisify.storageSet({"on": !on});
+    if (!on) {
       await Scroll.start(caller);
     } else {
       // Note: Although turnOff could also stop this tab, this would require us to write messy code to await that because we need to update the Popup instance

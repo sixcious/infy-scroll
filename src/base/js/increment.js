@@ -9,7 +9,7 @@
  * to increment, validating the selection, and actually incrementing it. Bases 2-36 (10 is the default) as well as
  * Custom Bases (custom alphabets) are all supported.
  *
- * There are additional objects in this file for handling more complex increment functions. They are for:
+ * There are additional classes in this file for handling more complex increment functions. They are for:
  * 1. Multi Incrementing: incrementing multiple parts of a URL individually, simultaneously, or in ranges
  * 2. Date/Time Incrementing: incrementing dates and times
  * 3. Roman Numeral Incrementing: incrementing roman numerals like vii

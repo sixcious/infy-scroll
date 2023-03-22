@@ -163,8 +163,8 @@ class Workflow {
       Promisify.runtimeSendMessage({receiver: "background", greeting: "setBadge", badge: badge, temporary: true});
     }
     // Send a message to update the popup if it's opened or if this is a relevant action (this process wakes up the Background, so we don't want to always do it)
-    // if (V.instance.popupOpened || (caller === "popupClickActionButton") || ["auto", "power", "blacklist", "whitelist"].includes(action)) {
-    if (V.instance.popupOpened) {
+    // if (caller === "popupClickActionButton" || ["auto", "power", "blacklist", "whitelist"].includes(action)) {
+    if (V.instance.popupOpened || caller === "popupClickActionButton" || ["auto", "power", "blacklist", "whitelist"].includes(action)) {
       // If a new page was appended (action is now a MAIN_ACTION), we need to set current page to total pages in case scrolling is smooth (finishes after sending instance to popup)
       if (Workflow.#MAIN_ACTIONS.includes(action)) {
         V.instance.currentPage = V.pages.length;

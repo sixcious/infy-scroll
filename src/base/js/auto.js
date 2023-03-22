@@ -44,7 +44,7 @@ class Auto {
    * This function can be called by the following callers and situations:
    *
    * 1. Auto.autoListener() - After Auto expires normally, like when autoTimes reaches 0
-   * 2. Action.perform() - After the following actions fail: next, prev, button
+   * 2. Action - After the following actions fail: next, prev, click
    * 3. Scroll.stop() - After an off action is performed, the stop() will call this
    * 4. Popup - Whenever the user clicks the ACCEPT Button and Auto is not toggled on
    *
@@ -76,7 +76,7 @@ class Auto {
    * 4. Auto.setTimeout() because autoRepeating is true calls Action.returnToStart()
    * 5. Action.returnToStart() sets autoRepeating to false, resets all the instance properties (including multi, array)
    *
-   * Note: This function is no longer public. We moved the call to repeat from Action.perform (stop) to the Auto
+   * Note: This function is no longer public. We moved the call to repeat from Action.stop() to the Auto
    * Listener here
    *
    * @private
