@@ -67,7 +67,7 @@ const Scripts = [
                   // Alternative Solution: JSON.parse("\"" + url + "\"");
                   const src = url.replace(/\\u([\d\w]{4})/gi, (...arguments) => { return String.fromCharCode(parseInt(arguments[1], 16))});
                   if (src && img && img.nodeName && img.nodeName.toUpperCase() === "IMG") {
-                    console.log("fn() - changing img id=" + id + ", from=" + img.src + " to=" + src);
+                    console.log("Scripts.fn() - changing img id=" + id + ", from=" + img.src + " to=" + src);
                     img.src = src;
                   }
                 }
@@ -82,18 +82,18 @@ const Scripts = [
             // '\x3d' is '=' \x22 is ? \u0026 is &
             // regexp = new RegExp("(var _pmc=')(.*)(';)").exec(textContent);
             // if (regexp && regexp[2]) {
-            //   console.log("Google Shopping Image Script Found");
+            //   console.log("Scripts.fn() - Google Shopping Image Script Found");
             //   doc.querySelectorAll("[data-ved]").forEach(div => {
             //     div.style.setProperty("opacity", "1", "important");
             //   });
             //   // const json = JSON.parse(regexp[2]);
             //   // if (json && json.spop && json.spop.r) {
-            //   //   console.log("Google Shopping JSON Found");
+            //   //   console.log("Scripts.fn() - Google Shopping JSON Found");
             //   // }
             // }
           }
         } catch (e) {
-          console.log("fn() - Error:");
+          console.log("Scripts.fn() - Error:");
           console.log(e);
         }
       });
@@ -122,10 +122,10 @@ const Scripts = [
             // const src = url.replace(/\\x([0-9A-Fa-f]{2})/gi, (...arguments) => { return String.fromCharCode(parseInt(arguments[1], 16))});
             const src = url;
             if (src && img && img.nodeName && img.nodeName.toUpperCase() === "IMG") {
-              console.log("fn() - changing img id=" + id + ", from=" + img.src + " to=" + src);
+              console.log("Scripts.fn() - changing img id=" + id + ", from=" + img.src + " to=" + src);
               img.src = src;
             }
-            console.log("fn() - src=" + src);
+            console.log("Scripts.fn() - src=" + src);
           }
         }
       });
@@ -141,7 +141,7 @@ const Scripts = [
     fn: function (doc) {
       doc.querySelectorAll(".javascript-hide").forEach(el => {
         if (el && el.classList) {
-          console.log("fn() - removing javascript-hide class from element");
+          console.log("Scripts.fn() - removing javascript-hide class from element");
           el.classList.remove("javascript-hide");
         }
       });

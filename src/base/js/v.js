@@ -5,11 +5,7 @@
  */
 
 /**
- * V (short for Variable) is a class that stores all variables and constants that are used and shared between the
- * individual content scripts.
- *
- * Note that the instance is primarily stored here. Therefore, if the Action or other area of the app needs access to
- * it, it can do so by accessing this class.
+ * V (short for Variable) stores all variables and constants that are used and shared between the individual content scripts.
  */
 class V {
 
@@ -40,11 +36,11 @@ class V {
    * @param {Document} currentDocument - the cloned full document for the current (latest) page that is being observed
    * @param {Node} insertionPoint - the insertion point is only used in append element mode and is the point at the bottom of the content to start inserting more elements
    * @param {Element[]} pageElements - the current page's array of page elements (in append element mode)
-   * @param {Element} button - the current button used for the Click Button action
+   * @param {Element} clickElement - the current click element used for the Click Element action
    * @param {HTMLIFrameElement} iframe - the current iframe that was appended for the current page
    * @param {Map<String, Element>} lazys - the lazy image/media elements that we obtain in fixLazyLoadingPre() and that we then need to later handle in fixLazyLoadingPost() after they are appended
    * @param {Element} bottom - the bottom element to track in Intersection Observer mode
-   * @param {number} offset - the offset is only used in Scroll Listener mode and is the number of pixels from the bottom of the content (e.g. the pageElements or buttonPosition) to the very bottom of the HTML document
+   * @param {number} offset - the offset is only used in Scroll Listener mode and is the number of pixels from the bottom of the content (e.g. the pageElements or clickElementPosition) to the very bottom of the HTML document
    * @param {Element} loading - the loading element that is appended while a new page is being loaded
    * @param {Element} divider - the last page divider element that was appended; we store this in order to not have to re-calculate the colSpan again for future dividers in Append Element mode (tables)
    * @param {Element} overlay - (optional) the overlay element that is fixed onto the page, showing the current page number and total pages
@@ -86,7 +82,7 @@ class V {
   static currentDocument = document;
   static insertionPoint;
   static pageElements;
-  static button;
+  static clickElement;
   static iframe;
   static lazys;
   static bottom;

@@ -18,7 +18,7 @@ class List {
    * @public
    */
   static findLinks() {
-    console.log("findLinks()");
+    console.log("List.findLinks()");
     // We use a set instead of an array to avoid duplicate links, note in JS that Sets maintain insertion order
     const links = new Set();
     // TODO: Just check [href] regardless of element tag names?
@@ -35,7 +35,7 @@ class List {
           links.add(url);
         }
       } catch (e) {
-        console.log("findLinks() - Error:");
+        console.log("List.findLinks() - Error:");
         console.log(e);
       }
     }

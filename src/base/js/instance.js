@@ -15,13 +15,14 @@ class Instance {
   /**
    * Fields
    *
-   * @param {string[]} - the option screen's keys for the instance (used by Saves and Database items).
+   * @param {string[]} OPTION_KEYS - the option screen's properties that can be instance/save-specific (used by Saves and Database items).
    */
   static OPTION_KEYS = [
     "scrollDetection", "scrollBehavior", "scrollUpdateAddress", "scrollUpdateTitle", "appendThreshold", "appendDelay",
-    "pageDivider", "pageDividerAlign", "pageDividerButtons", "pageOverlay",
-    "scrollIcon", "scrollLoading", "color", "maximumPages",
+    "pageDivider", "pageDividerAlign", "pageDividerButtons", "pageOverlay", "showIcon", "showLoading", "maximumPages",
     "customScriptsEnabled", "resizeMediaEnabled", "linksNewTabEnabled", "customEventsEnabled", "debugEnabled",
+    // Iffy on keeping these:
+    "linksNewTabOneEnabled", "color"
   ];
 
   /**
@@ -34,7 +35,7 @@ class Instance {
    * @public
    */
   static async buildInstance(tab, items, checks) {
-    console.log("buildInstance() - checks=" + checks);
+    console.log("Instance.buildInstance() - checks=" + checks);
     // Multiple checks, up to 5 seconds after document.idle
     const CHECK_VALUES = [0, 1000, 2000, 2000];
     // Assume we'll be using the storage items as the source for building the instance
@@ -50,7 +51,7 @@ class Instance {
       source = check.source;
       items = check.items;
       spa = check.spa;
-      console.log("buildInstance() - after checking saves, spa=" + spa);
+      console.log("Instance.buildInstance() - after checking saves, spa=" + spa);
     }
     // Check DatabaseIS (Only if source.via is still items)
     if ((source.via === "items" || source.via === "placeholder") && items.databaseIS && Array.isArray(items.databaseIS) && items.databaseIS.length > 0) {
@@ -58,7 +59,7 @@ class Instance {
       source = check.source;
       items = check.items;
       spa = spa || check.spa;
-      console.log("buildInstance() - after checking databaseIS, spa=" + spa);
+      console.log("Instance.buildInstance() - after checking databaseIS, spa=" + spa);
     }
     // Check DatabaseAP (Only if source.via is still items)
     if ((source.via === "items" || source.via === "placeholder") && items.databaseAP && Array.isArray(items.databaseAP) && items.databaseAP.length > 0) {
@@ -67,11 +68,11 @@ class Instance {
       source = check.source;
       items = check.items;
       spa = spa || check.spa;
-      console.log("buildInstance() - after checking databaseAP, spa=" + spa);
+      console.log("Instance.buildInstance() - after checking databaseAP, spa=" + spa);
     }
     // If still haven't found a Save or Database source, retry after the checks seconds... (only if checks argument is present)
     if ((source.via === "items" || source.via === "placeholder") && typeof checks === "number" && checks >= 1 && checks < CHECK_VALUES.length) {
-      console.log("buildInstance() - no Saved URL or Database URL found, retrying after " + CHECK_VALUES[checks] + "ms ...");
+      console.log("Instance.buildInstance() - no Saved URL or Database URL found, retrying after " + CHECK_VALUES[checks] + "ms ...");
       await Promisify.sleep(CHECK_VALUES[checks]);
       return Instance.buildInstance(tab, items, checks + 1);
     }
@@ -93,10 +94,10 @@ class Instance {
    * @public
    */
   static translateInstance(source, direction="source>instance") {
-    // console.log("translateInstance(), before translation, source=");
+    // console.log("Instance.translateInstance(), before translation, source=");
     // console.log(source);
     // Step 1: Determine the action and append (these are optional in Database items)
-    if (!source.action) {
+    if (!["next", "prev", "increment", "list", "click"].includes(source.action)) {
       let action;
       if      (source.nextLink) { action = "next"; }
       else if (source.prevLink) { action = "prev"; }
@@ -105,10 +106,10 @@ class Instance {
       else                      { action = "click"; }
       source.action = action;
     }
-    if (!source.append) {
+    if (!["media", "ajax", "none", "element", "iframe", "page"].includes(source.append)) {
       let append;
       if      (source.mediaType)                                 { append = "media"; }
-      // It is possible for this combination element, but this is the less common case, so we prioritize ajax
+      // It is possible for this to be click element instead of click ajax, but this is the less common case, so we prioritize ajax
       else if (source.pageElement && source.action === "click")  { append = "ajax"; }
       else if (!source.pageElement && source.action === "click") { append = "none"; }
       else if (source.pageElement)                               { append = "element"; }
@@ -126,30 +127,29 @@ class Instance {
           source[number] = Number(source[number]);
         }
       }
-      // No booleans currently?
+      // No booleans currently
       // const booleans = [""];
       // for (const boolean of booleans) {
       //   if (typeof source[boolean] === "string") {
       //     source[boolean] = source[boolean] === "true";
       //   }
       // }
-      // const arrays = ["puppet"];
+      // No arrays currently
+      // const arrays = [""];
       // for (const array of arrays) {
       //   if (typeof source[array] === "string") {
       //     source[array] = JSON.parse(array);
       //   }
       // }
     } catch (e) {
-      console.log("translateInstance() - Error converting strings to objects:")
+      console.log("Instance.translateInstance() - Error converting strings to objects:")
       console.log(e);
     }
     // Step 3: Translate the source keys to instance keys or vice versa
     const translations = new Map([
-      ["button", "buttonPath"],
       ["nextLink", "nextLinkPath"],
       ["prevLink", "prevLinkPath"],
-      ["keyword", "prevLinkKeyword"],
-      ["keyword", "nextLinkKeyword"],
+      ["clickElement", "clickElementPath"],
       ["pageElement", "pageElementPath"],
       ["insertBefore", "insertBeforePath"],
       ["loadElement", "loadElementPath"],
@@ -169,7 +169,7 @@ class Instance {
       }
       // Add another property called type + "Mode" and if the source has a type defined for it, set it there for later
       // We need to do this here and now because we always set the type before we create the instance: Auto or Fixed Type
-      for (let type of ["nextLinkType", "prevLinkType", "buttonType", "pageElementType"]) {
+      for (let type of ["nextLinkType", "prevLinkType", "clickElementType", "pageElementType"]) {
         source[type + "Mode"] = source[type] || "auto";
       }
     } else {
@@ -180,7 +180,7 @@ class Instance {
         }
       }
     }
-    // console.log("translateInstance(), after translation, source=");
+    // console.log("Instance.translateInstance(), after translation, source=");
     // console.log(source);
   }
 
@@ -253,14 +253,15 @@ class Instance {
     _.prevLinkProperty = source.prevLinkProperty || items.prevLinkProperty;
     _.prevLinkKeywordsEnabled = source.via !== "items" ? !!source.prevLinkKeywordsEnabled : undefined;
     _.prevLinkKeyword = source.action === "prev" ? source.prevLinkKeywordDetected : undefined;
-    _.buttonPath = source.buttonPath || "";
-    _.buttonType = source.buttonTypeDetected || items.preferredPathType;
-    _.buttonDetection = typeof source.buttonPosition !== "undefined" && source.via !== "items" ? "manual" : "auto";
-    _.buttonPosition = source.via !== "items" ? source.buttonPosition : undefined;
+    _.clickElementPath = source.clickElementPath || "";
+    _.clickElementType = source.clickElementTypeDetected || items.preferredPathType;
+    _.clickElementDetection = typeof source.clickElementPosition === "number" && source.via !== "items" ? "manual" : "auto";
+    _.clickElementPosition = typeof source.clickElementPosition === "number" ? source.clickElementPosition : items.clickElementPosition;
     _.list = source.list || [];
     // _.listOptions = source.listOptions || false;
     _.iframePageOne = !!source.iframePageOne;
     _.iframeResize = typeof source.iframeResize === "boolean" ? source.iframeResize : true;
+    _.iframeDelay = source.iframeDelay;
     _.mediaType = source.mediaType || items.mediaType;
     _.pageElementPath = source.pageElementPath || "";
     _.pageElementType = source.pageElementTypeDetected || items.preferredPathType;
@@ -300,7 +301,7 @@ class Instance {
     _.transferNodeMode = _.transferNode || (_.append === "ajax" ? "import" : "adopt");
     _.comment = source.comment;
     // Types (Auto or Fixed)
-    for (const type of ["nextLinkType", "prevLinkType", "buttonType", "pageElementType"]) {
+    for (const type of ["nextLinkType", "prevLinkType", "clickElementType", "pageElementType"]) {
       _[type + "Mode"] = source[type + "Mode"] || "auto";
     }
     // Instance Option Keys
@@ -317,7 +318,6 @@ class Instance {
     // Make the threshold be 100 for click button, including both ajax modes; in the case of iframe, this also buys us extra time to scroll
     // the iframe, and in the case of native, if some of the bottom content hasn't loaded before the button has been clicked, this is necessary
     _.appendThreshold = source.action === "click" ? 100 : _.appendThreshold;
-    // _.appendDelay = source.action === "click" ? _.appendDelay + 1000 : _.appendDelay;
     _.pageDividerGrid = 0;
     _.pageDividerGridParentModified = false;
     _.scrollbarExists = false;
@@ -349,7 +349,7 @@ class Instance {
     // We never show the loading in workflowPrepend because we don't know when the elements will be appended by the site
     _.workflowReverse = (source.append === "ajax" && source.ajaxMode !== "native") || (source.append === "element" && source.pageElementIframe);
     _.workflowPrepend = (source.action === "click" && ((source.append === "element") || (source.append === "ajax" && source.ajaxMode === "native"))) ? "divider" : "";
-    if (_.workflowPrepend) { _.scrollLoading = false }
+    if (_.workflowPrepend) { _.showLoading = false }
     _.workflowSkipAppend = false;
     // If action is list or shuffle is enabled, precalculate the URLs array for the _
     if (_.action === "list" || (_.shuffleURLs && (_.action === "increment" || _.action === "decrement"))) {
@@ -363,17 +363,17 @@ class Instance {
         for (let i = 0; i < Scripts.length; i++) {
           // const scriptURL = Scripts[i].eurl ? new TextDecoder().decode(Scripts[i].eurl) : Scripts[i].url;
           const scriptURL = Scripts[i].url;
-          console.log("createInstance() - checking scriptURL=" + scriptURL);
+          console.log("Instance.createInstance() - checking scriptURL=" + scriptURL);
           if (new RegExp(scriptURL).test(tab.url)) {
-            console.log("createInstance() - attaching a custom script to the instance, i=" + i + ", script url=" + scriptURL);
+            console.log("Instance.createInstance() - attaching a custom script to the instance, i=" + i + ", script url=" + scriptURL);
             _.script = i;
             break;
           }
-          console.log("createInstance() - done checking scriptURL=" + scriptURL);
+          console.log("Instance.createInstance() - done checking scriptURL=" + scriptURL);
         }
       }
     } catch (e) {
-      console.log("createInstance() - error checking scripts. Error:");
+      console.log("Instance.createInstance() - error checking scripts. Error:");
       console.log(e);
     }
     // Note: While some cryptography functions aren't available on non-https websites, we can use the ones needed to generate random numbers and strings
@@ -381,21 +381,21 @@ class Instance {
       _.randomNumber = Cryptography.randomNumber();
       _.randomString = Cryptography.randomString();
     } catch (e) {
-      console.log("createInstance() - error generating random number and string. Error:");
+      console.log("Instance.createInstance() - error generating random number and string. Error:");
       console.log(e);
     }
     // We need to check Bing Search specifically because it doesn't like us using a li divider in its ol parent (we check this later in Append.appendDivider())
     try {
       _.isBingSearchURL = new RegExp(String.raw`^https?://(?:www|cnweb)4?\.bing\.com/(?:[^/]+/)*?(?:results\.aspx|search)`).test(tab.url);
     } catch (e) {
-      console.log("createInstance() - error checking isBingSearchURL. Error:");
+      console.log("Instance.createInstance() - error checking isBingSearchURL. Error:");
       console.log(e);
     }
     // Trim down the database date to something more manageable
     try {
       _.databaseUpdatedAt = source.databaseUpdatedAt ? new Date(source.databaseUpdatedAt).toLocaleDateString() : "";
     } catch (e) {
-      console.log("createInstance() - error trimming databaseUpdatedAt date. Error:");
+      console.log("Instance.createInstance() - error trimming databaseUpdatedAt date. Error:");
       console.error(e);
       _.databaseUpdatedAt = source.databaseUpdatedAt;
     }
@@ -413,7 +413,7 @@ class Instance {
    * @private
    */
   static #checkSaves(tab, items, source, disregardActivate) {
-    console.log("checkSaves()");
+    console.log("Instance.checkSaves()");
     let spa = undefined;
     for (let i = 0; i < items.saves.length; i++) {
       const save = items.saves[i];
@@ -426,7 +426,7 @@ class Instance {
       }
       const result = Saves.matchesSave(tab.url, save);
       if (result && result.matches) {
-        console.log("checkSaves() - save matches this tab's URL, checking for activation... save=");
+        console.log("Instance.checkSaves() - save matches this tab's URL, checking for activation... save=");
         console.log(save);
         // Translate the save to the instance keys before checking for activation
         Instance.translateInstance(save);
@@ -435,7 +435,7 @@ class Instance {
         // If source.via becomes placeholder, we don't check the other saves unless they have passed activation
         if (activate || disregardActivate || source.via === "items") {
           const isPlaceholder = !activate && !disregardActivate;
-          console.log("checkSaves() - save activation passed for this tab's URL, disregardActivate=" + disregardActivate + ", isPlaceholder=" + isPlaceholder + ", save=");
+          console.log("Instance.checkSaves() - save activation passed for this tab's URL, disregardActivate=" + disregardActivate + ", isPlaceholder=" + isPlaceholder + ", save=");
           console.log(save);
           source = save;
           source.via = isPlaceholder ? "placeholder" : "save";
@@ -477,7 +477,7 @@ class Instance {
    * @private
    */
   static #checkDatabaseIS(tab, items, source, disregardActivate) {
-    console.log("checkDatabaseIS()");
+    console.log("Instance.checkDatabaseIS()");
     let spa = undefined;
     for (let i = 0; i < items.databaseIS.length; i++) {
       const is = items.databaseIS[i];
@@ -490,13 +490,13 @@ class Instance {
       }
       const result = Saves.matchesSave(tab.url, is);
       if (result && result.matches) {
-        console.log("checkDatabaseIS() - item matches this tab's URL, checking for activation... item=");
+        console.log("Instance.checkDatabaseIS() - item matches this tab's URL, checking for activation... item=");
         console.log(is);
         // Translate the database to the instance keys before checking for activation
         Instance.translateInstance(is);
         const activate = Instance.#checkActivate(tab, items, is);
         if (activate || disregardActivate) {
-          console.log("checkDatabaseIS() - item activation passed for this tab's URL, disregardActivate=" + disregardActivate + ", item=");
+          console.log("Instance.checkDatabaseIS() - item activation passed for this tab's URL, disregardActivate=" + disregardActivate + ", item=");
           console.log(is);
           source = is;
           source.via = "database";
@@ -542,7 +542,7 @@ class Instance {
    * @private
    */
   static #checkDatabaseAP(tab, items, source, disregardActivate) {
-    console.log("checkDatabaseAP()");
+    console.log("Instance.checkDatabaseAP()");
     let spa = undefined;
     for (let i = 0; i < items.databaseAP.length; i++) {
       let ap = items.databaseAP[i];
@@ -557,7 +557,7 @@ class Instance {
         ap.type = "regex";
         const result = Saves.matchesSave(tab.url, ap);
         if (result && result.matches) {
-          console.log("checkDatabaseAP() - item activation passed for this tab's URL, disregardActivate=" + disregardActivate + ", item=");
+          console.log("Instance.checkDatabaseAP() - item activation passed for this tab's URL, disregardActivate=" + disregardActivate + ", item=");
           console.log(ap);
           // Disregard activating the nextLink and pageElement requirements if this is the last check to allow the user to see the Database URL (ignore generic URLs whose length is small)
           if (disregardActivate) {
@@ -582,7 +582,7 @@ class Instance {
           // ap.pageElementType = "xpath";
           const activate = Instance.#checkActivate(tab, items, ap);
           if (activate || disregardActivate) {
-            console.log("checkDatabaseAP() - item activation passed for this tab's URL, item=");
+            console.log("Instance.checkDatabaseAP() - item activation passed for this tab's URL, item=");
             console.log(ap);
             source = ap;
             source.via = "database";
@@ -616,7 +616,7 @@ class Instance {
           items.databaseAP[i] = undefined;
         }
       } catch (e) {
-        console.log("checkDatabaseAP() - error checking a database record. Error:");
+        console.log("Instance.checkDatabaseAP() - error checking a database record. Error:");
         console.log(e);
       }
     }
@@ -642,7 +642,7 @@ class Instance {
     let activate = false;
     const action = source.action;
     const append = source.append;
-    console.log("checkActivate() - action=" + action + ", append=" + append);
+    console.log("Instance.checkActivate() - action=" + action + ", append=" + append);
     if (action === "next" || action === "prev") {
       // Note that if a source has a type already set for it, we don't change it
       // Important: We declare a new property for the source called "TypeDetected" instead of overriding its "Type"  with the detected type because
@@ -660,8 +660,8 @@ class Instance {
       const selection = Increment.findSelection(tab.url, source.selectionStrategy, source.selectionCustom);
       activate = selection && !!selection.selection;
     } else if (action === "click") {
-      source.buttonTypeDetected = source.buttonType || DOMPath.determinePathType(source.buttonPath, items.preferredPathType).type;
-      activate = Click.findButton(source.buttonPath, source.buttonTypeDetected, document, false).details.found;
+      source.clickElementTypeDetected = source.clickElementType || DOMPath.determinePathType(source.clickElementPath, items.preferredPathType).type;
+      activate = Click.findElement(source.clickElementPath, source.clickElementTypeDetected, document, false).details.found;
     } else if (action === "list") {
       activate = true;
     }
@@ -671,7 +671,7 @@ class Instance {
       const pageElements = Elementify.getPageElements(document, source.pageElementTypeDetected, source.pageElementPath);
       activate = pageElements && pageElements.length > 0 && pageElements[0] && pageElements[0].parentNode;
     }
-    console.log("checkActivate() - activate=" + activate);
+    console.log("Instance.checkActivate() - activate=" + activate);
     return activate;
   }
 

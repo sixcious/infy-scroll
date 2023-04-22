@@ -4,6 +4,13 @@
  * @license https://github.com/sixcious/infy-scroll/blob/main/LICENSE
  */
 
+/*
+body, .mdc-drawer {
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" fill="%23555" style="transform:rotate(60deg); opacity: 0.25;"><path d="M471.1 96C405 96 353.3 137.3 320 174.6 286.7 137.3 235 96 168.9 96 75.8 96 0 167.8 0 256s75.8 160 168.9 160c66.1 0 117.8-41.3 151.1-78.6 33.3 37.3 85 78.6 151.1 78.6 93.1 0 168.9-71.8 168.9-160S564.2 96 471.1 96zM168.9 320c-40.2 0-72.9-28.7-72.9-64s32.7-64 72.9-64c38.2 0 73.4 36.1 94 64-20.4 27.6-55.9 64-94 64zm302.2 0c-38.2 0-73.4-36.1-94-64 20.4-27.6 55.9-64 94-64 40.2 0 72.9 28.7 72.9 64s-32.7 64-72.9 64z"/></svg>')
+  100px 100px/100px 100px !important;
+}
+*/
+
 /* Variables */
 /* These two variables are helpful so we can dynamically adjust them to auto-calc() the path widths */
 
@@ -335,7 +342,7 @@ header {
 
 #next-link-path-text-field,
 #prev-link-path-text-field,
-#button-path-text-field,
+#click-element-path-text-field,
 #page-element-path-text-field,
 #element[data-type="ajax"] #page-element-path-text-field {
   width: calc(541px - var(--type-label-width) - var(--element-picker-button-width));
@@ -343,7 +350,7 @@ header {
 
 .mdc-drawer-app-content.drawer-collapsed #next-link-path-text-field,
 .mdc-drawer-app-content.drawer-collapsed #prev-link-path-text-field,
-.mdc-drawer-app-content.drawer-collapsed #button-path-text-field,
+.mdc-drawer-app-content.drawer-collapsed #click-element-path-text-field,
 .mdc-drawer-app-content.drawer-collapsed #page-element-path-text-field,
 .mdc-drawer-app-content.drawer-collapsed #element[data-type="ajax"] #page-element-path-text-field {
   width: calc(689px - var(--type-label-width) - var(--element-picker-button-width));
@@ -445,8 +452,8 @@ html[data-extra-document] .mdc-drawer-app-content.drawer-collapsed #page-element
 /* Button */
 
 /* Infy Scroll Only */
-#button-position-text-field {
-  width: 118px;
+#click-element-position-text-field {
+  width: 155px;
 }
 
 /* List */
@@ -695,17 +702,12 @@ footer #extras svg {
 }
 
 #manage-button {
-  background: var(--mdc-theme-error);
   position: absolute;
   bottom: 16px;
   right: 16px;
 }
 
 /* Help Dialog */
-
-#debug-copy-button {
-  background: var(--mdc-theme-error);
-}
 
 #help-dialog-notice {
   text-align: left;

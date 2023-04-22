@@ -36,7 +36,7 @@
           <svg class="options-header-svg hvr-grow"><use href="../lib/fontawesome/solid.svg#ranking-star"></use></svg>
         </div>
         <div id="theme-button" class="tooltip-without-underline display-inline-block" aria-describedby="tooltip" aria-label="theme-button-tooltip" data-balloon-pos="down" data-balloon-length="left">
-          <svg id="theme-icon" class="options-header-svg hvr-grow"><use href="../lib/feather/feather.svg#sun"></use></svg>
+          <svg id="theme-icon" class="options-header-svg hvr-grow"><use href="../lib/feather/feather.svg#sun-moon"></use></svg>
         </div>
         <a href="https://github.com/sixcious/infy-scroll/wiki" target="_blank" class="mdc-button mdc-button--raised mdc-ripple-upgraded">
           <span class="mdc-button__ripple"></span>
@@ -513,14 +513,14 @@
       <div class="clear-both"></div>
       <div id="database-options">
         <div id="database-options-label" data-i18n="textContent" class="sub-header"></div>
-        <div class="table">
+        <div class="table table-no-margin-top">
           <div class="row">
             <div class="column">
               <label id="database-update-label" data-i18n="textContent" aria-describedby="tooltip" aria-label="database-update-tooltip" data-balloon-pos="up" data-balloon-length="xlarge"></label>
             </div>
             <div class="column">
               <div id="database-update">
-                <span id="database-update-every-label" data-i18n="textContent"></span>
+                <span id="every-label" data-i18n="textContent"></span>
                 <div id="database-update-text-field" class="mdc-text-field mdc-text-field--outlined">
                   <input id="database-update-input" class="mdc-text-field__input" type="number" min="0" max="7">
                   <div class="mdc-notched-outline">
@@ -529,7 +529,7 @@
                     <div class="mdc-notched-outline__trailing"></div>
                   </div>
                 </div>
-                <span id="database-update-days-label" data-i18n="textContent"></span>
+                <span id="days-label" data-i18n="textContent"></span>
               </div>
             </div>
           </div>
@@ -758,7 +758,7 @@
           <div class="column">
             <div id="append-threshold">
               <div id="append-threshold-text-field" class="mdc-text-field mdc-text-field--outlined">
-                <input id="append-threshold-input" class="mdc-text-field__input" type="number" min="0" max="3000" step="100">
+                <input id="append-threshold-input" class="mdc-text-field__input" type="number" min="0" max="5000" step="100">
                 <div class="mdc-notched-outline">
                   <div class="mdc-notched-outline__leading"></div>
                   <div class="mdc-notched-outline__notch"></div>
@@ -891,12 +891,12 @@
         </div>
         <div class="row">
           <div class="column">
-            <label id="scroll-icon-label" data-i18n="textContent"></label>
+            <label id="show-icon-label" data-i18n="textContent"></label>
           </div>
           <div class="column">
             <div class="mdc-form-field">
               <div class="mdc-checkbox">
-                <input id="scroll-icon-input" type="checkbox" class="mdc-checkbox__native-control"/>
+                <input id="show-icon-input" type="checkbox" class="mdc-checkbox__native-control"/>
                 <div class="mdc-checkbox__background">
                   <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
                     <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
@@ -904,18 +904,18 @@
                 </div>
                 <div class="mdc-checkbox__ripple"></div>
               </div>
-              <label id="scroll-icon-checkbox-label" for="scroll-icon-input" data-i18n="textContent"></label>
+              <label id="show-icon-checkbox-label" for="show-icon-input" data-i18n="textContent"></label>
             </div>
           </div>
         </div>
         <div class="row">
           <div class="column">
-            <label id="scroll-loading-label" data-i18n="textContent"></label>
+            <label id="show-loading-label" data-i18n="textContent"></label>
           </div>
           <div class="column">
             <div class="mdc-form-field">
               <div class="mdc-checkbox">
-                <input id="scroll-loading-input" type="checkbox" class="mdc-checkbox__native-control"/>
+                <input id="show-loading-input" type="checkbox" class="mdc-checkbox__native-control"/>
                 <div class="mdc-checkbox__background">
                   <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
                     <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
@@ -923,7 +923,7 @@
                 </div>
                 <div class="mdc-checkbox__ripple"></div>
               </div>
-              <label id="scroll-loading-checkbox-label" for="scroll-loading-input" data-i18n="textContent"></label>
+              <label id="show-loading-checkbox-label" for="show-loading-input" data-i18n="textContent"></label>
             </div>
           </div>
         </div>
@@ -1436,18 +1436,53 @@
           <span class="mdc-button__ripple"></span>
           <span class="mdc-button__label" id="manual-backup-button-label" data-i18n="textContent"></span>
         </button>
-        <div class="clear-both"></div>
+      </div>
+      <div class="clear-both"></div>
+      <div id="backup-options">
+        <div id="backup-options-label" data-i18n="textContent" class="sub-header"></div>
+        <div class="table table-no-margin-top">
+          <div class="row">
+            <div class="column">
+              <label id="backup-auto-label" data-i18n="textContent" aria-describedby="tooltip" aria-label="backup-auto-tooltip" data-balloon-pos="up" data-balloon-length="xlarge"></label>
+            </div>
+            <div class="column">
+              <div class="mdc-form-field">
+                <div class="mdc-checkbox">
+                  <input id="backup-auto-input" type="checkbox" class="mdc-checkbox__native-control"/>
+                  <div class="mdc-checkbox__background">
+                    <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                      <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                    </svg>
+                  </div>
+                  <div class="mdc-checkbox__ripple"></div>
+                </div>
+                <label id="backup-auto-checkbox-label" for="backup-auto-input" data-i18n="textContent"></label>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="column">
+              <span data-id="download-settings-label" data-i18n="textContent"></span>
+            </div>
+            <div class="column">
+              <button id="download-settings-button" class="mdc-button mdc-button--gray mdc-button--raised mdc-ripple-upgraded">
+                <span class="mdc-button__ripple"></span>
+                <span class="mdc-button__label" id="download-settings-button-label" data-i18n="textContent"></span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
     <section id="about" class="mdc-tab-content" data-tab-bar="options-tab-bar">
       <div id="version-theme" style="position: relative;">
         <div id="version-theme-buildup">
-          <span style="position: absolute;top: 35px;left: 262px;transform: rotate(-5deg);font-size: 1.5rem;font-weight: 900;" class="version-theme-small">AJAX</span>
-          <span style="position: absolute;top: 38px;left: 330px;transform: rotate(-5deg);font-size: 1rem;font-weight: 900;" class="version-theme-medium">is</span>
-          <span style="position: absolute;top: 48px;left: 347px;transform: rotate(-5deg);font-size: 1.25rem;font-weight: 900;color: var(--mdc-theme-primary);" class="version-theme-medium">here!</span>
+          <span style="position: absolute;top: 35px;left: 262px;transform: rotate(-5deg);font-size: 1.5rem;font-weight: 900;" class="version-theme-small">AJAX~</span>
+          <span style="display: none; position: absolute; top: 38px;left: 330px;transform: rotate(-5deg);font-size: 1rem;font-weight: 900;" class="version-theme-medium">is</span>
+          <span style="display: none; position: absolute; top: 48px;left: 347px;transform: rotate(-5deg);font-size: 1.25rem;font-weight: 900;color: var(--mdc-theme-primary);" class="version-theme-medium">here!</span>
           <span style="display: none; position: absolute;top: 114px;left: 320px;transform: rotate(-5deg);font-size: 1rem;font-weight: 900;" class="version-theme-medium">So</span>
           <span style="position: absolute; top: 114px;left: 346px; transform: rotate(-10deg); font-size: 2rem;font-weight: 900;color: var(--mdc-theme-primary);" class="version-theme-medium">Click!</span>
-          <span style=" display: none; position: absolute;top: 124px;left: 560px;transform: rotate(-3deg);font-size: 0.7rem;font-weight: 900;font-family: 'RobotoMono', monospace;" class="version-theme-medium">  async function <span style="color: var(--mdc-theme-primary);">ajaxNative</span>() {<span style="opacity: 70%"> // AJAX - but without iframes!</span><br>&nbsp;&nbsp;await Promise.all([disableScroll(), disableRemove()]);<br>&nbsp;&nbsp;await Action.click(button);<br>}</span>
+          <span style="display: none; position: absolute;top: 124px;left: 560px;transform: rotate(-3deg);font-size: 0.7rem;font-weight: 900;font-family: 'RobotoMono', monospace;" class="version-theme-medium">  async function <span style="color: var(--mdc-theme-primary);">ajaxNative</span>() {<span style="opacity: 70%"> // AJAX - but without iframes!</span><br>&nbsp;&nbsp;await Promise.all([disableScroll(), disableRemove()]);<br>&nbsp;&nbsp;await Action.click(button);<br>}</span>
           <div style="position: absolute; top: 50px; left: 205px; transform: rotate(-10deg);"><svg style="width: 50px; height: 50px; cursor: pointer;" class="version-theme-small hvr-grow"><use href="../lib/fontawesome/solid.svg#circle-chevron-right"></use></svg></div>
           <div style="position: absolute; top: 70px; left: 290px; transform: rotate(-10deg);"><svg style="width: 40px; height: 40px; cursor: pointer; fill: var(--mdc-theme-primary); " class="version-theme-small hvr-grow"><use href="../lib/fontawesome/alt.svg#solid-circle-plus"></use></svg></div>
           <div style="position: absolute; top: 70px; left: 360px; transform: rotate(-10deg);"><svg style="width: 40px; height: 40px; cursor: pointer;" class="version-theme-medium hvr-grow"><use href="../lib/fontawesome/solid.svg#circle-dot"></use></svg></div>
@@ -1645,9 +1680,7 @@
               </div>
             </div>
             <div class="dialog-footer">
-              <div class="mdc-text-field-helper-text mdc-text-field-helper-text--persistent dialog-notice-warning-container">
-                <span id="shortcuts-dialog-disclaimer" data-i18n="textContent" class="notice"></span>
-              </div>
+              <span id="shortcuts-dialog-disclaimer" data-i18n="textContent" class="notice"></span>
             </div>
           </div>
           <footer class="mdc-dialog__actions">
@@ -1681,7 +1714,8 @@
                     </div>
                   </div>
                   <div class="mdc-text-field-helper-line">
-                    <div class="mdc-text-field-helper-text mdc-text-field-helper-text--persistent"><span id="backup-dialog-disclaimer" data-i18n="textContent"></span>
+                    <div class="mdc-text-field-helper-text mdc-text-field-helper-text--persistent">
+                      <span id="backup-dialog-disclaimer" data-i18n="textContent"></span>
                     </div>
                   </div>
                 </div>
@@ -1696,6 +1730,34 @@
                   <span id="restore-text-button-label" class="mdc-button__label" data-i18n="textContent"></span>
                 </button>
               </div>
+            </div>
+          </div>
+          <footer class="mdc-dialog__actions">
+            <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="ok" data-mdc-dialog-initial-focus>
+              <span class="mdc-button__label" data-id="mdc-button-ok" data-i18n="textContent"></span>
+            </button>
+          </footer>
+        </div>
+      </div>
+      <div class="mdc-dialog__scrim"></div>
+    </div>
+    <div id="download-settings-dialog" class="mdc-dialog" role="alertdialog" aria-modal="true" aria-labelledby="download-settings-dialog" aria-describedby="download-settings-dialog-content">
+      <div class="mdc-dialog__container">
+        <div class="mdc-dialog__surface">
+          <h2 class="mdc-dialog__title"><span id="download-settings-dialog-title" data-i18n="textContent"></span></h2>
+          <div class="mdc-dialog__content">
+            <div id="download-settings-dialog-content">
+              <div id="download-settings-dialog-text">
+                <p id="download-settings-dialog-description" data-i18n="textContent"></p>
+                <ol id="download-settings-dialog-list">
+                  <li id="download-settings-dialog-list-1" data-i18n="textContent"></li>
+                  <li id="download-settings-dialog-list-2" data-i18n="textContent"></li>
+                  <li id="download-settings-dialog-list-3" data-i18n="textContent"></li>
+                </ol>
+              </div>
+            </div>
+            <div class="dialog-footer">
+              <span id="download-settings-dialog-disclaimer" data-i18n="textContent" class="notice"></span>
             </div>
           </div>
           <footer class="mdc-dialog__actions">

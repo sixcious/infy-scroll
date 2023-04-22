@@ -5,7 +5,7 @@
  */
 
 /**
- * Storage is a class that handles all storage-specific tasks, such as updating data between versions and backing up and restoring data.
+ * Storage handles all storage-specific tasks, such as updating data between versions and backing up and restoring data.
  * It features additional helper methods, such as getting the browser name.
  *
  * TODO: Rename this because "Storage" is a reserved interface name. ("Store"?)
@@ -33,7 +33,7 @@ class Storage {
    * @public
    */
   static getStorageDefaultValues() {
-    console.log("getStorageDefaultValues()");
+    console.log("Storage.getStorageDefaultValues()");
     const version = chrome.runtime.getManifest().version;
     const date = new Date().toJSON();
     const platformName = Storage.#getPlatformName();
@@ -80,7 +80,7 @@ class Storage {
     _.prevLinkPath = _.prevLinkSelector;
     _.prevLinkProperty = ["href"];
     _.prevLinkKeywords = ["pnprev", "previouspage", "prevpage", "<prev", "‹prev", "←prev", "«prev", "previouslink", "prev", "previous", "newerposts", "newerpost", "leftarrow", "arrowleft", "angleleft", "chevronleft", "caretleft", "circleleft", "squareleft", "上一页", "前のページ", "前へ", "前", "이전페이지", "이전", "السابقة", "Предыдущая", "zurück", "précédent", "anterior", "&lt;", "<", "‹", "←", "«", "newer", "backward"];
-    _.buttonPosition = 1000;
+    _.clickElementPosition = 1000;
     _.mediaType = "image";
     _.autoTimes = 10;
     _.autoSeconds = 2;
@@ -99,8 +99,8 @@ class Storage {
     _.pageDividerAlign = "center";
     _.pageDividerButtons = false;
     _.pageOverlay = false;
-    _.scrollIcon = true;
-    _.scrollLoading = true;
+    _.showIcon = true;
+    _.showLoading = true;
     _.maximumPages = 0;
     _.saves = [];
     _.savesEnabled = true;
@@ -129,9 +129,15 @@ class Storage {
     _.linksNewTabEnabled = true;
     _.customEventsEnabled = false;
     _.debugEnabled = false;
+    _.backupDate = null;
+    // _.backupSchedule = 0;
+    _.backupAuto = false;
     _.stats = { actions: [0,0,0,0], appends: [0,0,0,0,0,0], elements: [0,0,0,0,0,0] };
     _.statsEnabled = true;
+    // Iffy on:
     _.navigationBlacklist = [];
+    _.linksNewTabOneEnabled = false;
+    _.incognitoDetection = false;
     return _;
   }
 
@@ -155,7 +161,7 @@ class Storage {
       browserName = UA.includes("Firefox/") ? firefoxName : UA.includes("Edg/") ? edgeName : chromeName;
       method = "navigator.userAgent:" + UA;
     }
-    console.log("getBrowserName() - browserName=" + browserName + ", method=" + method);
+    console.log("Storage.getBrowserName() - browserName=" + browserName + ", method=" + method);
     return browserName;
   }
 
@@ -171,7 +177,7 @@ class Storage {
     // navigator.userAgent (Note: navigator is still supported in Manifest V3 Service Worker)
     const UA = typeof navigator !== "undefined" && navigator.userAgent ? navigator.userAgent : "";
     const platformName = /Android|iPad|iPhone|iPod|Kindle|Opera Mini|webOS|Windows Phone/i.test(UA) ? "mobile" : "desktop";
-    console.log("getPlatformName() - platformName=" + platformName);
+    console.log("Storage.getPlatformName() - platformName=" + platformName);
     return platformName;
   }
 
@@ -181,7 +187,7 @@ class Storage {
    * @public
    */
   static async install() {
-    console.log("install()");
+    console.log("Storage.install()");
     const SDV = Storage.getStorageDefaultValues();
     SDV.firstRun = true;
     await Promisify.storageClear();
@@ -201,12 +207,12 @@ class Storage {
    * @public
    */
   static async update(previousVersion, jsonData) {
-    console.log("update() - previousVersion=" + previousVersion + ", jsonData=" + jsonData);
+    console.log("Storage.update() - previousVersion=" + previousVersion + ", jsonData=" + jsonData);
     let successful = true;
     // Cache storage items in case of error along the way
     let currentItems;
     try {
-      currentItems = await Promisify.storageGet(undefined, undefined, []);
+      currentItems = await Promisify.storageGet();
       await Storage.#_restoreJson(jsonData);
       await Storage.#_02(previousVersion);
       await Storage.#_03(previousVersion);
@@ -218,7 +224,7 @@ class Storage {
       await Storage.#_08(previousVersion);
       await Storage.#_firstVersionRun(previousVersion, !!jsonData);
     } catch (e) {
-      console.log("update() - error encountered, rolling back storage to currentItems. Error:");
+      console.log("Storage.update() - error encountered, rolling back storage to currentItems. Error:");
       console.log(e);
       successful = false;
       if (currentItems) {
@@ -238,7 +244,7 @@ class Storage {
     if (!jsonData) {
       return;
     }
-    console.log("_restoreJson() - restoring JSON data ...");
+    console.log("Storage._restoreJson() - restoring JSON data ...");
     // Need to reacquire the browserName and platformName just in case the user is migrating data from a different browser or platform
     jsonData.browserName = Storage.#getBrowserName();
     jsonData.platformName = Storage.#getPlatformName();
@@ -258,12 +264,12 @@ class Storage {
     if (previousVersion >= "0.2") {
       return;
     }
-    console.log("_02() - updating to 0.2 ...");
-    const items = await Promisify.storageGet(undefined, undefined, []);
-    console.log("_02() - storageGet=");
+    console.log("Storage._02() - updating to 0.2 ...");
+    const items = await Promisify.storageGet();
+    console.log("Storage._02() - storageGet=");
     console.log(JSON.stringify(items));
     const shouldDownloadDatabase = items && items.database && items.database.length > 0;
-    console.log("_02() shouldDownloadDatabase=" + shouldDownloadDatabase);
+    console.log("Storage._02() shouldDownloadDatabase=" + shouldDownloadDatabase);
     await Promisify.storageSet({
       "version": "0.2",
       "interfaceMessages": true,
@@ -309,9 +315,9 @@ class Storage {
     if (previousVersion >= "0.3") {
       return;
     }
-    console.log("_03() - updating to 0.3 ...");
-    const items = await Promisify.storageGet(undefined, undefined, []);
-    console.log("_03() - storageGet=");
+    console.log("Storage._03() - updating to 0.3 ...");
+    const items = await Promisify.storageGet();
+    console.log("Storage._03() - storageGet=");
     console.log(JSON.stringify(items));
     // Set new storage items and reset default values for some items
     await Promisify.storageSet({
@@ -351,9 +357,9 @@ class Storage {
     if (previousVersion >= "0.4") {
       return;
     }
-    console.log("_04() - updating to 0.4 ...");
-    const items = await Promisify.storageGet(undefined, undefined, []);
-    console.log("_04() - storageGet=");
+    console.log("Storage._04() - updating to 0.4 ...");
+    const items = await Promisify.storageGet();
+    console.log("Storage._04() - storageGet=");
     console.log(JSON.stringify(items));
     // Reset default values for scroll append threshold due to internal algorithm change and new minimum values being 0, not -1
     // Reset scrollElementInsertRule due to selector rule change, add new autoBehavior and on storage items
@@ -389,9 +395,9 @@ class Storage {
     if (previousVersion >= "0.5") {
       return;
     }
-    console.log("_05() - updating to 0.5 ...");
-    const items = await Promisify.storageGet(undefined, undefined, []);
-    console.log("_05() - storageGet=");
+    console.log("Storage._05() - updating to 0.5 ...");
+    const items = await Promisify.storageGet();
+    console.log("Storage._05() - storageGet=");
     console.log(JSON.stringify(items));
     // Reset scrollAction and add new storage items for two options
     await Promisify.storageSet({
@@ -427,9 +433,9 @@ class Storage {
     if (previousVersion >= "0.6") {
       return;
     }
-    console.log("_06() - updating to 0.6 ...");
-    const items = await Promisify.storageGet(undefined, undefined, []);
-    console.log("_06() - storageGet=");
+    console.log("Storage._06() - updating to 0.6 ...");
+    const items = await Promisify.storageGet();
+    console.log("Storage._06() - storageGet=");
     console.log(JSON.stringify(items));
     // Storage Items changes - Increase button size if still using default 40px size, make scroll wrap first page false (see certain websites with iframe mode for why)
     await Promisify.storageSet({
@@ -499,9 +505,9 @@ class Storage {
     if (previousVersion >= "0.6.0.6") {
       return;
     }
-    console.log("_0606() - updating to 0.6.0.6 ...");
-    const items = await Promisify.storageGet(undefined, undefined, []);
-    console.log("_0606() - storageGet=");
+    console.log("Storage._0606() - updating to 0.6.0.6 ...");
+    const items = await Promisify.storageGet();
+    console.log("Storage._0606() - storageGet=");
     console.log(JSON.stringify(items));
     // Storage Items changes - scrollLazyLoad is now true by default
     await Promisify.storageSet({
@@ -522,9 +528,9 @@ class Storage {
     if (previousVersion >= "0.7") {
       return;
     }
-    console.log("_07() - updating to 0.7 ...");
-    const items = await Promisify.storageGet(undefined, undefined, []);
-    console.log("_07() - storageGet=");
+    console.log("Storage._07() - updating to 0.7 ...");
+    const items = await Promisify.storageGet();
+    console.log("Storage._07() - storageGet=");
     console.log(JSON.stringify(items));
     // Storage Items changes - new append custom styles, need to reset the scrollElementRule stuff as we should never save it (it's always different for every page)
     await Promisify.storageSet({
@@ -570,14 +576,14 @@ class Storage {
     if (previousVersion >= "0.8") {
       return;
     }
-    console.log("_08() - updating to 0.8 ...");
-    let items = await Promisify.storageGet(undefined, undefined, []);
+    console.log("Storage._08() - updating to 0.8 ...");
+    let items = await Promisify.storageGet();
     // To avoid null-checking this every time in this function
     items = items || {};
-    console.log("_08() - storageGet=");
+    console.log("Storage._08() - storageGet=");
     console.log(JSON.stringify(items));
     const databaseEnabled = items.database?.length > 0;
-    console.log("_08() databaseEnabled=" + databaseEnabled);
+    console.log("Storage._08() databaseEnabled=" + databaseEnabled);
     // Storage Items removals - Remove before adding/changes due to database to databaseAP rename (don't want to risk not having space for both)
     // Forgot to remove autoAction as we are no longer needing it/Remove scrollHeightWait after confirming iFrameResizer will work/Remove shuffleStart
     await Promisify.storageRemove([
@@ -594,11 +600,11 @@ class Storage {
       "scrollLazyLoad", "scrollLazyLoadMode", "scrollLazyLoadAttributeSource", "scrollLazyLoadAttributeDestination",
       "scrollAppendScripts", "scrollAppendStyles",
       "scrollDetectionThrottle", "scrollAppendThresholdPixels", "scrollAppendThresholdPages", "scrollAppendDelay",
-      "scrollDivider", "scrollDividerAlign", "scrollHeightWait",
+      "scrollDivider", "scrollDividerAlign", "scrollHeightWait", "scrollIcon", "scrollLoading",
       "shuffleLimit", "shuffleStart", "autoAction", "pickerMinimize",
       "currentVersion"
     ]);
-    // Storage Items changes - new platformName property, reset buttonPath to "" as we should never save it (it's always different for every page), button properties
+    // Storage Items changes - too many to list
     await Promisify.storageSet({
       "version": "0.8",
       // // Keep the versions three characters for simplicity (e.g. 0.6.0.6 should become 0.6)
@@ -609,19 +615,20 @@ class Storage {
       "themeVersion": !!items.interfaceTheme,
       "preferredPathType": ["selector", "xpath"].includes(items.nextType) ? items.nextType : "selector",
       "buttonSize": typeof items.buttonSize !== "number" || items.buttonSize === 50 ? 40 : items.buttonSize,
-      "scrollLoading": false,
       "appendThreshold": typeof items.scrollAppendThresholdPixels === "number" ? items.scrollAppendThresholdPixels : 500,
       "appendDelay": typeof items.scrollAppendDelay === "number" ? items.scrollAppendDelay : 2000,
       "pageDivider": typeof items.scrollDivider === "string" ? items.scrollDivider : "element",
       "pageDividerAlign": typeof items.scrollDividerAlign === "string" ? items.scrollDividerAlign : "center",
       "pageDividerButtons": false,
       "pageOverlay": typeof items.scrollOverlay === "boolean" ? items.scrollOverlay : false,
+      "showIcon": typeof items.scrollIcon === "boolean" ? items.scrollIcon : true,
+      "showLoading": typeof items.scrollLoading === "boolean" ? items.scrollLoading : true,
       "append": typeof items.scrollAppend === "string" ? items.scrollAppend : "page",
       "nextLinkProperty": ["href"],
       "prevLinkProperty": ["href"],
       "selectionStrategy": items.selectionPriority || "smart",
       "shuffleURLs": 100,
-      "buttonPosition": 1000,
+      "clickElementPosition": 1000,
       "mediaType": items.scrollMediaType || "image",
       "lazyLoad": items.scrollLazyLoad || "auto",
       // "lazyLoadSource": items && items.scrollLazyLoadAttributeSource ? items.scrollLazyLoadAttributeSource : "data-src",
@@ -643,8 +650,14 @@ class Storage {
       "databaseMode": typeof items.databaseAutoActivate === "boolean" && !items.databaseAutoActivate ? "whitelist" : "blacklist",
       "databaseUpdate": typeof items.databaseAutoUpdate === "number" ? items.databaseAutoUpdate : 1,
       "debugEnabled": false,
+      "backupDate": null,
+      // "backupSchedule": 0,
+      "backupAuto": false,
       "stats": { actions: [0,0,0,0], appends: [0,0,0,0,0,0], elements: [0,0,0,0,0,0] },
-      "statsEnabled": false
+      "statsEnabled": false,
+      "navigationBlacklist": [],
+      "linksNewTabOneEnabled": false,
+      "incognitoDetection": false
     });
     // Next/Prev Selector XPath Double Quote to Single Quote
     if (items.nextSelector === "[rel=\"next\"]") {
@@ -677,7 +690,7 @@ class Storage {
             items.nextLinkKeywords.every(function (e,i) {
               return e === o.k[i];
             })) {
-          console.log("_08() - updating " + "nextLinkKeywords to 0.8 keywords");
+          console.log("Storage._08() - updating " + "nextLinkKeywords to 0.8 keywords");
           await Promisify.storageSet({"nextLinkKeywords": ["pnnext", "nextpage", "next>", "next›", "next→", "next»", "nextlink", "next", "olderposts", "olderpost", "moreresults", "loadmore", "showmore", "rightarrow", "arrowright", "angleright", "chevronright", "caretright", "circleright", "squareright", "下一页", "次のページ", "次へ", "次", "다음페이지", "다음", "التالية", "Следующая", "weiter", "suivant", "siguiente", "&gt;", ">", "›", "→", "»", "older", "forward"]});
           break;
         }
@@ -701,7 +714,7 @@ class Storage {
           items.prevLinkKeywords.every(function (e,i) {
             return e === o.k[i];
           })) {
-          console.log("_08() - updating prevLinkKeywords to 0.8 keywords");
+          console.log("Storage._08() - updating prevLinkKeywords to 0.8 keywords");
           await Promisify.storageSet({"prevLinkKeywords": ["pnprev", "previouspage", "prevpage", "<prev", "‹prev", "←prev", "«prev", "previouslink", "prev", "previous", "newerposts", "newerpost", "leftarrow", "arrowleft", "angleleft", "chevronleft", "caretleft", "circleleft", "squareleft", "上一页", "前のページ", "前へ", "前", "이전페이지", "이전", "السابقة", "Предыдущая", "zurück", "précédent", "anterior", "&lt;", "<", "‹", "←", "«", "newer", "backward"]});
           break;
         }
@@ -754,15 +767,17 @@ class Storage {
       save.lazyLoadDestination = save.scrollLazyLoadAttributeDestination;
       save.nextLink = save.nextType === "xpath" ? save.nextXpath : save.nextSelector;
       save.nextLinkProperty = save.nextProperty;
-      save.keyword = (save.action === "next" && save.nextKeywordsEnabled) || (save.action === "prev" && save.prevKeywordsEnabled);
       save.nextLinkType = save.nextType;
+      save.nextLinkKeyword = save.nextLinkKeywordsEnabled;
       save.prevLink = save.prevType === "xpath" ? save.prevXpath : save.prevSelector;
       save.prevLinkProperty = save.prevProperty;
       save.prevLinkType = save.prevType;
+      save.prevLinkKeyword = save.prevLinkKeywordsEnabled;
+      // save.keyword = (save.action === "next" && save.nextKeywordsEnabled) || (save.action === "prev" && save.prevKeywordsEnabled);
       save.selectionStrategy = save.selectionPriority;
-      save.button = save.buttonRule;
-      save.buttonPosition = save.buttonScrollPixels;
-      // save.buttonType = save.buttonType;
+      save.clickElement = save.buttonRule;
+      save.clickElementType = save.buttonType;
+      save.clickElementPosition = save.buttonScrollPixels;
       save.list = save.listArray;
       if (save.action === "button") {
         save.action = "click";
@@ -813,11 +828,13 @@ class Storage {
         delete save.nextLink;
         delete save.nextLinkType;
         delete save.nextLinkProperty;
+        delete save.nextLinkKeyword;
       }
       if (save.action !== "prev") {
         delete save.prevLink;
         delete save.prevLinkType;
-        delete save.prevLinkProperty;
+        delete save.prevLinkProperty
+        delete save.prevLinkKeyword;
       }
       // For next and prev actions, delete the nextLinkProperty if its the default ["href"] (This should be the vast majority of cases)
       if (save.action === "next" || save.action === "prev") {
@@ -825,8 +842,11 @@ class Storage {
           delete save[save.action + "LinkProperty"];
         }
       }
-      if (!save.keyword) {
-        delete save.keyword;
+      if (!save.nextLinkKeyword) {
+        delete save.nextLinkKeyword;
+      }
+      if (!save.prevLinkKeyword) {
+        delete save.prevLinkKeyword;
       }
       if (save.action !== "click") {
         delete save.button;
@@ -992,9 +1012,9 @@ class Storage {
   //   if (previousVersion >= "0.9") {
   //     return;
   //   }
-  //   console.log("_09() - updating to 0.9 ...");
-  //   const items = await Promisify.storageGet(undefined, undefined, []);
-  //   console.log("_09() - storageGet=");
+  //   console.log("Storage._09() - updating to 0.9 ...");
+  //   const items = await Promisify.storageGet();
+  //   console.log("Storage._09() - storageGet=");
   //   console.log(JSON.stringify(items));
   //   // Storage Items changes - ...
   //   await Promisify.storageSet({
@@ -1015,7 +1035,7 @@ class Storage {
     if ((previousVersion >= chrome.runtime.getManifest().version) || skip) {
       return;
     }
-    console.log("update() - setting firstVersionRun to true because the current version=" + chrome.runtime.getManifest().version);
+    console.log("Storage._firstVersionRun() - setting firstVersionRun to true because the current version=" + chrome.runtime.getManifest().version);
     await Promisify.storageSet({"firstVersionRun": true});
   }
 

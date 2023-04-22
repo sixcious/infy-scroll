@@ -32,7 +32,7 @@ class Next {
    * @public
    */
   static findLinkWithInstance(instance, items, action, documents , pages ) {
-    console.log("findLinkWithInstance()");
+    console.log("Next.findLinkWithInstance()");
     return Next.findLinkWithProperties(
       instance[action + "LinkPath"],
       instance[action + "LinkType"],
@@ -66,7 +66,7 @@ class Next {
    * @public
    */
   static findLinkWithProperties(path, type, property , keywordsEnabled, keywords, keywordObject, checkOtherKeywords, documents = [document], pages = [], currentURL, highlight = false) {
-    console.log("findLinkWithProperties()");
+    console.log("Next.findLinkWithProperties()");
     let result;
     for (const doc of documents) {
       // Firefox Dead Object Error - Need to wrap this in a try-catch in case one of the documents (namely currentDocument) is dead
@@ -82,11 +82,11 @@ class Next {
           break;
         }
       } catch (e) {
-        console.log("findLinkWithProperties() - error most likely Firefox Dead Object Error, Error:")
+        console.log("Next.findLinkWithProperties() - error most likely Firefox Dead Object Error, Error:")
         console.log(e);
       }
     }
-    console.log("returning result, result=");
+    console.log("Next.findLinkWithProperties() - returning result, result=");
     console.log(result);
     return result;
   }
@@ -110,7 +110,7 @@ class Next {
    * @public
    */
   static findLink(path, type, property = ["href"], keywordsEnabled, keywords, keywordStatic, checkOtherKeywords, doc = document, highlight = false) {
-    console.log("findLink() - path=" + path + ", type=" + type + ", property=" + property + ", keywordsEnabled=" + keywordsEnabled + ", keywords=" + keywords + ", keywordStatic=" + keywordStatic + ", checkOtherKeywords=" + checkOtherKeywords + ", doc=" + doc + ", highlight=" + highlight);
+    console.log("Next.findLink() - path=" + path + ", type=" + type + ", property=" + property + ", keywordsEnabled=" + keywordsEnabled + ", keywords=" + keywords + ", keywordStatic=" + keywordStatic + ", checkOtherKeywords=" + checkOtherKeywords + ", doc=" + doc + ", highlight=" + highlight);
     // The urls object stores the Path URL (selector or xpath), and Keywords URLs (self/child/parent attribute and innerText)
     Next.urls = {
       "path": undefined,
@@ -150,7 +150,7 @@ class Next {
     Next.#checkPath(path, type, property, doc, details);
     // If a URL was found using the selector or xpath path, return it (minus the element)
     if (Next.urls.path) {
-      console.log("findLink() - found a URL using the " + Next.urls.path.method + " path " + Next.urls.path.path + ": " + Next.urls.path.url);
+      console.log("Next.findLink() - found a URL using the " + Next.urls.path.method + " path " + Next.urls.path.path + ": " + Next.urls.path.url);
       Next.#highlightElement(Next.urls.path.element, highlight);
       return { "url": Next.urls.path.url, "method": Next.urls.path.method, "path": Next.urls.path.path, "element": Next.urls.path.element.elementName };
     }
@@ -158,7 +158,7 @@ class Next {
     // If keywordsEnabled is true OR if keywordsEnabled is undefined (i.e. we don't know yet as this is our first time checking), check keywords and return the result if found
     if (keywords && (keywordsEnabled || keywordsEnabled === undefined)) {
       Next.#checkKeywords(keywords, doc, details);
-      console.log("findLink() - found the following next/prev URLs via keywords (no path match):");
+      console.log("Next.findLink() - found the following next/prev URLs via keywords (no path match):");
       console.log(Next.urls);
       if (keywordStatic) {
         let value;
@@ -167,11 +167,11 @@ class Next {
           const ks = keywordStatic.split(" ");
           value = Next.urls.keywords[ks[0]][ks[1]][ks[2]].get(ks[3]);
         } catch (e) {
-          console.log("findLink() - Error parsing keywordObject, Error:");
+          console.log("Next.findLink() - Error parsing keywordObject, Error:");
           console.log(e);
         }
         if (value) {
-          console.log("findLink() - returning keywordObject url:" + value.url);
+          console.log("Next.findLink() - returning keywordObject url:" + value.url);
           console.log(value);
           Next.#highlightElement(value.element, highlight);
           return { "url": value.url, "method": "keyword", "keywordObject": keywordStatic, "element": value.elementName, "attribute": value.attribute };
@@ -186,7 +186,7 @@ class Next {
             if (keywordStatic && checkOtherKeywords) {
               result.method += "-alternate";
             }
-            console.log("findLink() - returning keywordObject url:");
+            console.log("Next.findLink() - returning keywordObject url:");
             console.log(result);
             return result;
           }
@@ -236,11 +236,11 @@ class Next {
       // If the property isn't [href], we may be dealing with a relative URL (href will always give us the absolute URL)
       // In this situation, we will try and make sure we are getting the absolute URL by passing in the window.location.origin as the basepoint second argument in the URL
       if (url && !defaultProperty && property && !property.includes("href")) {
-        console.log("checkPath() - property isn't href! attempting to deal with a potential relative URL, url=" + url + ", property=" + property);
+        console.log("Next.checkPath() - property isn't href! attempting to deal with a potential relative URL, url=" + url + ", property=" + property);
         try {
           url = new URL(url, document.baseURI).href;
         } catch (e) {
-          console.log("checkPath() - Exception caught trying to get the absolute URL from the potential relative URL. Error:")
+          console.log("Next.checkPath() - Exception caught trying to get the absolute URL from the potential relative URL. Error:")
           console.log(e);
           details.error = e.message;
         }
@@ -251,7 +251,7 @@ class Next {
         Next.urls.path = { "url": url, "method": type, "path": path + "." + property.join(".") + (defaultProperty ? chrome.i18n.getMessage("next_prev_default_property") : ""), "element": element };
       }
     } catch (e) {
-      console.log("checkPath() - Exception caught when querying for selector or evaluating xpath. Error:");
+      console.log("Next.checkPath() - Exception caught when querying for selector or evaluating xpath. Error:");
       console.log(e);
       details.error = e.message;
     }
@@ -299,13 +299,13 @@ class Next {
           // TODO: Check element.nextSibling? May be TOO aggressive and error-prone
         }
       } catch (e) {
-        console.log("buildURLs() - Error:");
+        console.log("Next.buildURLs() - Error:");
         console.log(e);
         details.error = e.message;
       }
     }
     // const endTime = performance.now();
-    // console.log("findLink() - Call to do test took " + (endTime - startTime) + " milliseconds");
+    // console.log("Next.findLink() - Call to do test took " + (endTime - startTime) + " milliseconds");
   }
 
   /**
@@ -320,7 +320,7 @@ class Next {
    * @private
    */
   static #checkChildElements(keywords, url, elementName, children, level) {
-    // console.log("checkChildElements() - elementName=" + elementName + " children.length=" + (children ? children.length : "undefined")  + ", level=" + level);
+    // console.log("Next.checkChildElements() - elementName=" + elementName + " children.length=" + (children ? children.length : "undefined")  + ", level=" + level);
     for (const child of children) {
       Next.#checkElement(keywords, url, elementName, child, "child");
       // Recursively check only 10 levels down
@@ -406,7 +406,7 @@ class Next {
       for (const subtype of subtypes) {
         if (Next.urls.keywords[relationship][type][subtype].has(keyword)) {
           const value = Next.urls.keywords[relationship][type][subtype].get(keyword);
-          console.log("traverseResults() - a next/prev link was found:" + relationship + " - " +  type + " - " + subtype + " - " + keyword + " - " + value.elementName + " - " + value.attribute + " - " + value.url);
+          console.log("Next.traverseResults() - a next/prev link was found:" + relationship + " - " +  type + " - " + subtype + " - " + keyword + " - " + value.elementName + " - " + value.attribute + " - " + value.url);
           Next.#highlightElement(value.element, highlight);
           const keywordObject = relationship + " " + type + " " + subtype + " " + keyword;
           return { url: value.url, method: "keyword", keywordObject: keywordObject, element: value.elementName, attribute: value.attribute };
@@ -429,7 +429,7 @@ class Next {
         new HoverBox().highlightElement(element, true);
       }
     } catch (e) {
-      console.log("highlightElement() - Error:");
+      console.log("Next.highlightElement() - Error:");
       console.log(e);
     }
   }

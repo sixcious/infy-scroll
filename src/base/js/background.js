@@ -50,15 +50,15 @@ class Background {
    * @private
    */
   static #setBadge(tabId, badge, temporary, text, backgroundColor) {
-    console.log("setBadge() - tabId=" + tabId + ", badge=" + badge + ", temporary=" + temporary + ", text=" + text + ", backgroundColor=" + backgroundColor);
+    console.log("Background.setBadge() - tabId=" + tabId + ", badge=" + badge + ", temporary=" + temporary + ", text=" + text + ", backgroundColor=" + backgroundColor);
     // Firefox Android: chrome.action.setBadge API isn't supported
     if (!chrome.action || !chrome.action.setBadgeText || !chrome.action.setBadgeBackgroundColor) {
-      console.log("setBadge() - no chrome.action badge functions are available, returning");
+      console.log("Background.setBadge() - no chrome.action badge functions are available, returning");
       return;
     }
     // Must either have a badge object OR both a text and backgroundColor to continue
     if (!Background.#BROWSER_ACTION_BADGES[badge] && (!text || !backgroundColor)) {
-      console.log("setBadge() - no badge and either no text or backgroundColor detected, returning");
+      console.log("Background.setBadge() - no badge and either no text or backgroundColor detected, returning");
       return;
     }
     chrome.action.setBadgeText({text: text || Background.#BROWSER_ACTION_BADGES[badge].text, tabId: tabId});
@@ -88,16 +88,17 @@ class Background {
    * @private
    */
   static #setIcon(icon, tabId = undefined) {
-    console.log("setIcon() - setting browserAction icon to " + icon);
+    console.log("Background.setIcon() - setting browserAction icon to " + icon);
     // Ensure the chosen toolbar icon is set. Firefox Android: chrome.action.setIcon() not supported
     if (chrome.action && chrome.action.setIcon) {
+      // MV3: Note that Service Workers can't access window.matchMedia, so this won't work:
       if (icon === "system" && typeof window === "object" && window.matchMedia) {
         icon = window.matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "dark";
       }
       const details = {};
       // icon-dark.png, icon-light.png, or icon.png (default)
       const path = "/img/icon" + (["dark", "light"].includes(icon) ? "-" + icon : "") + ".png";
-      details.path = { "16": path, "24": path, "32": path };
+      details.path = {"16": path, "24": path, "32": path};
       if (tabId) {
         details.tabId = tabId;
       }
@@ -112,12 +113,12 @@ class Background {
    * @private
    */
   static async #installedListener(details) {
-    console.log("installedListener() - details=" + JSON.stringify(details));
+    console.log("Background.installedListener() - details=" + JSON.stringify(details));
     if (details.reason === "install") {
-      console.log("installedListener() - installing ...");
+      console.log("Background.installedListener() - installing ...");
       await Storage.install();
     } else if (details.reason === "update" && details.previousVersion < chrome.runtime.getManifest().version) {
-      console.log("installedListener() - updating ...");
+      console.log("Background.installedListener() - updating ...");
       await Storage.update(details.previousVersion);
     }
     Background.#startupListener("installedListener");
@@ -134,9 +135,15 @@ class Background {
    * @private
    */
   static async #startupListener(caller) {
-    console.log("startupListener() - caller=" + caller);
-    const icon = await Promisify.storageGet("icon");
-    Background.#setIcon(icon);
+    console.log("Background.startupListener() - caller=" + caller);
+    const items = await Promisify.storageGet(undefined, undefined, ["databaseAP", "databaseIS", "saves"]);
+    Background.#setIcon(items.icon);
+    // Tab Listener - To avoid possibly adding multiple listeners, always assume we need to remove the tab listener and only add it if necessary
+    // MV3 Note: This won't work in MV3 because event listeners cannot be added asynchronously (after we await getting the storage items)
+    chrome.tabs.onUpdated.removeListener(Background.#tabListener);
+    if (items.incognitoDetection && ["dark", "system"].includes(items.icon)) {
+      chrome.tabs.onUpdated.addListener(Background.#tabListener);
+    }
     // Firefox: Set badge text color to white always instead of using default color-contrasting introduced in FF 63
     if (typeof browser !== "undefined" && browser.browserAction && typeof browser.browserAction.setBadgeTextColor === "function") {
       browser.browserAction.setBadgeTextColor({color: "#FFFFFF"});
@@ -153,6 +160,25 @@ class Background {
   }
 
   /**
+   * Listens for when a tab is updated and then updates the icon if in incognito mode. This also fires when a tab is  created,
+   * thus there is no need for a separate chrome.tabs.onCreated listener.
+   *
+   * Note: chrome.tabs.onUpdated fires multiple times for different changeInfo statuses: "loading", "complete", and undefined.
+   * undefined happens multiple times.
+   *
+   * @param {number} tabId - the tab id
+   * @param {Object} changeInfo - the relevant tab properties regarding the update
+   * @param {Object} tab - the tab
+   */
+  static #tabListener(tabId, changeInfo, tab) {
+    console.log("Background.tabListener() - updated tab, changeInfo=" + changeInfo?.status);
+    // We only want to set the icon the first time this is fired at the earliest point (so just at "loading")
+    if (tab.incognito && changeInfo?.status === "loading") {
+      Background.#setIcon("light", tab.id);
+    }
+  }
+
+  /**
    * Listen for requests from chrome.runtime.sendMessage (e.g. Content Scripts).
    *
    * @param {Object} request - the request containing properties to parse (e.g. greeting message)
@@ -161,7 +187,7 @@ class Background {
    * @private
    */
   static async #messageListener(request, sender, sendResponse) {
-    console.log("messageListener() - request=");
+    console.log("Background.messageListener() - request=");
     console.log(request);
     // TODO: This isn't actually needed anymore because we don't ever use the sender.tab.url (this was a carryover from URLI); however keeping it commented out for reference in the future
     // Firefox: sender.tab.url is undefined in FF due to not having tabs permissions (even though we have <all_urls>!), so use sender.url, which should be identical in 99% of cases (e.g. iframes may be different)
@@ -204,7 +230,7 @@ class Background {
           for (const tab of tabs) {
             // We already manually call stop on the tab that initiated this
             if (tab && tab.id && tab.id !== tabId) {
-              console.log("messageListener() - sending a stop message to tab.id=" + tab.id);
+              console.log("Background.messageListener() - sending a stop message to tab.id=" + tab.id);
               chrome.tabs.sendMessage(tab.id, {receiver: "contentscript", greeting: "stop", caller: request.caller});
               // promises.push(Promisify.tabsSendMessage(tab.id, {receiver: "contentscript", greeting: "stop", caller: "background"}));
             }
@@ -249,7 +275,7 @@ class Background {
    * @private
    */
   static async #commandListener(command) {
-    console.log("commandListener() - command=" + command);
+    console.log("Background.commandListener() - command=" + command);
     if (command === "down" || command === "up" || command === "power" || command === "blacklist" || command === "auto")  {
       const tabs = await Promisify.tabsQuery();
       if (tabs && tabs[0] && tabs[0].id) {
@@ -265,12 +291,10 @@ class Background {
    * @private
    */
   static #init = (() => {
-    console.log("init()");
+    console.log("Background.init() - Background Started");
     // Background Listeners
     chrome.runtime.onInstalled.addListener(Background.#installedListener);
     chrome.runtime.onStartup.addListener(Background.#startupListener);
-    // chrome.tabs.onCreated.addListener(Background.#iconListener);
-    // chrome.tabs.onUpdated.addListener(Background.#iconListener);
     // Message Listener: We need to return immediately if the function will be performing asynchronous work
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) { if (!request || request.receiver !== "background") { return; } Background.#messageListener(request, sender, sendResponse); if (request && request.async) { return true; } });
     // Firefox Android: chrome.commands is unsupported

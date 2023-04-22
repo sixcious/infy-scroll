@@ -5,7 +5,7 @@
  */
 
 /**
- * Cryptography is a class that contains various functions that use the window.crypto API.
+ * Cryptography contains various functions that use the window.crypto API.
  *
  * Cryptography provides the following features:
  * 1. Generates a securely random number

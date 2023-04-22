@@ -52,7 +52,7 @@ class Database {
    * @public
    */
   static async download(downloadAP = true, downloadIS = true, downloadLocation = undefined) {
-    console.log("download() - downloadAP=" + downloadAP + ", downloadIS=" + downloadIS);
+    console.log("Database.download() - downloadAP=" + downloadAP + ", downloadIS=" + downloadIS);
     // Save the Database Date first (separately) to avoid potential issues, such as this function being called on every request in case of error with the fetch request
     await Promisify.storageSet({"databaseDate": new Date().toJSON()});
     // We need to clone the URLS array each time because if this is called again before the background is unloaded, the index order will be different
@@ -72,7 +72,7 @@ class Database {
     const result = {};
     result.downloaded = (downloadAP && resultAP.downloaded) || (resultIS && resultIS.downloaded);
     result.error = resultAP.error || resultIS.error;
-    console.log("download() - result.downloaded=" + result.downloaded + ", result.error=" + result.error);
+    console.log("Database.download() - result.downloaded=" + result.downloaded + ", result.error=" + result.error);
     return result;
   }
 
@@ -85,7 +85,7 @@ class Database {
    * @private
    */
   static async #downloadDatabase(databaseName, index = 0) {
-    console.log("downloadDatabase() - databaseName=" + databaseName + ", index=" + index);
+    console.log("Database.downloadDatabase() - databaseName=" + databaseName + ", index=" + index);
     const result = { location: "", downloaded: false, error: undefined };
     const databaseURLs = Database.#urls[databaseName];
     try {
@@ -96,7 +96,7 @@ class Database {
       // https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Date#the_ecmascript_epoch_and_timestamps
       const timestamp = "?ts=" + Date.now();
       result.location = location;
-      console.log("downloadDatabase() - downloading database from: " + url);
+      console.log("Database.downloadDatabase() - downloading database from: " + url);
       const response = await fetch(url + timestamp);
       let database = await response.json();
       // Filter the database to only records who contain the required properties
@@ -104,6 +104,7 @@ class Database {
       // Map each database record (r) to a flat object with the desired keys
       database = database.map(d => {
         const r = {};
+        // Checking for existence works here because the database values will always be strings (i.e. not booleans or 0)
         for (const k of ["name", "resource_url", "created_at", "updated_at", "created_by"]) { if (d[k]) { r[k] = d[k]; } }
         for (const k of Object.keys(d.data)) { if (d.data[k]) { r[k] = d.data[k]; } }
         return r;
@@ -137,7 +138,7 @@ class Database {
         throw new Error(chrome.i18n.getMessage("database_empty_error"));
       }
     } catch (e) {
-      console.log("downloadDatabase() - error downloading database from: " + result.location + " - Error:");
+      console.log("Database.downloadDatabase() - error downloading database from: " + result.location + " - Error:");
       console.log(e);
       result.error = e.message;
       index++;

@@ -25,7 +25,7 @@ class Auto {
    * @public
    */
   static startTimer(caller) {
-    console.log("startTimer() - starting auto timer");
+    console.log("Auto.startTimer() - starting auto timer");
     Auto.#clearTimer();
     Auto.#createTimer();
     // Set starting badge with either normal "auto" badge or repeat badge if it has repeated at least 1 or more times
@@ -52,7 +52,7 @@ class Auto {
    * @public
    */
   static stopTimer(caller) {
-    console.log("stopTimer() - stopping auto timer");
+    console.log("Auto.stopTimer() - stopping auto timer");
     Auto.#clearTimer();
     V.instance.autoEnabled = false;
     V.instance.autoPaused = false;
@@ -82,7 +82,7 @@ class Auto {
    * @private
    */
   static #repeatTimer() {
-    console.log("repeatTimer() - repeating auto timer");
+    console.log("Auto.repeatTimer() - repeating auto timer");
     V.instance.autoRepeating = true;
     V.instance.autoRepeatCount++;
     Auto.startTimer("repeatTimer");
@@ -95,7 +95,7 @@ class Auto {
    */
   static #createTimer() {
     const callback = function() {
-      // This is the only place/time we have to decrement autoTimes, get the latest instance after the timeout to be safe
+      // This is the only place and time we have to decrement autoTimes
       V.instance.autoTimes--;
       // 3 Cases: If repeating, return to start, slideshow always down (will be adjusted to instance.action in preWorkflow if needed), regular auto is always instance.action
       const action = V.instance.autoRepeating ? "return" : V.instance.autoSlideshow ? "down" : V.instance.action;
@@ -125,12 +125,12 @@ class Auto {
   static pauseOrResumeTimer() {
     if (Auto.timer) {
       if (!V.instance.autoPaused) {
-        console.log("pauseOrResumeTimer() - pausing auto timer...");
+        console.log("Auto.pauseOrResumeTimer() - pausing auto timer...");
         Auto.timer.pause();
         V.instance.autoPaused = true;
         Promisify.runtimeSendMessage({receiver: "background", greeting: "setBadge", badge: "autopause", temporary: false});
       } else {
-        console.log("pauseOrResumeTimer() - resuming auto timer...");
+        console.log("Auto.pauseOrResumeTimer() - resuming auto timer...");
         Auto.timer.resume();
         V.instance.autoPaused = false;
         // The small window when the auto timer is repeating (REP), show repeat badge if it's times
@@ -155,7 +155,7 @@ class Auto {
    * @public
    */
   static autoListener() {
-    console.log("autoListener() - instance.autoTimes=" + V.instance.autoTimes);
+    console.log("Auto.autoListener() - instance.autoTimes=" + V.instance.autoTimes);
     if (V.instance.autoEnabled) {
       // If autoTimes is still greater than 0, set the auto timeout, else handle stopping auto normally
       // Note: Remember, the first time Auto is already done via Popup calling setAutoTimeout()
@@ -165,7 +165,7 @@ class Auto {
         Auto.#createTimer(V.instance);
         // In very rare race situations, the timing of pausing just barely missed registering while the previous Timer was still alive, so we pause again on the new Timer
         if (V.instance.autoPaused) {
-          console.log("autoListener() - rare auto pause race condition, attempting to re-pause it...");
+          console.log("Auto.autoListener() - rare auto pause race condition, attempting to re-pause it...");
           Auto.timer.pause();
           Promisify.runtimeSendMessage({receiver: "background", greeting: "setBadge", badge: "autopause", temporary: false});
         }
@@ -206,7 +206,6 @@ class Auto {
  * Note: This class is derived from code written by Tim Down @ stackoverflow.com.
  *
  * @see https://stackoverflow.com/a/3969760
- * @private
  */
 class Timer {
 

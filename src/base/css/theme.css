@@ -23,6 +23,7 @@
   --mdc-theme-alert-dark: #FF801A;
   --mdc-theme-warning-light: #FFCD56;
   --mdc-theme-warning-dark: #FFCD56;
+  --mdc-theme-neutral: #646C71;
   --light-background: #FFFFFF;
   --light-background-rgb: 255,255,255;
   --dark-background: #202124; /* #202124 is by Google, also consider: #1C1B22 (Firefox), #0D1117 (GitHub), #1A1E24 (?), #1E1E1E, #191919, #121212 */

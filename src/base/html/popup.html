@@ -182,7 +182,7 @@
                         </div>
                       </div>
                       <div id="next-link-type-label" data-action="next" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-auto-label" data-balloon-pos="up"></div>
-                      <div id="element-picker-next-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
+                      <div id="element-picker-next-button" data-picker="next" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                         <label class="hvr-grow-2x">
                           <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
                         </label>
@@ -230,7 +230,7 @@
                         </div>
                       </div>
                       <div id="prev-link-type-label" data-action="prev" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-auto-label" data-balloon-pos="up"></div>
-                      <div id="element-picker-prev-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
+                      <div id="element-picker-prev-button" data-picker="prev" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                         <label class="hvr-grow-2x">
                           <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
                         </label>
@@ -515,10 +515,10 @@
                 </div>
               </section>
               <section id="click">
-                <header id="button-result" class="async-result">
-                  <div id="button-result-loading" class="result-loading">
+                <header id="click-element-result" class="async-result">
+                  <div id="click-element-result-loading" class="result-loading">
                     <span data-id="loading-message" data-i18n="textContent"></span>
-                    <div id="button-linear-progress" role="progressbar" class="mdc-linear-progress" aria-label="Progress Bar" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+                    <div id="click-element-linear-progress" role="progressbar" class="mdc-linear-progress" aria-label="Progress Bar" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
                       <div class="mdc-linear-progress__buffer">
                         <div class="mdc-linear-progress__buffer-bar"></div>
                         <div class="mdc-linear-progress__buffer-dots"></div>
@@ -531,45 +531,45 @@
                       </div>
                     </div>
                   </div>
-                  <div id="button-result-success">
+                  <div id="click-element-result-success">
                     <svg class="success-icon"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
-                    <span id="button-result-message-success" data-i18n="textContent"></span>
-                    <span id="button-result-details-success" class="success-details" aria-describedby="tooltip" aria-label="button-result-tooltip-success" data-balloon-pos="down" data-balloon-length="medium"></span>
+                    <span id="click-element-result-message-success" data-i18n="textContent"></span>
+                    <span id="click-element-result-details-success" class="success-details" aria-describedby="tooltip" aria-label="click-element-result-tooltip-success" data-balloon-pos="down" data-balloon-length="medium"></span>
                   </div>
-                  <div id="button-result-error">
+                  <div id="click-element-result-error">
                     <svg class="error-icon"><use href="../lib/fontawesome/alt.svg#solid-circle-exclamation"></use></svg>
-                    <span id="button-result-message-error" data-i18n="textContent"></span>
-                    <span id="button-result-details-error" class="error-details" aria-describedby="tooltip" aria-label="placeholder" data-balloon-pos="down" data-balloon-length="medium"></span>
+                    <span id="click-element-result-message-error" data-i18n="textContent"></span>
+                    <span id="click-element-result-details-error" class="error-details" aria-describedby="tooltip" aria-label="placeholder" data-balloon-pos="down" data-balloon-length="medium"></span>
                   </div>
                 </header>
-                <div id="button-path" class="section">
-                  <div id="button-path-text-field-container" class="text-field-container display-inline-block">
-                    <div id="button-path-text-field" class="mdc-text-field mdc-text-field--textarea path">
-                      <textarea id="button-path-textarea" class="mdc-text-field__input" spellcheck="false"></textarea>
+                <div id="click-element-path" class="section">
+                  <div id="click-element-path-text-field-container" class="text-field-container display-inline-block">
+                    <div id="click-element-path-text-field" class="mdc-text-field mdc-text-field--textarea path">
+                      <textarea id="click-element-path-textarea" class="mdc-text-field__input" spellcheck="false"></textarea>
                       <div class="mdc-notched-outline mdc-notched-outline--upgraded mdc-notched-outline--notched">
                         <div class="mdc-notched-outline__leading"></div>
                         <div class="mdc-notched-outline__notch">
-                          <label class="mdc-floating-label mdc-floating-label--float-above" for="button-path-textarea" id="button-path-label" data-i18n="textContent"></label>
+                          <label class="mdc-floating-label mdc-floating-label--float-above" for="click-element-path-textarea" id="click-element-path-label" data-i18n="textContent"></label>
                         </div>
                         <div class="mdc-notched-outline__trailing"></div>
                       </div>
                     </div>
                   </div>
-                  <div id="button-type-label" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-auto-label" data-balloon-pos="up"></div>
-                  <div id="element-picker-button-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
+                  <div id="click-element-type-label" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-auto-label" data-balloon-pos="up"></div>
+                  <div id="element-picker-click-button" data-picker="click" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                     <label class="hvr-grow-2x">
                       <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
                     </label>
                   </div>
                 </div>
-                <div id="button-options" class="flex-row position-relative">
-                  <div id="button-position">
-                    <div id="button-position-text-field" class="mdc-text-field mdc-text-field--outlined">
-                      <input id="button-position-input" class="mdc-text-field__input" type="number" min="0" max="10000" step="100">
+                <div id="click-options" class="flex-row position-relative">
+                  <div id="click-element-position">
+                    <div id="click-element-position-text-field" class="mdc-text-field mdc-text-field--outlined">
+                      <input id="click-element-position-input" class="mdc-text-field__input" type="number" min="0" max="10000" step="100">
                       <div class="mdc-notched-outline">
                         <div class="mdc-notched-outline__leading"></div>
                         <div class="mdc-notched-outline__notch">
-                          <label id="button-position-label" for="button-position-input" class="mdc-floating-label mdc-floating-label--float-above" data-i18n="textContent"></label>
+                          <label id="click-element-position-label" for="click-element-position-input" class="mdc-floating-label mdc-floating-label--float-above" data-i18n="textContent"></label>
                         </div>
                         <div class="mdc-notched-outline__trailing"></div>
                       </div>
@@ -577,24 +577,24 @@
                     &nbsp;
                     <span data-id="pixels-bottom-label" data-i18n="textContent"></span>
                   </div>
-                  <div id="button-detection" class="chip-set chip-set-absolute">
-                    <label class="chip-set-label" data-id="button-detection-label" data-i18n="textContent"></label>
-                    <div id="button-detection-chip-set" class="mdc-chip-set mdc-chip-set--choice" role="grid">
-                      <div id="button-detection-manual-chip" class="mdc-chip" role="row" data-value="manual">
+                  <div id="click-element-detection" class="chip-set chip-set-absolute">
+                    <label class="chip-set-label" data-id="click-element-detection-label" data-i18n="textContent"></label>
+                    <div id="click-element-detection-chip-set" class="mdc-chip-set mdc-chip-set--choice" role="grid">
+                      <div id="click-element-detection-manual-chip" class="mdc-chip" role="row" data-value="manual">
                         <div class="mdc-chip__ripple"></div>
                         <svg class="mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
                         <span role="gridcell">
                           <span role="button" tabindex="0" class="mdc-chip__primary-action">
-                            <span data-id="button-detection-manual-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                            <span data-id="click-element-detection-manual-label" data-i18n="textContent" class="mdc-chip__text"></span>
                           </span>
                         </span>
                       </div>
-                      <div id="button-detection-auto-chip" class="mdc-chip" role="row" data-value="auto">
+                      <div id="click-element-detection-auto-chip" class="mdc-chip" role="row" data-value="auto">
                         <div class="mdc-chip__ripple"></div>
                         <svg class="mdc-chip__icon mdc-chip__icon--leading"><use href="../lib/fontawesome/solid.svg#circle-check"></use></svg>
                         <span role="gridcell">
                           <span role="button" tabindex="0" class="mdc-chip__primary-action">
-                            <span data-id="button-detection-auto-label" data-i18n="textContent" class="mdc-chip__text"></span>
+                            <span data-id="click-element-detection-auto-label" data-i18n="textContent" class="mdc-chip__text"></span>
                           </span>
                         </span>
                       </div>
@@ -602,7 +602,7 @@
                   </div>
                 </div>
                 <div class="flex-row">
-                  <p id="button-details" data-i18n="textContent"></p>
+                  <p id="click-description" data-i18n="textContent"></p>
                 </div>
               </section>
               <section id="list">
@@ -751,7 +751,7 @@
                     </div>
                   </div>
                   <div id="page-element-type-label" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-auto-label" data-balloon-pos="up"></div>
-                  <div id="element-picker-element-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
+                  <div id="element-picker-element-button" data-picker="element" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                     <label class="hvr-grow-2x">
                       <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
                     </label>
@@ -870,7 +870,7 @@
                         </div>
                       </div>
                       <div id="remove-element-type-label" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-element-label" data-balloon-pos="up"></div>
-                      <div id="element-picker-remove-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
+                      <div id="element-picker-remove-button" data-picker="remove" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                         <label class="hvr-grow-2x">
                           <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
                         </label>
@@ -892,7 +892,7 @@
                         </div>
                       </div>
                       <div id="load-element-type-label" data-mode="auto" class="type-label tooltip-without-underline" aria-describedby="tooltip" aria-label="change-type-element-label" data-balloon-pos="up"></div>
-                      <div id="element-picker-load-button" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
+                      <div id="element-picker-load-button" data-picker="load" class="element-picker-button icon-button tooltip-without-underline" aria-describedby="tooltip" aria-label="element-picker-button" data-balloon-pos="up">
                         <label class="hvr-grow-2x">
                           <svg><use href="../lib/fontawesome/solid.svg#eye-dropper"></use></svg>
                         </label>
@@ -1441,7 +1441,7 @@
                   <span class="mdc-button__ripple"></span>
                   <span class="mdc-button__label" id="report-an-issue-label" data-i18n="textContent">Report an Issue</span>
                 </a>
-                <button id="debug-copy-button" class="mdc-button mdc-button--raised mdc-ripple-upgraded">
+                <button id="debug-copy-button" class="mdc-button mdc-button--red mdc-button--raised mdc-ripple-upgraded">
                   <span class="mdc-button__ripple"></span>
                   <span id="debug-copy-button-label" class="mdc-button__label" data-i18n="textContent"></span>
                 </button>
@@ -1507,6 +1507,7 @@
                   <div id="version-dialog-footer">
                     <span data-id="version-dialog-footer" data-i18n="textContent"></span>
                     <svg class="theme-icon"><use href="../lib/fontawesome/solid.svg#heart"></use></svg>
+                    6
                   </div>
                   <div class="dialog-footer">
                     <svg><use href="../lib/fontawesome/brands.svg#github"></use></svg>
@@ -1546,7 +1547,7 @@
             <svg class="mdc-button__icon smaller-icon"><use href="../lib/fontawesome/alt.svg#solid-question"></use></svg>
             <span id="help-button-label" class="mdc-button__label">Help</span>
           </a>
-          <button id="manage-button" class="mdc-button mdc-button--raised mdc-ripple-upgraded">
+          <button id="manage-button" class="mdc-button mdc-button--gray mdc-button--raised mdc-ripple-upgraded">
             <span class="mdc-button__ripple"></span>
             <svg class="mdc-button__icon smaller-icon"><use href="../lib/fontawesome/solid.svg#puzzle-piece"></use></svg>
             <span class="mdc-button__label" id="extension-settings-button-label">Manage Settings</span>

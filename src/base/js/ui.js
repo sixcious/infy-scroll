@@ -5,7 +5,7 @@
  */
 
 /**
- * UI is a class that provides user interface functions, such as generating alert messages and clicking buttons.
+ * UI provides user interface functions, such as generating alert messages and clicking buttons.
  */
 class UI {
 

@@ -81,7 +81,7 @@ const Popup = (() => {
     }
     // Initialize popup content (1-time only)
     try {
-      items = await Promisify.storageGet();
+      items = await Promisify.storageGet(undefined, undefined, ["databaseAP", "databaseIS", "saves"]);
       if (!items || Object.keys(items).length <= 0) {
         throw new Error(chrome.i18n.getMessage("popup_error_reason_items"));
       }
@@ -160,7 +160,7 @@ const Popup = (() => {
     MDC.lists.get("action-list").selectedIndex = instance.action === "next" || instance.action === "prev" ? 0 : instance.action === "click" ? 1 : instance.action === "increment" || instance.action === "decrement" ? 2 : instance.action === "list" ? 3 : -1;
     MDC.lists.get("append-list").selectedIndex = instance.append === "page" ? 0 : instance.append === "iframe" ? 1 : instance.append === "element" ? 2 : instance.append === "media" ? 3 : instance.append === "none" ? 4 : instance.append === "ajax" ? 5 : -1;
     MDC.chips.get((instance.action === "prev" ? "prev" : "next") + "-chip").selected = true;
-    MDC.chips.get("button-detection-" + (instance.buttonDetection === "manual" ? "manual": "auto") + "-chip").selected = true;
+    MDC.chips.get("click-element-detection-" + (instance.clickElementDetection === "manual" ? "manual": "auto") + "-chip").selected = true;
     MDC.chips.get("page-element-iframe-mode-" + (instance.pageElementIframe === "trim" ? "trim" : "import") + "-chip").selected = true;
     MDC.chips.get("media-type-" + (instance.mediaType === "video" ? "video" : instance.mediaType === "audio" ? "audio" : "image") + "-chip").selected = true;
     MDC.chips.get("ajax-mode-" + (instance.ajaxMode === "native" ? "native": "iframe") + "-chip").selected = true;
@@ -193,7 +193,7 @@ const Popup = (() => {
       }, 100);
     }
     // The drawer can be expanded or collapsed; we always save the last choice the user made and initialize the drawer with that choice
-    openDrawer(undefined, items.drawerCollapsed);
+    MDC.openDrawer(undefined, items.drawerCollapsed, DOM);
     // Add event listeners after we initialize the inputs with the instance. For example, MDC select next/prev type listeners would have fired if we set their value after listening to them
     addEventListeners();
   }
@@ -219,7 +219,7 @@ const Popup = (() => {
     // Element Picker
     DOM["#element-picker-next-button"].addEventListener("click", clickElementPicker);
     DOM["#element-picker-prev-button"].addEventListener("click", clickElementPicker);
-    DOM["#element-picker-button-button"].addEventListener("click", clickElementPicker);
+    DOM["#element-picker-click-button"].addEventListener("click", clickElementPicker);
     DOM["#element-picker-element-button"].addEventListener("click", clickElementPicker);
     DOM["#element-picker-load-button"].addEventListener("click", clickElementPicker);
     DOM["#element-picker-remove-button"].addEventListener("click", clickElementPicker);
@@ -227,11 +227,11 @@ const Popup = (() => {
     // Change Type Label
     DOM["#next-link-type-label"].addEventListener("click", changeType);
     DOM["#prev-link-type-label"].addEventListener("click", changeType);
-    DOM["#button-type-label"].addEventListener("click", changeType);
+    DOM["#click-element-type-label"].addEventListener("click", changeType);
     DOM["#page-element-type-label"].addEventListener("click", changeType);
     // Toggle the drawer by first always closing it and then listening to see when it has finished closing to re-open it with the new collapsed state
-    DOM["#drawer-button"].addEventListener("click", closeDrawer);
-    MDC.drawers.get("app-drawer").listen("MDCDrawer:closed", openDrawer);
+    DOM["#drawer-button"].addEventListener("click", MDC.closeDrawer);
+    MDC.drawers.get("app-drawer").listen("MDCDrawer:closed", (event) => { MDC.openDrawer(event, undefined, DOM) });
     MDC.fabs.get("save-fab").listen("click", () => { MDC.dialogs.get("save-dialog").open(); if (!checks.checkSave) { checkSave(false, "save-fab click listener"); } MDC.layout(); });
     // TODO: These MDC list listeners are being executed twice each call due to the following issue/bug, need to update MDC beyond version 6. Until then, adding click listener manually
     // https://github.com/material-components/material-components-web/issues/5221
@@ -274,13 +274,13 @@ const Popup = (() => {
     // Shuffle Button is an SVG, so use className.baseVal instead of just className
     DOM["#shuffle-button-yes"].addEventListener("click", function () { DOM["#shuffle-enabled-input"].checked = true; DOM["#shuffle-button-icon"].className.baseVal = ""; });
     DOM["#shuffle-button-no"].addEventListener("click", function () { DOM["#shuffle-enabled-input"].checked = false; DOM["#shuffle-button-icon"].className.baseVal = "disabled"; });
-    // Button
-    DOM["#button-path"].addEventListener("input", function (event) { checkButton(true, true,"button-section input listener"); });
-    MDC.chipsets.get("button-detection-chip-set").chips.forEach(chip => chip.listen("click", function () {
-      console.log("MDCChip:() button-detection-chip-set - clicked " + this.id + ", value=" + this.dataset.value);
+    // Click
+    DOM["#click-element-path"].addEventListener("input", function (event) { checkClickElement(true, true,"click-section input listener"); });
+    MDC.chipsets.get("click-element-detection-chip-set").chips.forEach(chip => chip.listen("click", function () {
+      console.log("MDCChip:() click-element-detection-chip-set - clicked " + this.id + ", value=" + this.dataset.value);
       MDC.chips.get(this.id).selected = true;
-      _.buttonDetection = this.dataset.value;
-      DOM["#button-position"].className = this.dataset.value === "manual" ? "display-block fade-in" : "visibility-hidden";
+      _.clickElementDetection = this.dataset.value;
+      DOM["#click-element-position"].className = this.dataset.value === "manual" ? "display-block fade-in" : "visibility-hidden";
     }));
     // List
     DOM["#find-links-button"].addEventListener("click", clickFindLinks);
@@ -384,65 +384,6 @@ const Popup = (() => {
   }
 
   /**
-   * Closes the drawer. This function is called every time the drawer menu button is pressed.
-   *
-   * This will then emit the MDCDrawer:closed event, allowing us to listen for the event and then reopen the drawer in
-   * openDrawer().
-   *
-   * @private
-   */
-  function closeDrawer() {
-    console.log("closeDrawer() - drawer.root.classList=" + MDC.drawers.get("app-drawer").root_.classList);
-    const drawer = MDC.drawers.get("app-drawer");
-    // Don't do this, it doesn't work well if you try clicking the drawer button very fast multiple times
-    // Random Bug: Sometimes the drawer won't "close" (toggle) because it's in a stuck state with these two classes. Removing them helps
-    // drawer.root_.classList.remove("mdc-drawer--closing", "mdc-drawer--opening", "mdc-drawer--animate");
-    drawer.foundation_.close();
-  }
-
-  /**
-   * Opens the drawer. This function is called every time we close the drawer to toggle it in a new state: expanded (regular) or collapsed.
-   *
-   * This is called each time the MDCDrawer:closed event is emitted.
-   *
-   * @param {Event} event - the click event that triggered this callback function
-   * @param {boolean} itemsDrawerCollapsed - the storage items drawer collapsed state
-   * @private
-   */
-  async function openDrawer(event, itemsDrawerCollapsed) {
-    console.log("openDrawer() - event=" + event  + ", itemsDrawerCollapsed=" + itemsDrawerCollapsed + ", drawer.foundation_.isOpen()=" + MDC.drawers.get("app-drawer").foundation_.isOpen());
-    // In order to reuse this function when we are initializing the drawer state, we need this initializing variable
-    // We only save the toggled state in storage if we're not initializing
-    // Toggle the drawer carefully:
-    const drawer = MDC.drawers.get("app-drawer");
-    const initializing = typeof itemsDrawerCollapsed === "boolean";
-    for (let ms = 0; ms <= 1000; ms+= 100) {
-      await Promisify.sleep(ms);
-      if (!drawer.foundation_.isOpen()) {
-        console.log("openDrawer() - isClosed! ms=" + ms);
-        if (drawer.root_.classList.contains("drawer-collapsed") || (initializing && !itemsDrawerCollapsed)) {
-          // Make drawer expanded (regular)
-          drawer.root_.classList.remove("drawer-collapsed");
-          DOM["#app-content"].classList.remove("drawer-collapsed");
-          DOM["#app-content"].style.marginLeft = "200px";
-          DOM["#drawer-collapsed-app-icon-div"].className = "display-none";
-          if (!initializing) { Promisify.storageSet({"drawerCollapsed": false}); }
-        } else {
-          // Make drawer collapsed
-          drawer.root_.classList.add("drawer-collapsed");
-          DOM["#app-content"].classList.add("drawer-collapsed");
-          DOM["#app-content"].style.marginLeft = "52px";
-          DOM["#drawer-collapsed-app-icon-div"].className = "display-block fade-in";
-          if (!initializing) { Promisify.storageSet({"drawerCollapsed": true}); }
-        }
-        drawer.foundation_.open();
-        setTimeout(() => { MDC.layout(); }, 100);
-        break;
-      }
-    }
-  }
-
-  /**
    * Called when the action (Next Link, Increment URL, Click Button, URL List) is changed.
    * Changes the Setup window so that the appropriate action controls are in view.
    *
@@ -473,8 +414,8 @@ const Popup = (() => {
     } else if (action === "increment" || action === "decrement") {
       DOM["#url-textarea"].setSelectionRange(instance.selectionStart, instance.selectionStart + instance.selection.length);
       DOM["#url-textarea"].focus();
-    } else if (!checks.checkButton && action === "click") {
-      checkButton(false, false,"changeAction()");
+    } else if (!checks.checkClickElement && action === "click") {
+      checkClickElement(false, false,"changeAction()");
     }
     changeAppend();
     MDC.layout();
@@ -604,9 +545,14 @@ const Popup = (() => {
     }
     // Type Setup
     if (all) {
-      // for (let type of ["nextLinkType", "prevLinkType", "buttonType", "pageElementType"]) {
-      for (const type of ["next-link", "prev-link", "button", "page-element"]) {
-        DOM["#" + type + "-type-label"].dataset.mode = instance[(type === "next-link" ? "nextLink" : type === "prev-link" ? "prevLink" : type === "page-element" ? "pageElement" : type) + "TypeMode"];
+      const typeProperties = new Map([
+        ["next-link", "nextLink"],
+        ["prev-link", "prevLink"],
+        ["click-element", "clickElement"],
+        ["page-element", "pageElement"]
+      ]);
+      for (const [type, property] of typeProperties) {
+        DOM["#" + type + "-type-label"].dataset.mode = instance[property + "TypeMode"];
         changeType(undefined, DOM["#" + type + "-type-label"]);
       }
     }
@@ -630,11 +576,11 @@ const Popup = (() => {
       DOM["#selection-input"].value = instance.selection;
       DOM["#selection-start-input"].value = instance.selectionStart;
     }
-    // Button Setup
+    // Click Setup
     if (all || instance.action === "click") {
-      DOM["#button-path-textarea"].value = instance.buttonPath;
-      DOM["#button-position"].className = instance.buttonDetection === "manual" ? "display-block" : "visibility-hidden";
-      DOM["#button-position-input"].value = typeof instance.buttonPosition !== "undefined" ? instance.buttonPosition : items.buttonPosition;
+      DOM["#click-element-path-textarea"].value = instance.clickElementPath;
+      DOM["#click-element-position"].className = instance.clickElementDetection === "manual" ? "display-block" : "visibility-hidden";
+      DOM["#click-element-position-input"].value = instance.clickElementPosition;
       DOM["#mirror-page-input"].checked = instance.mirrorPage;
     }
     // List Setup
@@ -807,7 +753,7 @@ const Popup = (() => {
         }
         MDC.linearProgresses.get("save-test-linear-progress").foundation_.setDeterminate(true);
         // MDC.layout();
-      }, delay ? 500 : 0);
+      }, delay ? 100 : 0);
     }, delay ? 1000 : 0);
   }
 
@@ -887,7 +833,7 @@ const Popup = (() => {
         if (focus && success) {
           DOM["#next-prev-link-textarea"].focus();
         }
-      }, delay ? 1000 : 0);
+      }, delay ? 100 : 0);
     }, delay ? 1000 : 0);
   }
 
@@ -900,46 +846,46 @@ const Popup = (() => {
    * @param {string} caller - the caller who called this function
    * @private
    */
-  function checkButton(delay, highlight, caller) {
-    console.log("checkButton() - delay=" + delay + ", highlight=" + highlight + ", caller=" + caller);
-    checks.checkButton = true;
+  function checkClickElement(delay, highlight, caller) {
+    console.log("checkClickElement() - delay=" + delay + ", highlight=" + highlight + ", caller=" + caller);
+    checks.checkClickElement = true;
     // TODO: This "double timeout" is so we don't show the "Loading" as soon as the user starts typing, but this is confusing and should be refactored into a better event listener
-    MDC.linearProgresses.get("button-linear-progress").foundation_.setDeterminate(false);
-    clearTimeout(timeouts.checkButton);
-    timeouts.checkButton = setTimeout(function () {
-      clearTimeout(timeouts.checkButton2);
-      DOM["#button-result-loading"].style.display = "block";
-      DOM["#button-result-success"].style.display = "none";
-      DOM["#button-result-error"].style.display = "none";
-      timeouts.checkButton2 = setTimeout(async function () {
-        const buttonPath = DOM["#button-path-textarea"].value;
-        const typeMode = DOM ["#button-type-label"].dataset.mode;
-        const buttonType = ["selector", "xpath", "js"].includes(typeMode) ? typeMode : await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "determinePathType", path: buttonPath, type: _.buttonType });
-        console.log("checkButton() - sending message to check: buttonType=" + buttonType + ", buttonPath=" + buttonPath);
+    MDC.linearProgresses.get("click-element-linear-progress").foundation_.setDeterminate(false);
+    clearTimeout(timeouts.checkClickElement);
+    timeouts.checkClickElement = setTimeout(function () {
+      clearTimeout(timeouts.checkClickElement2);
+      DOM["#click-element-result-loading"].style.display = "block";
+      DOM["#click-element-result-success"].style.display = "none";
+      DOM["#click-element-result-error"].style.display = "none";
+      timeouts.checkClickElement2 = setTimeout(async function () {
+        const clickElementPath = DOM["#click-element-path-textarea"].value;
+        const typeMode = DOM ["#click-element-type-label"].dataset.mode;
+        const clickElementType = ["selector", "xpath", "js"].includes(typeMode) ? typeMode : await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "determinePathType", path: clickElementPath, type: _.clickElementType });
+        console.log("checkClickElement() - sending message to check: clickElementType=" + clickElementType + ", clickElementPath=" + clickElementPath);
         await Promisify.tabsExecuteScript(tabs[0].id, {file: "/lib/hoverbox/hoverbox.js", runAt: "document_end"});
-        const response = await Promisify.tabsSendMessage(tabs[0].id, {caller: "popup", receiver: "contentscript", greeting: "checkButton", buttonType: buttonType, buttonPath: buttonPath, highlight: highlight});
-        console.log("checkButton() - response received from check:");
+        const response = await Promisify.tabsSendMessage(tabs[0].id, {caller: "popup", receiver: "contentscript", greeting: "checkClickElement", clickElementType: clickElementType, clickElementPath: clickElementPath, highlight: highlight});
+        console.log("checkClickElement() - response received from check:");
         console.log(response);
         const success = response && response.found && response.clickable;
         // This is the only opportunity to store the new type if the path changes
-        _.buttonType = buttonType;
-        _.buttonTypeMode = typeMode;
-        DOM["#button-type-label"].textContent = chrome.i18n.getMessage(buttonType + "_abbreviated_label");
-        DOM["#button-result-loading"].style.display = "none";
-        DOM["#button-result-success"].style.display = success ? "block" : "none";
-        DOM["#button-result-error"].style.display = success ? "none" : "block";
-        const details = chrome.i18n.getMessage("button_path_label");
-        // + " (" + chrome.i18n.getMessage(buttonType + "_label") + ")";
+        _.clickElementType = clickElementType;
+        _.clickElementTypeMode = typeMode;
+        DOM["#click-element-type-label"].textContent = chrome.i18n.getMessage(clickElementType + "_abbreviated_label");
+        DOM["#click-element-result-loading"].style.display = "none";
+        DOM["#click-element-result-success"].style.display = success ? "block" : "none";
+        DOM["#click-element-result-error"].style.display = success ? "none" : "block";
+        const details = chrome.i18n.getMessage("click_element_path_label");
+        // + " (" + chrome.i18n.getMessage(clickElementType + "_label") + ")";
         if (success) {
-          DOM["#button-result-details-success"].textContent = details;
-          DOM["#button-result-details-success"].setAttribute("aria-label", chrome.i18n.getMessage("button_result_tooltip_success").replace("?", response.buttonNode));
+          DOM["#click-element-result-details-success"].textContent = details;
+          DOM["#click-element-result-details-success"].setAttribute("aria-label", chrome.i18n.getMessage("click_element_result_tooltip_success").replace("?", response.nodeName));
         } else {
-          DOM["#button-result-details-error"].textContent = details;
-          DOM["#button-result-details-error"].setAttribute("aria-label", response?.error ? (typeMode === "js" ? chrome.i18n.getMessage("jspath_result_tooltip_error") : "") + response.error : response?.found && !response?.clickable ? chrome.i18n.getMessage("button_result_tooltip_error_clickable") : chrome.i18n.getMessage("no_result_tooltip_error"));
+          DOM["#click-element-result-details-error"].textContent = details;
+          DOM["#click-element-result-details-error"].setAttribute("aria-label", response?.error ? (typeMode === "js" ? chrome.i18n.getMessage("jspath_result_tooltip_error") : "") + response.error : response?.found && !response?.clickable ? chrome.i18n.getMessage("click_element_result_tooltip_error_clickable") : chrome.i18n.getMessage("no_result_tooltip_error"));
         }
-        MDC.linearProgresses.get("button-linear-progress").foundation_.setDeterminate(true);
+        MDC.linearProgresses.get("click-element-linear-progress").foundation_.setDeterminate(true);
         MDC.layout();
-      }, delay ? 1000 : 0);
+      }, delay ? 100 : 0);
     }, delay ? 1000 : 0);
   }
 
@@ -995,8 +941,8 @@ const Popup = (() => {
         }
         MDC.linearProgresses.get("page-element-linear-progress").foundation_.setDeterminate(true);
         MDC.layout();
-      }, delay ? 500 : 0);
-    }, delay ? 500 : 0);
+      }, delay ? 100 : 0);
+    }, delay ? 1000 : 0);
   }
 
   /**
@@ -1009,11 +955,8 @@ const Popup = (() => {
     // Note: We need to cache the event.currentTarget now before we start awaiting the code below. We will lose it if we don't
     // Why we use event.currentTarget over event.target
     // https://stackoverflow.com/questions/10086427/what-is-the-exact-difference-between-currenttarget-property-and-target-property
-    const id = event.currentTarget.id;
-    // Example format of the id is "element-picker-next-button" and we want to extract the "next":
-    const picker = id.replaceAll("element-picker-", "").replaceAll("-button", "");
-    console.log("clickElementPicker() - tabs[0].id=" + tabs[0].id + ", event.currentTarget.id=" + id + ", picker=" + picker);
-    _.picker = picker;
+    _.picker = event.currentTarget.dataset.picker;
+    console.log("clickElementPicker() - tabs[0].id=" + tabs[0].id + ", picker=" + _.picker);
     // Calling setupInputs is somewhat risky, but it lets us be sure that all inputs are saved when they return back to the Popup...
     setupInputs("accept");
     // Before we send off the temporary instance, we need to make sure we store the current keywordsEnabled state.
@@ -1026,8 +969,8 @@ const Popup = (() => {
     // await Promisify.tabsExecuteScript(tabs[0].id, {file: "/lib/dompath/dompath.js", runAt: "document_end"});
     await Promisify.tabsExecuteScript(tabs[0].id, {file: "/lib/hoverbox/hoverbox.js", runAt: "document_end"});
     await Promisify.tabsExecuteScript(tabs[0].id, {file: "/js/picker.js", runAt: "document_end"});
-    await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "setInstance", instance: _ });
-    await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "openPicker" });
+    await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "setInstance", instance: _});
+    await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "openPicker"});
     // We automatically close the Popup to enter the Picker mode
     window.close();
   }
@@ -1055,7 +998,7 @@ const Popup = (() => {
     if (!el) {
       switch (element.id) {
         case "next-link-type-label": case "prev-link-type-label": checkNextPrev(element.dataset.action, false, false, false, "changeType"); break;
-        case "button-type-label": checkButton(false, false, "changeType"); break;
+        case "click-element-type-label": checkClickElement(false, false, "changeType"); break;
         case "page-element-type-label": checkPageElement(false, false, "", "changeType"); break;
       }
     }
@@ -1211,8 +1154,8 @@ const Popup = (() => {
         defaults.shuffleURLs = _.shuffleURLs;
       }
     }
-    if (_.action === "click") {
-      defaults.buttonPosition = _.buttonDetection === "manual" ? _.buttonPosition : items.buttonPosition;
+    if (_.action === "click" && _.clickElementDetection === "manual") {
+      defaults.clickElementPosition = _.clickElementPosition;
     }
     if (_.append === "media") {
       defaults.mediaType = _.mediaType;
@@ -1270,9 +1213,9 @@ const Popup = (() => {
 //      _.shuffleEnabled = (DOM["#shuffle-enabled-input"].checked && (_.action === "increment" || _.action === "decrement")) || (DOM["#list-shuffle-urls-input"].checked &&  _.action === "list");
       _.shuffleEnabled = (DOM["#shuffle-enabled-input"].checked && (_.action === "increment" || _.action === "decrement")); //|| (DOM["#list-shuffle-urls-input"].checked &&  _.action === "list");
       _.shuffleURLs = _.shuffleEnabled ? +DOM["#shuffle-urls-input"].value : undefined;
-      // Button
-      _.buttonPath = DOM["#button-path-textarea"].value;
-      _.buttonPosition = _.buttonDetection === "manual" ? +DOM["#button-position-input"].value : undefined;
+      // Click
+      _.clickElementPath = DOM["#click-element-path-textarea"].value;
+      _.clickElementPosition = +DOM["#click-element-position-input"].value;
       // List
       _.listEnabled = _.action === "list";
       // This will be null if we don't do || []
@@ -1309,7 +1252,7 @@ const Popup = (() => {
       // Workflow
       _.workflowReverse = (_.append === "ajax" && _.ajaxMode !== "native") || (_.append === "element" && _.pageElementIframe);
       _.workflowPrepend = (_.action === "click" && ((_.append === "element") || (_.append === "ajax" && _.ajaxMode === "native")))  ? "divider" : "";
-      if (_.workflowPrepend) { _.scrollLoading = false }
+      if (_.workflowPrepend) { _.showLoading = false }
     }
     if (caller === "multi") {
       const range = /\[(.*)-(\d+)]/.exec(_.selection);
@@ -1370,8 +1313,8 @@ const Popup = (() => {
     }
     // Click Errors
     if (_.action === "click") {
-      if (_.buttonPosition < 0 || _.buttonPosition > 10000) { errors.push(chrome.i18n.getMessage("button_position_error")); }
-      if (_.autoEnabled && _.autoSlideshow && _.append === "none") { errors.push(chrome.i18n.getMessage("button_auto_slideshow_error")); }
+      if (_.clickElementDetection === "manual" && _.clickElementPosition < 0 || _.clickElementPosition > 10000) { errors.push(chrome.i18n.getMessage("click_element_position_error")); }
+      if (_.autoEnabled && _.autoSlideshow && _.append === "none") { errors.push(chrome.i18n.getMessage("click_element_auto_slideshow_error")); }
     }
     // List Errors
     // TODO: (Infy only) Validate that the list URLs all have the same origin as instance.locationOrigin?
@@ -1444,6 +1387,10 @@ const Popup = (() => {
       await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "deleteSave", id: _.saveID, url: _.saveURL, writeToStorage: true});
       _.saveID = undefined;
     }
+    // As we are awaiting the tabsSendMessage to add/delete the save, this should be fine to do in the Popup instead of Saves
+    if (items.backupAuto && ["add", "edit", "delete"].includes(saveAction)) {
+      Util.downloadBackup();
+    }
   }
 
   /**
@@ -1470,7 +1417,7 @@ const Popup = (() => {
         instance = Util.clone(request.instance);
         // If this will change the on/off state and the popup is still open, we need to update the popup's storage items too!
         if (request.action === "power" || request.action === "blacklist" || request.action === "whitelist") {
-          items = await Promisify.storageGet();
+          items = await Promisify.storageGet(undefined, undefined, ["databaseAP", "databaseIS", "saves"]);
         }
         // Introduce a small delay before updating the controls after they click the button
         // setTimeout(() => { updateControls(); }, request.action === "blacklist" || request.action === "whitelist" ? 0 : 0);

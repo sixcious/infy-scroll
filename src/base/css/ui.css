@@ -391,6 +391,11 @@ input[type="number"]:hover, input[type="number"]:focus {
   background-color: var(--mdc-theme-error);
 }
 
+.mdc-button--raised:not(:disabled).mdc-button--gray,
+.mdc-button--unelevated:not(:disabled).mdc-button--gray {
+  background-color: var(--mdc-theme-neutral);
+}
+
 /* mdc-card */
 
 .mdc-card {

@@ -46,7 +46,7 @@ const Options = (() => {
   async function init() {
     // If we don't have chrome, display an error message. Note: Firefox allows Private Window Installation, which is primarily the reason why we need this check
     if (typeof chrome === "undefined") {
-      console.log("init() - error: chrome is undefined");
+      console.log("Options.init() - error: chrome is undefined");
       MDC.dialogs.get("error-dialog").open();
       return;
     }
@@ -88,10 +88,13 @@ const Options = (() => {
     // MDC Snackbar
     DOM["#undo-button"].addEventListener("click", async function() {
       // Important: Right now this undo button is only needed for undoing the Delete Save operation, but it could be parameterized to handle multiple undo operations e.g. reset options, or restore data
-      console.log("The undo button was clicked, undoing previous operation..., undo=");
+      console.log("Options.undo() - The undo button was clicked, undoing previous operation..., undo=");
       console.log(undo);
       if (undo && undo.saves && Array.isArray(undo.saves) && undo.saves.length > 0) {
         await Promisify.storageSet({"saves": undo.saves});
+        if (items.backupAuto) {
+          Util.downloadBackup();
+        }
         populateValuesFromStorage("saves");
         MDC.openSnackbar(chrome.i18n.getMessage("saves_snackbar_undo_label"));
       }
@@ -118,6 +121,11 @@ const Options = (() => {
     DOM["#button-size-input"].addEventListener("change", function () { if (+this.value >= 16 && +this.value <= 128) { saveInput(this, "buttonSize", "number");
       DOM["#button-size-icon"].style = "width:" + (+this.value) + "px; height:" + (+this.value) + "px;"; } });
     DOM["#button-size-icon"].addEventListener("click", function () { UI.clickHoverCss(this, "hvr-push-click"); });
+    // DOM["#incognito-detection-input"].addEventListener("change", async function () {
+    //   await Promisify.storageSet({"incognitoDetection": this.checked});
+    //   // We need to call startupListener to deal with removing/adding the chrome.tabs.onUpdated listener depending on the incognitoDetection and icon settings
+    //   Promisify.runtimeSendMessage({sender: "options", receiver: "background", greeting: "startupListener" });
+    // });
     DOM["#tooltips-enable-input"].addEventListener("change", function () { chrome.storage.local.set({"tooltipsEnabled": this.checked}); });
     DOM["#extra-inputs-input"].addEventListener("change", function () { chrome.storage.local.set({"extraInputs": this.checked}); });
     DOM["#theme-version-input"].addEventListener("change", function () { chrome.storage.local.set({"themeVersion": this.checked}); });
@@ -133,14 +141,14 @@ const Options = (() => {
     // Add window.matchMedia listener in case the icon or theme is system
     if (typeof window !== "undefined" && window.matchMedia) {
       window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(e) {
-        console.log("prefers-color-scheme change, dark=" + e.matches);
+        console.log("Options.prefers-color-scheme() - prefers-color-scheme change, dark=" + e.matches);
         if (items.icon === "system") {
-          Promisify.runtimeSendMessage({sender: "contentscript", receiver: "background", greeting: "setIcon", icon: e.matches ? "light" : "dark"});
+          Promisify.runtimeSendMessage({sender: "options", receiver: "background", greeting: "setIcon", icon: e.matches ? "light" : "dark"});
         }
-        // Update the theme icon from sun to moon or vice-versa
-        if (items.theme === "system") {
-          populateValuesFromStorage("theme");
-        }
+        // // Update the theme icon from sun to moon or vice-versa
+        // if (items.theme === "system") {
+        //   populateValuesFromStorage("theme");
+        // }
       });
     }
     // Saves
@@ -187,13 +195,13 @@ const Options = (() => {
     DOM["#scroll-behavior-radios"].addEventListener("change", function (event) { saveInput(event.target, "scrollBehavior", "value"); });
     DOM["#scroll-update-address-input"].addEventListener("change", function () { chrome.storage.local.set({"scrollUpdateAddress": this.checked}); });
     DOM["#scroll-update-title-input"].addEventListener("change", function () { chrome.storage.local.set({"scrollUpdateTitle": this.checked}); });
-    DOM["#append-threshold-input"].addEventListener("change", function () { if (+this.value >= 0 && +this.value <= 3000) { saveInput(this, "appendThreshold", "number");} });
+    DOM["#append-threshold-input"].addEventListener("change", function () { if (+this.value >= 0 && +this.value <= 5000) { saveInput(this, "appendThreshold", "number");} });
     DOM["#append-delay-input"].addEventListener("change", function () { if (+this.value >= 1000 && +this.value <= 10000) { saveInput(this, "appendDelay", "number");} });
     DOM["#page-divider-align-radios"].addEventListener("change", function (event) { saveInput(event.target, "pageDividerAlign", "value"); });
     DOM["#page-divider-buttons-input"].addEventListener("change", function () { chrome.storage.local.set({"pageDividerButtons": this.checked}); });
     DOM["#page-overlay-input"].addEventListener("change", function () { chrome.storage.local.set({"pageOverlay": this.checked}); });
-    DOM["#scroll-icon-input"].addEventListener("change", function () { chrome.storage.local.set({"scrollIcon": this.checked}); });
-    DOM["#scroll-loading-input"].addEventListener("change", function () { chrome.storage.local.set({"scrollLoading": this.checked}); });
+    DOM["#show-icon-input"].addEventListener("change", function () { chrome.storage.local.set({"showIcon": this.checked}); });
+    DOM["#show-loading-input"].addEventListener("change", function () { chrome.storage.local.set({"showLoading": this.checked}); });
     DOM["#maximum-pages-input"].addEventListener("change", function () { if (+this.value >= 0 && +this.value <= 100) { saveInput(this, "maximumPages", "number");} });
     DOM["#maximum-pages-checkbox-input"].addEventListener("change", function () {
       // We always reset this to 0 on every checkbox change to avoid issues
@@ -221,7 +229,7 @@ const Options = (() => {
     DOM["#custom-events-enable-input"].addEventListener("change", function () { chrome.storage.local.set({"customEventsEnabled": this.checked}); });
     DOM["#debug-enable-input"].addEventListener("change", function () { chrome.storage.local.set({"debugEnabled": this.checked}); });
     // Backup
-    DOM["#backup-button"].addEventListener("click", downloadBackup);
+    DOM["#backup-button"].addEventListener("click", Util.downloadBackup);
     DOM["#restore-button"].addEventListener("click", uploadFile);
     DOM["#manual-backup-button"].addEventListener("click", async function () {
       MDC.dialogs.get("backup-dialog").open();
@@ -231,6 +239,20 @@ const Options = (() => {
     });
     DOM["#backup-text-button"].addEventListener("click", copyText);
     DOM["#restore-text-button"].addEventListener("click", uploadText);
+    // DOM["#backup-schedule-input"].addEventListener("change", function () { if (+this.value >= 0 && +this.value <= 52) { saveInput(this, "backupSchedule", "number");} });
+    DOM["#backup-auto-input"].addEventListener("change", function () { chrome.storage.local.set({"backupAuto": this.checked}); items.backupAuto = this.checked; });
+    // Edge: Note that while Edge will redirect chrome:// to edge://, it has its own URI/namespace so we should probably use that
+    // Firefox: There is no programmatic way to go to the download settings screen, so display message telling the user where to go instead
+    DOM["#download-settings-button"].addEventListener("click", function () {
+      console.log("browserName=" + items.browserName);
+      if (items && items.browserName === "firefox") {
+        MDC.dialogs.get("download-settings-dialog").open();
+      } else if (items && items.browserName === "edge") {
+        chrome.tabs.create({url: "edge://settings/downloads"});
+      } else {
+        chrome.tabs.create({url: "chrome://settings/downloads"});
+      }
+    });
     // About
     DOM["#reset-options-button"].addEventListener("click", () => { MDC.dialogs.get("reset-options-dialog").open(); });
     DOM["#reset-options-button-yes"].addEventListener("click", resetOptions);
@@ -241,7 +263,7 @@ const Options = (() => {
     // @see https://stackoverflow.com/a/36846308/988713 by Isaac
     document.querySelectorAll("[contenteditable]").forEach(el => {
       el.addEventListener("paste", (e) => {
-        console.log("contenteditable paste listener() - overriding default behavior to paste only plaintext");
+        console.log("Options.contenteditable paste listener() - overriding default behavior to paste only plaintext");
         e.preventDefault();
         document.execCommand("insertHTML", false, e.clipboardData.getData("text/plain"));
       })
@@ -263,14 +285,15 @@ const Options = (() => {
    * @private
    */
   async function populateValuesFromStorage(values) {
-    items = await Promisify.storageGet(undefined, undefined, []);
+    items = await Promisify.storageGet();
     if (values === "all" || values === "theme") {
       // If this is the firstRun, don't override the theme based on the user's system default using the @media css query
       if (!items.firstRun) {
         document.documentElement.dataset.theme = items.theme;
       }
-      // Note: If the user is using the default theme and they change the system default while the Options page is still open, we will update the icon in the window.matchMedia listener added in addEventListeners()
-      DOM["#theme-icon"].children[0].setAttribute("href", "../lib/feather/feather.svg#" + (items.theme === "light" ? "sun" : items.theme === "dark" ? "moon" : getPreferredColor() === "light" ? "sun" : "moon"));
+      // // Note: If the user is using the default theme and they change the system default while the Options page is still open, we will update the icon in the window.matchMedia listener added in addEventListeners()
+      // DOM["#theme-icon"].children[0].setAttribute("href", "../lib/feather/feather.svg#" + (items.theme === "light" ? "sun" : items.theme === "dark" ? "moon" : getPreferredColor() === "light" ? "sun" : "moon"));
+      DOM["#theme-icon"].children[0].setAttribute("href", "../lib/feather/feather.svg#" + (items.theme === "light" ? "sun" : items.theme === "dark" ? "moon" : "sun-moon"));
       DOM["#theme-icon"].style.display = "initial";
       // Firefox doesn't officially support ariaLabel, so we have to use setAttribute to change it
       DOM["#theme-button"].setAttribute("aria-label", chrome.i18n.getMessage("theme_button_tooltip").replaceAll("?", chrome.i18n.getMessage("theme_" + items.theme + "_label")));
@@ -300,6 +323,7 @@ const Options = (() => {
       DOM["#on-switch-label"].textContent = chrome.i18n.getMessage((items.on ? "on" : "off") + "_switch_label");
       DOM["#button-size-input"].value = items.buttonSize;
       DOM["#button-size-icon"].style = (isNaN(items.buttonSize) || items.buttonSize < 16 || items.buttonSize > 128) ? "" : "width:" + items.buttonSize + "px; height:" + items.buttonSize + "px;";
+      // DOM["#incognito-detection-input"].checked = items.incognitoDetection;
       DOM["#tooltips-enable-input"].checked = items.tooltipsEnabled;
       DOM["#extra-inputs-input"].checked = items.extraInputs;
       DOM["#theme-version-input"].checked = items.themeVersion;
@@ -332,8 +356,8 @@ const Options = (() => {
       DOM["#page-divider-align-right-input"].checked = items.pageDividerAlign === "right";
       DOM["#page-divider-buttons-input"].checked = items.pageDividerButtons;
       DOM["#page-overlay-input"].checked = items.pageOverlay;
-      DOM["#scroll-icon-input"].checked = items.scrollIcon;
-      DOM["#scroll-loading-input"].checked = items.scrollLoading;
+      DOM["#show-icon-input"].checked = items.showIcon;
+      DOM["#show-loading-input"].checked = items.showLoading;
       DOM["#maximum-pages-checkbox-input"].checked = items.maximumPages > 0;
       DOM["#maximum-pages"].className = items.maximumPages > 0 ? "display-inline-block" : "display-none";
       DOM["#maximum-pages-input"].value = items.maximumPages;
@@ -366,6 +390,9 @@ const Options = (() => {
       DOM["#links-new-tab-enable-input"].checked = items.linksNewTabEnabled;
       DOM["#custom-events-enable-input"].checked = items.customEventsEnabled;
       DOM["#debug-enable-input"].checked = items.debugEnabled;
+      // Backup
+      // DOM["#backup-schedule-input"].value = items.backupSchedule;
+      DOM["#backup-auto-input"].checked = items.backupAuto;
       // About
       DOM["#manifest-name"].textContent = chrome.runtime.getManifest().name;
       DOM["#manifest-version"].textContent = chrome.runtime.getManifest().version;
@@ -400,7 +427,7 @@ const Options = (() => {
     if (typeof window !== "undefined" && window.matchMedia) {
       color = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     }
-    console.log("getPreferredColor() - color=" +  color);
+    console.log("Options.getPreferredColor() - color=" +  color);
     return color;
   }
 
@@ -414,9 +441,12 @@ const Options = (() => {
     await Promisify.storageSet({"icon": icon});
     // Need to keep the cache updated for the window.matchmedia listener
     items.icon = icon;
+    // MV3: Need to set the icon manually because we can't use window.matchMedia in the Background Service Worker to determine light or dark
     if (icon === "system") {
       icon = getPreferredColor() === "dark" ? "light" : "dark";
     }
+    // // We need to call startupListener to deal with removing/adding the chrome.tabs.onUpdated listener depending on the incognitoDetection and icon settings
+    // await Promisify.runtimeSendMessage({sender: "options", receiver: "background", greeting: "startupListener", icon: icon });
     Promisify.runtimeSendMessage({receiver: "background", greeting: "setIcon", icon: icon });
   }
 
@@ -509,13 +539,13 @@ const Options = (() => {
   async function addSave() {
     // We must get the checkbox ID values dynamically via a query (can't use the DOM Cache)
     const checkboxes = [...document.querySelectorAll("#saves-tbody input[type=checkbox]:checked")].map(o => +o.value);
-    console.log("addSave() - checkboxes=");
+    console.log("Options.addSave() - checkboxes=");
     console.log(checkboxes);
     const saves = await Promisify.storageGet("saves");
     // Users can add saves either using the default template or by using an existing save as a template
     let template = items.savesTemplate;
     if (typeof Util.clone(template, "json", false) !== "object") {
-      console.log("addSave() - error parsing savesTemplate as an object, resetting to default storage items template...");
+      console.log("Options.addSave() - error parsing savesTemplate as an object, resetting to default storage items template...");
       const options = await Promisify.runtimeSendMessage({receiver: "background", greeting: "getSDV"});
       template = options?.savesTemplate || {};
       template.comment = chrome.i18n.getMessage("saves_template_corrupted");
@@ -550,7 +580,7 @@ const Options = (() => {
       const json = JSON.parse(DOM["#save-dialog-json"].textContent);
       const type = DOM["#save-dialog-type"].value;
       const saves = await Promisify.storageGet("saves");
-      console.log("editSave - editing save id=" + json.id + ", json=");
+      console.log("Options.editSave - editing save id=" + json.id + ", json=");
       console.log(json);
       // The URL is the only required piece so they can at least click on it to edit it; throw an error if the user removed it
       if (!json.url) {
@@ -563,12 +593,12 @@ const Options = (() => {
         json.date = new Date().toJSON();
       }
       if (type === "add") {
-        console.log("editSave - adding new save");
+        console.log("Options.editSave - adding new save");
         saves.push(json);
       } else if (type === "edit") {
         for (let i = 0; i < saves.length; i++) {
           if (saves[i].id === json.id) {
-            console.log("editSave - editing a save");
+            console.log("Options.editSave - editing a save");
             const old = saves[i];
             saves[i] = json;
             saves[i].url = saves[i].url || old.url;
@@ -579,6 +609,9 @@ const Options = (() => {
       // Resort back to default sort order
       saves.sort((a, b) => b.url?.length - a.url?.length || a.id - b.id);
       await Promisify.storageSet({saves: saves});
+      if (items.backupAuto) {
+        Util.downloadBackup();
+      }
       populateValuesFromStorage("saves");
       MDC.dialogs.get("save-dialog").close();
       MDC.openSnackbar(chrome.i18n.getMessage("saves_snackbar_success_" + type + "_label"));
@@ -596,7 +629,7 @@ const Options = (() => {
   async function deleteSave() {
     // We must get the checkbox ID values dynamically via a query (can't use the DOM Cache)
     const checkboxes = [...document.querySelectorAll("#saves-tbody input[type=checkbox]:checked")].map(o => +o.value);
-    console.log("deleteSave() - checkboxes=" + checkboxes);
+    console.log("Options.deleteSave() - checkboxes=" + checkboxes);
     if (!checkboxes || checkboxes.length <= 0) {
       MDC.openSnackbar(chrome.i18n.getMessage("saves_snackbar_select_delete_error_label"));
       return;
@@ -616,6 +649,9 @@ const Options = (() => {
       // Resort back to default sort order
       newSaves.sort((a, b) => b.url?.length - a.url?.length || a.id - b.id);
       await Promisify.storageSet({saves: newSaves});
+      if (items.backupAuto) {
+        Util.downloadBackup();
+      }
       populateValuesFromStorage("saves");
       // Make sure to give the user infinite time to undo this operation
       MDC.openSnackbar(chrome.i18n.getMessage("saves_snackbar_delete_label"), -1, "mdc-snackbar-undo");
@@ -693,7 +729,7 @@ const Options = (() => {
   async function downloadDatabase() {
     // We must get the checkbox ID values dynamically via a query (can't use the DOM Cache)
     const checkboxes = [...document.querySelectorAll("#database-tbody input[type=checkbox]:checked")].map(o => +o.value);
-    console.log("downloadDatabase() - checkboxes=");
+    console.log("Options.downloadDatabase() - checkboxes=");
     console.log(checkboxes);
     if (!checkboxes || checkboxes.length <= 0) {
       MDC.openSnackbar(chrome.i18n.getMessage("database_snackbar_select_error"));
@@ -701,7 +737,7 @@ const Options = (() => {
     }
     MDC.openSnackbar(chrome.i18n.getMessage("database_snackbar_download_downloading_label"));
     const response = await Promisify.runtimeSendMessage({receiver: "background", greeting: "downloadDatabase", downloadAP: checkboxes.includes(1), downloadIS: checkboxes.includes(2), downloadLocation: MDC.selects.get("database-location-select").value });
-    console.log("downloadDatabase() - download response=" + JSON.stringify(response));
+    console.log("Options.downloadDatabase() - download response=" + JSON.stringify(response));
     if (response && response.downloaded) {
       MDC.openSnackbar(chrome.i18n.getMessage("database_snackbar_download_success_label"));
       populateValuesFromStorage("database");
@@ -718,7 +754,7 @@ const Options = (() => {
   async function deleteDatabase() {
     // We must get the checkbox ID values dynamically via a query (can't use the DOM Cache)
     const checkboxes = [...document.querySelectorAll("#database-tbody input[type=checkbox]:checked")].map(o => +o.value);
-    console.log("deleteDatabase() - checkboxes=");
+    console.log("Options.deleteDatabase() - checkboxes=");
     console.log(checkboxes);
     if (!checkboxes || checkboxes.length <= 0) {
       MDC.openSnackbar(chrome.i18n.getMessage("database_snackbar_select_error"));
@@ -829,7 +865,7 @@ const Options = (() => {
    * @private
    */
   function saveInput(input, storageKey, type) {
-    console.log("saveInput() - about to clearTimeout and setTimeout... input.id=" + input.id + ", input.value=" + input.value + ", storageKey=" + storageKey +", type=" + type);
+    console.log("Options.saveInput() - about to clearTimeout and setTimeout... input.id=" + input.id + ", input.value=" + input.value + ", storageKey=" + storageKey +", type=" + type);
     clearTimeout(timeouts[input.id]);
     timeouts[input.id] = setTimeout(function () {
       // Note: We use Math.ceil in case the user tries to enter a decimal input for items where we expect a whole number. e.g. an input of "0.1" becomes "1"
@@ -896,7 +932,7 @@ const Options = (() => {
       //   throw new Error(url.substring(selectionStart, selectionStart + selection.length) + " " + chrome.i18n.getMessage("selection_custom_matchnotvalid_error"));
       // }
     } catch (e) {
-      console.log("customSelection() - Error:");
+      console.log("Options.customSelection() - Error:");
       console.log(e);
       DOM["#selection-custom-message-span"].textContent = e.message;
       return;
@@ -911,30 +947,30 @@ const Options = (() => {
     }
   }
 
-  /**
-   * Downloads the user's data in a backup file. Called when the Download Backup Button is clicked.
-   *
-   * Creates a hidden anchor and blob of the table HTML. It then simulates a mouse click event to download the blob,
-   * and then revokes it to release it from memory. Note that we need the anchor because the actual element that calls
-   * this is a button (anchors are the only elements that can have the download attribute).
-   *
-   * @private
-   */
-  async function downloadBackup() {
-    console.log("downloadBackup() - downloading backup...");
-    // Don't backup the databases due to size
-    const storageBackup = await Promisify.storageGet(undefined, undefined, ["databaseAP", "databaseIS"]);
-    const backup = JSON.stringify(storageBackup, null, "  ");
-    const date = new Date().toJSON();
-    const a = document.createElement("a");
-    const blob = URL.createObjectURL(new Blob([backup], {"type": "text/plain"}));
-    a.href = blob;
-    // For the filename, we should replace the periods and colons in JSON Dates time with an underscore. Technically we don't have to do this, as the colon gets converted to _ automatically and the period is fine for the OS
-    a.download = (chrome.runtime.getManifest().name + " Backup " + (date ? date : "")).replaceAll(/[\s.:]/g, "_") + ".json";
-    a.dispatchEvent(new MouseEvent("click"));
-    setTimeout(function () { URL.revokeObjectURL(blob); }, 5000);
-    // MDC.openSnackbar(chrome.i18n.getMessage("backup_snackbar_success_label"));
-  }
+  // /**
+  //  * Downloads the user's data in a backup file. Called when the Download Backup Button is clicked.
+  //  *
+  //  * Creates a hidden anchor and blob of the table HTML. It then simulates a mouse click event to download the blob,
+  //  * and then revokes it to release it from memory. Note that we need the anchor because the actual element that calls
+  //  * this is a button (anchors are the only elements that can have the download attribute).
+  //  *
+  //  * @private
+  //  */
+  // async function downloadBackup() {
+  //   console.log("Options.downloadBackup() - downloading backup...");
+  //   // Don't backup the databases due to size
+  //   const storageBackup = await Promisify.storageGet(undefined, undefined, ["databaseAP", "databaseIS"]);
+  //   const backup = JSON.stringify(storageBackup, null, "  ");
+  //   const date = new Date().toJSON();
+  //   const a = document.createElement("a");
+  //   const blob = URL.createObjectURL(new Blob([backup], {"type": "text/plain"}));
+  //   a.href = blob;
+  //   // For the filename, we should replace the periods and colons in JSON Dates time with an underscore. Technically we don't have to do this, as the colon gets converted to _ automatically and the period is fine for the OS
+  //   a.download = (chrome.runtime.getManifest().name + " Backup " + (date ? date : "")).replaceAll(/[\s.:]/g, "_") + ".json";
+  //   a.dispatchEvent(new MouseEvent("click"));
+  //   setTimeout(function () { URL.revokeObjectURL(blob); }, 5000);
+  //   // MDC.openSnackbar(chrome.i18n.getMessage("backup_snackbar_success_label"));
+  // }
 
   /**
    * Uploads a file that the user selects and restores the data from it.
@@ -942,7 +978,7 @@ const Options = (() => {
    * @private
    */
   function uploadFile() {
-    console.log("uploadFile() - uploading file...");
+    console.log("Options.uploadFile() - uploading file...");
     clearTimeout(timeouts.uploadFile);
     timeouts.uploadFile = setTimeout(function () {
       const input = document.createElement("input");
@@ -950,11 +986,11 @@ const Options = (() => {
       // For historical reasons, always accept .txt in addition to .json
       input.accept = ".json,.txt";
       input.addEventListener("change", function(event) {
-        console.log("uploadFile() - addEventListener() - change");
+        console.log("Options.uploadFile() - addEventListener() - change");
         const files = event.target.files;
         const reader = new FileReader();
         reader.onload = function() {
-          console.log("uploadFile() - reader.onload()");
+          console.log("Options.uploadFile() - reader.onload()");
           restoreData(this.result);
           input.remove();
         };
@@ -996,7 +1032,7 @@ const Options = (() => {
    * @private
    */
   async function restoreData(value) {
-    console.log("restoreData() - restoring data..., value=");
+    console.log("Options.restoreData() - restoring data..., value=");
     console.log(value);
     try {
       // const value = DOM["#restore-textarea"].value;
@@ -1016,12 +1052,12 @@ const Options = (() => {
       }
       // Leverage storage.js to restore the data by passing it to the Background to give to it
       const response = await Promisify.runtimeSendMessage({receiver: "background", greeting: "restoreData", data: data, previousVersion: data.version});
-      console.log("restoreData() - restore response=" + JSON.stringify(response));
+      console.log("Options.restoreData() - restore response=" + JSON.stringify(response));
       MDC.openSnackbar(chrome.i18n.getMessage("restore_snackbar_success_label"));
       // Now populate the Options with the restored data. Note: populateValuesFromStorage always get a new copy of the storage when called
       await populateValuesFromStorage("all");
     } catch (e) {
-      console.log("restoreData() - Error:");
+      console.log("Options.restoreData() - Error:");
       console.log(e);
       MDC.openSnackbar(chrome.i18n.getMessage("error_label") + ": " + e.message);
     }
@@ -1146,7 +1182,7 @@ const Options = (() => {
       // @see https://stackoverflow.com/a/46113791/988713
       plugins: [{
         beforeInit: function(chart, args, options) {
-          console.log("buildChart() - building chart:");
+          console.log("Options.buildChart() - building chart:");
           console.log(chart);
           const data = chart.data.datasets[0].data;
           if (data.some(d => d > 0)) {
@@ -1171,12 +1207,12 @@ const Options = (() => {
    * @private
    */
   function resetOptions() {
-    console.log("resetOptions() - resetting options...");
+    console.log("Options.resetOptions() - resetting options...");
     // Timeout in case the user tries double-clicking the button very fast
     clearTimeout(timeouts.resetOptions);
     timeouts.resetOptions = setTimeout(async function () {
       // First, get the User's current options (items) and the SDV (storage default values) to use as our baseline options
-      items = await Promisify.storageGet(undefined, undefined, []);
+      items = await Promisify.storageGet();
       const options = await Promisify.runtimeSendMessage({receiver: "background", greeting: "getSDV"});
       // Second, replace some of the specific default values with existing user options (if they exist!)
       if (items) {
@@ -1186,10 +1222,9 @@ const Options = (() => {
         const map = new Map();
         map.set("number", ["databaseUpdate"]);
         map.set("string", ["installVersion", "icon", "theme", "databaseAPLocation", "databaseISLocation", "databaseLocation", "databaseMode", "installDate", "databaseAPDate", "databaseISDate", "databaseDate"]);
-        map.set("boolean", ["savesEnabled", "databaseAPEnabled", "databaseISEnabled", "statsEnabled"]);
+        map.set("boolean", ["savesEnabled", "databaseAPEnabled", "databaseISEnabled", "statsEnabled", "backupAuto"]);
         map.set("array", ["saves", "databaseAP", "databaseIS", "databaseBlacklist", "databaseWhitelist", "navigationBlacklist"]);
         map.set("object", ["stats"]);
-        //, "statsSites", "statsActions", "statsAppends", "statsElements"
         for (const [type, keys] of map) {
           for (const key of keys) {
             if (type === "array" ? Array.isArray(items[key]) : typeof items[key] === type) {
@@ -1204,6 +1239,8 @@ const Options = (() => {
       // Note: We don't have to set items = options here because populate already gets the items from storage
       await populateValuesFromStorage("all");
       MDC.openSnackbar(chrome.i18n.getMessage("reset_options_snackbar_label"));
+      // // We need to call startupListener to deal with removing/adding the chrome.tabs.onUpdated listener depending on the incognitoDetection and icon settings
+      // Promisify.runtimeSendMessage({sender: "options", receiver: "background", greeting: "startupListener" });
     }, 200);
   }
 
@@ -1216,7 +1253,7 @@ const Options = (() => {
    * @private
    */
   async function messageListener(request, sender, sendResponse) {
-    console.log("messageListener() - request=");
+    console.log("Options.messageListener() - request=");
     console.log(request);
     // Default response
     let response = {};

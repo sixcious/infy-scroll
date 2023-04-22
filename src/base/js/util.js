@@ -5,7 +5,7 @@
  */
 
 /**
- * Util is a class that provides common utility functions that don't fit in anywhere else.
+ * Util provides common utility functions that don't fit in anywhere else.
  */
 class Util {
 
@@ -29,7 +29,7 @@ class Util {
       const elapsed = now - previouslyRun;
       clearTimeout(timeout);
       if (elapsed >= wait) {
-        console.log("throttle() - executing fn, wait=" + wait + ", elapsed=" + elapsed);
+        console.log("Util.throttle() - executing fn, wait=" + wait + ", elapsed=" + elapsed);
         fn.apply(null, args);
         previouslyRun = now;
       } else {
@@ -50,7 +50,7 @@ class Util {
    * @public
    */
   static clone(object, method = "structuredClone", fallback = true) {
-    console.log("clone() - method=" + method + ", fallback=" + fallback);
+    console.log("Util.clone() - method=" + method + ", fallback=" + fallback);
     let clonedObject;
     try {
       switch (method) {
@@ -64,7 +64,7 @@ class Util {
       }
     } catch (e) {
       const alternateMethod = method === "structuredClone" ? "json" : "structuredClone";
-      console.log("clone() - Error cloning via " + method + ", falling back to " + alternateMethod + ". Error:");
+      console.log("Util.clone() - Error cloning via " + method + ", falling back to " + alternateMethod + ". Error:");
       console.log(e);
       if (fallback) {
         return Util.clone(object, alternateMethod, false);
@@ -83,7 +83,7 @@ class Util {
    * @public
    */
   static isValidURL(url, logic = "default", details = {}) {
-    // console.log("isValidURL() - url=" + url + ", logic=" + logic + ", details=" + details);
+    // console.log("Util.isValidURL() - url=" + url + ", logic=" + logic + ", details=" + details);
     let valid = false;
     // Banned protocols for a valid URL Object. Note: We probably want to keep "blob:" for the list action
     const protocols = ["about:", "javascript:", "mailto:"];
@@ -111,7 +111,7 @@ class Util {
           break;
       }
     } catch (e) {
-      console.log("isValidURL() - Error:");
+      console.log("Util.isValidURL() - Error:");
       console.log(e);
       details.error = e.message;
     }
@@ -164,7 +164,7 @@ class Util {
           break;
       }
     } catch (e) {
-      console.log("isValidExtension() - Error:");
+      console.log("Util.isValidExtension() - Error:");
       console.log(e);
       // details.error = e.message;
     }
@@ -238,16 +238,16 @@ class Util {
       if ((urlo.protocol === "http:" && window.location.protocol === "https:") ||
           (window.location.protocol === "http:" && urlo.protocol === "https:")) {
         url = url.replace(urlo.protocol, window.location.protocol);
-        console.log("fixURL() - fixed protocol https/http, url after=" + url);
+        console.log("Util.fixURL() - fixed protocol https/http, url after=" + url);
       }
       // Second fix: hostname (www or no www)
       if ((urlo.hostname.startsWith("www.") && (urlo.hostname.replace("www.", "") === window.location.hostname)) ||
           (window.location.hostname.startsWith("www.") && (window.location.hostname.replace("www.", "") === urlo.hostname))) {
         url = url.replace(urlo.hostname, window.location.hostname);
-        console.log("fixURL() - fixed hostname www/no www, url after=" + url);
+        console.log("Util.fixURL() - fixed hostname www/no www, url after=" + url);
       }
     } catch (e) {
-      console.log("fixURL() - Error:");
+      console.log("Util.fixURL() - Error:");
       console.log(e);
     }
     return url;
@@ -325,7 +325,7 @@ class Util {
   static getTotalHeight(doc) {
     const html = doc?.documentElement;
     const body = doc?.body;
-    console.log("getTotalHeight() - hch="  + html?.clientHeight + ", hsh=" + html?.scrollHeight + ", hoh=" + html?.offsetHeight + ", bch=" + body?.clientHeight + ", bsh=" + body?.scrollHeight + ", boh=" + body?.offsetHeight);
+    console.log("Util.getTotalHeight() - hch="  + html?.clientHeight + ", hsh=" + html?.scrollHeight + ", hoh=" + html?.offsetHeight + ", bch=" + body?.clientHeight + ", bsh=" + body?.scrollHeight + ", boh=" + body?.offsetHeight);
     return Math.max(html?.clientHeight, html?.scrollHeight, html?.offsetHeight, body?.clientHeight, body?.scrollHeight, body?.offsetHeight);
   }
 
@@ -341,7 +341,7 @@ class Util {
    * @public
    */
   static createIcon(name, options = { color: "#000000" }) {
-    console.log("createIcon() - icon=" + name);
+    console.log("Util.createIcon() - icon=" + name);
     let svg;
     const icons = {
       "infinity": {
@@ -452,7 +452,7 @@ class Util {
       }
       svg.appendChild(path);
     } catch (e) {
-      console.log("createIcon() - Error:");
+      console.log("Util.createIcon() - Error:");
       console.log(e);
       svg = document.createTextNode(" ");
     }
@@ -477,7 +477,7 @@ class Util {
   static triggerCustomEvent(name, element, detail, shouldTrigger = true, browserName) {
     try {
       if (shouldTrigger) {
-        console.log("triggerCustomEvent() - name=" + name + ", element=" + element);
+        console.log("Util.triggerCustomEvent() - name=" + name + ", element=" + element);
         const object = {
           detail: undefined,
           bubbles: true,
@@ -489,19 +489,46 @@ class Util {
         // We also clone the detail due to a bug in Chrome. The detail object would normally return null. We also need this for Firefox as well. @see https://stackoverflow.com/a/53914790
         // Note: Must use JSON.parse(JSON.stringify())), Not Util.clone() or structuredClone() because it throws DOMException: Failed to execute 'structuredClone' on 'Window': HTMLDivElement object could not be cloned.
         if (browserName === "firefox" && typeof cloneInto === "function") {
-          console.log("triggerCustomEvent() - using Firefox's window.cloneInto() to clone the detail");
+          console.log("Util.triggerCustomEvent() - using Firefox's window.cloneInto() to clone the detail");
           object.detail = cloneInto(JSON.parse(JSON.stringify(detail)), document.defaultView);
         } else {
-          console.log("triggerCustomEvent() - only using normal clone to clone the detail");
+          console.log("Util.triggerCustomEvent() - only using normal clone to clone the detail");
           object.detail = JSON.parse(JSON.stringify(detail));
         }
         const event = new CustomEvent(name, object);
         element.dispatchEvent(event);
       }
     } catch (e) {
-      console.log("triggerCustomEvent() - Error:");
+      console.log("Util.triggerCustomEvent() - Error:");
       console.log(e);
     }
+  }
+
+  /**
+   * Downloads the user's data in a backup file. Called when the Download Backup Button is clicked in the Options or
+   * when the Auto Backup setting is turned on. The latter can be called by both the Popup and Options,
+   *
+   * Creates a hidden anchor and blob of the data to download. It then simulates a mouse click event to download the
+   * blob, and then revokes it to release it from memory. Note that we need the anchor because the actual element that
+   * calls this is a button (anchors are the only elements that can have the download attribute).
+   *
+   * @public
+   */
+  static async downloadBackup() {
+    console.log("Util.downloadBackup() - downloading backup...");
+    // Save the date first (separately) to avoid this being called on every request (in case of error)
+    await Promisify.storageSet({"backupDate": new Date().toJSON()});
+    // Don't backup the databases due to size
+    const storageBackup = await Promisify.storageGet(undefined, undefined, ["databaseAP", "databaseIS"]);
+    const backup = JSON.stringify(storageBackup, null, "  ");
+    const date = new Date().toJSON();
+    const a = document.createElement("a");
+    const blob = URL.createObjectURL(new Blob([backup], {"type": "text/plain"}));
+    a.href = blob;
+    // For the filename, we should replace the periods and colons in JSON Dates time with an underscore. Technically we don't have to do this, as the colon gets converted to _ automatically and the period is fine for the OS
+    a.download = (chrome.runtime.getManifest().name + " Backup " + (date ? date : "")).replaceAll(/[\s.:]/g, "_") + ".json";
+    a.dispatchEvent(new MouseEvent("click"));
+    setTimeout(function () { URL.revokeObjectURL(blob); }, 5000);
   }
 
 }

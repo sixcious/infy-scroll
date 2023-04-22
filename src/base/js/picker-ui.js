@@ -84,7 +84,7 @@ class PickerUI {
       const value = this.dataset.action;
       Promisify.runtimeSendMessage({receiver: "background", greeting: "changePicker", change: "type", value: value });
       X.DOM["#data-label"].textContent = value === "property" && X.DOM["#property-input"].value && X.DOM["#property-input"].value.trim() ? X.DOM["#property-input"].value : chrome.i18n.getMessage(value + "_label");
-      // We only save the one pickerType if it's Element Picky; it doesn't make sense to save it in any of the others as they have different types already saved e.g. nextLinkType, buttonType
+      // We only save the one pickerType if it's Element Picky; it doesn't make sense to save it in any of the others as they have different types already saved e.g. nextLinkType, clickElementType
       if (X.name === "Element Picky") {
         Promisify.storageSet({"pickerType": value });
       }
@@ -159,7 +159,7 @@ class PickerUI {
     X.DOM["#content"].className = "display-none";
     X.DOM["#footer"].className = "display-none";
     // Items
-    X.items = await Promisify.storageGet();
+    X.items = await Promisify.storageGet(undefined, undefined, ["databaseAP", "databaseIS", "saves"]);
     console.log("init() - items=");
     console.log(X.items);
     // Set the theme as soon as possible after getting the items

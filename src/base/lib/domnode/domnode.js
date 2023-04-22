@@ -54,10 +54,10 @@ var DOMNode = class DOMNode {
           }
           break;
       }
-      // console.log("getElement() - path=" + path + ", type=" + type + ", preference=" + preference + ", element=");
+      // console.log("DOMNode.getElement() - path=" + path + ", type=" + type + ", preference=" + preference + ", element=");
       // console.log(element);
     } catch (e) {
-      console.log("getElement() - Error:");
+      console.log("DOMNode.getElement() - Error:");
       console.log(e);
       error = e.message;
     }
@@ -101,11 +101,11 @@ var DOMNode = class DOMNode {
           break;
       }
     } catch (e) {
-      console.log("getElements() - Error:");
+      console.log("DOMNode.getElements() - Error:");
       console.log(e);
       error = e.message;
     }
-    // console.log("getElements() - path=" + path + ", type=" + type + ", elements=");
+    // console.log("DOMNode.getElements() - path=" + path + ", type=" + type + ", elements=");
     // console.log(elements);
     return { elements, error };
   }
@@ -181,10 +181,10 @@ var DOMNode = class DOMNode {
         }
         // Set to element.shadowRoot in case they return null or undefined?
         shadowRoot = shadowRoot || element.shadowRoot;
-        // console.log("shadowRoot() - element.shadowRoot=" + element.shadowRoot);
+        // console.log("DOMNode.shadowRoot() - element.shadowRoot=" + element.shadowRoot);
       }
     } catch (e) {
-      console.log("getShadowRoot() - Error:");
+      console.log("DOMNode.getShadowRoot() - Error:");
       console.log(e);
     }
     return shadowRoot;
@@ -277,7 +277,7 @@ var DOMNode = class DOMNode {
       contexts.unshift({ node, context });
       node = ancestor;
     }
-    console.log("getAncestorContexts() - contexts=");
+    console.log("DOMNode.getAncestorContexts() - contexts=");
     console.log(contexts);
     return contexts;
   }
@@ -306,11 +306,11 @@ var DOMNode = class DOMNode {
     let context = doc;
     if (contexts) {
       for (let i = 0; i < contexts.length; i++) {
-        // console.log("getElementsFromContextPath() - i=" + i + ", context=" + contexts[i] + ", path=" + paths[i]);
+        // console.log("DOMNode.getElementsFromContextPath() - i=" + i + ", context=" + contexts[i] + ", path=" + paths[i]);
         context = contexts[i] === "contentDocument" ? context.querySelector(paths[i]).contentDocument : DOMNode.getShadowRoot(context.querySelector(paths[i]));
       }
     }
-    console.log("getElementsFromContextPath() - paths, contexts, chosen context=");
+    console.log("DOMNode.getElementsFromContextPath() - paths, contexts, chosen context=");
     console.log(paths);
     console.log(contexts);
     console.log(context);
@@ -331,7 +331,7 @@ var DOMNode = class DOMNode {
    * @public
    */
   static getNodesByTreeWalker(root, whatToShow) {
-    console.log("getNodesByTreeWalker() - root=" + root + ", whatToShow=" + whatToShow);
+    console.log("DOMNode.getNodesByTreeWalker() - root=" + root + ", whatToShow=" + whatToShow);
     const nodes = [];
     try {
       const walker = document.createTreeWalker(root, whatToShow);
@@ -340,7 +340,7 @@ var DOMNode = class DOMNode {
         nodes.push(walker.currentNode);
       }
     } catch (e) {
-      console.log("getNodesByTreeWalker() - Error:");
+      console.log("DOMNode.getNodesByTreeWalker() - Error:");
       console.log(e);
     }
     return nodes;
@@ -373,10 +373,10 @@ var DOMNode = class DOMNode {
         // height = bottom - top;
       }
     } catch (e) {
-      console.log("getElementPosition() - Error:");
+      console.log("DOMNode.getElementPosition() - Error:");
       console.log(e);
     }
-    // console.log("getElementPosition() - position.top=" + position.top + ", position.bottom=" + position.bottom);
+    // console.log("DOMNode.getElementPosition() - position.top=" + position.top + ", position.bottom=" + position.bottom);
     return position;
   }
 
@@ -400,7 +400,7 @@ var DOMNode = class DOMNode {
    * @public
    */
   static insertBefore(node, position) {
-    console.log("insertBefore() - typeof position=" + (position instanceof Node ? "Node" : position instanceof Element ? "Element" : "?") + ", typeof position.before()=" + typeof position?.before);
+    console.log("DOMNode.insertBefore() - typeof position=" + (position instanceof Node ? "Node" : position instanceof Element ? "Element" : "?") + ", typeof position.before()=" + typeof position?.before);
     if (typeof position?.before === "function") {
       // The before method is from the Element interface, but for some reason this works even if the position is a text node...
       position?.before(node);
@@ -435,7 +435,7 @@ var DOMNode = class DOMNode {
   static transferNode(node, mode) {
     // There are 3 ways to transfer the node from the nextDocument/iframeDocument to this document: importNode, adoptNode, and a standard appendChild
     // importNode doesn't work with some websites (p), so we should only use either the standard appendChild or adoptNode
-    // console.log("transferNode() - before transferring, node.ownerDocument === document=" + (node.ownerDocument === document));
+    // console.log("DOMNode.transferNode() - before transferring, node.ownerDocument === document=" + (node.ownerDocument === document));
     let transferredNode;
     try {
       // AJAX Note: If we don't import/clone the elements, if the web page expects the elements to be there on the next page (e.g. for a replacement), it will fail to load the next page's elements
@@ -455,13 +455,38 @@ var DOMNode = class DOMNode {
           break;
       }
     } catch (e) {
-      console.log("transferNode() - error transferring this node, Error:");
+      console.log("DOMNode.transferNode() - error transferring this node, Error:");
       console.log(e);
       // If there was an error using importNode or adoptNode, return the original node
       transferredNode = node;
     }
-    // console.log("transferNode() - after transferring, node.ownerDocument === document=" + (transferredNode.ownerDocument === document));
+    // console.log("DOMNode.transferNode() - after transferring, node.ownerDocument === document=" + (transferredNode.ownerDocument === document));
     return transferredNode;
   }
+
+  // TODO: This usually works really well but has occasionally given incorrect values, so we'll need to rethink this approach
+  // /**
+  //  * Converts a text node into a HTML element (namely the insertion point) so that we can use Node.ELEMENT_NODE
+  //  * functions, like getBoundingClientRect in order to calculate the scroll position.
+  //  *
+  //  * @param {Node} node - the node
+  //  * @returns {HTMLSpanElement|*} the converted element
+  //  * @public
+  //  */
+  // static convertTextToElement(node) {
+  //   console.log("DOMNode.convertTextToElement()");
+  //   try {
+  //     if (node.nodeType === Node.TEXT_NODE) {
+  //       const element = document.createElement("span");
+  //       DOMNode.insertBefore(element, node);
+  //       element.appendChild(node);
+  //       return element;
+  //     }
+  //   } catch (e) {
+  //     console.log("DOMNode.convertTextToElement() - Error:");
+  //     console.log(e);
+  //   }
+  //   return node;
+  // }
 
 }

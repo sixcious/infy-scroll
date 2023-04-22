@@ -5,8 +5,8 @@
  */
 
 /**
- * MDC is a class that contains all the Material Design Components that are being used.
- * Each component is stored in a Map with its element's ID as the key and the component as the value.
+ * MDC contains all the Material Design Components that are being used. Each component is stored in a Map with its element's ID
+ * as the key and the component as the value. It also contains common MDC-related utility functions.
  */
 class MDC {
 
@@ -119,6 +119,7 @@ class MDC {
    * @public
    */
   static layout() {
+    console.log("MDC.layout()");
     MDC.selects.forEach(el => el.layout());
     MDC.textFields.forEach(el => {
       // If the text field input is empty (no value), remove the float-above from the label so it doesn't look broken
@@ -140,6 +141,7 @@ class MDC {
    * @public
    */
   static resize() {
+    console.log("MDC.resize()");
     MDC.textFields.forEach(el => {
       if (el.input_.scrollHeight > 0 && el.input_.nodeName.toUpperCase() === "TEXTAREA") {
         el.input_.style.height = el.input_.scrollHeight + "px";
@@ -157,6 +159,7 @@ class MDC {
    * @public
    */
   static openSnackbar(labelText, timeoutMs = 5000, snackbarId = "mdc-snackbar") {
+    console.log("MDC.openSnackbar()");
     // Close any previously open snackbars so they don't cover up the newest snackbar and to avoid issues like deleting and then adding new saves right afterwards
     [...MDC.snackbars.values()].forEach(snackbar => snackbar.close());
     const snackbar = MDC.snackbars.get(snackbarId);
@@ -166,6 +169,71 @@ class MDC {
     snackbar.labelText = "";
     snackbar.open();
     snackbar.labelText = labelText;
+  }
+
+  /**
+   * Opens the drawer. This function is called every time we close the drawer to toggle it in a new state: expanded (regular) or
+   * collapsed.
+   *
+   * This is called each time the MDCDrawer:closed event is emitted.
+   *
+   * @param {Event} event - the click event that triggered this callback function
+   * @param {boolean} itemsDrawerCollapsed - the storage items drawer collapsed state
+   * @param {Object} DOM - the DOM elements cache
+   * @private
+   */
+  static async openDrawer(event, itemsDrawerCollapsed, DOM) {
+    console.log("MDC.openDrawer() - event=" + event  + ", itemsDrawerCollapsed=" + itemsDrawerCollapsed + ", drawer.foundation_.isOpen()=" + MDC.drawers.get("app-drawer").foundation_.isOpen());
+    // In order to reuse this function when we are initializing the drawer state, we need this initializing variable
+    // We only save the toggled state in storage if we're not initializing
+    // Toggle the drawer carefully:
+    const drawer = MDC.drawers.get("app-drawer");
+    const initializing = typeof itemsDrawerCollapsed === "boolean";
+    for (let ms = 0; ms <= 1000; ms+= 100) {
+      await Promisify.sleep(ms);
+      if (!drawer.foundation_.isOpen()) {
+        console.log("openDrawer() - isClosed! ms=" + ms);
+        if (drawer.root_.classList.contains("drawer-collapsed") || (initializing && !itemsDrawerCollapsed)) {
+          // Make drawer expanded (regular)
+          drawer.root_.classList.remove("drawer-collapsed");
+          DOM["#app-content"].classList.remove("drawer-collapsed");
+          DOM["#app-content"].style.marginLeft = "200px";
+          DOM["#drawer-collapsed-app-icon-div"].className = "display-none";
+          if (!initializing) {
+            Promisify.storageSet({"drawerCollapsed": false});
+          }
+        } else {
+          // Make drawer collapsed
+          drawer.root_.classList.add("drawer-collapsed");
+          DOM["#app-content"].classList.add("drawer-collapsed");
+          DOM["#app-content"].style.marginLeft = "52px";
+          DOM["#drawer-collapsed-app-icon-div"].className = "display-block fade-in";
+          if (!initializing) {
+            Promisify.storageSet({"drawerCollapsed": true});
+          }
+        }
+        drawer.foundation_.open();
+        setTimeout(() => { MDC.layout(); }, 100);
+        break;
+      }
+    }
+  }
+
+  /**
+   * Closes the drawer. This function is called every time the drawer menu button is pressed.
+   *
+   * This will then emit the MDCDrawer:closed event, allowing us to listen for the event and then reopen the drawer in
+   * openDrawer().
+   *
+   * @private
+   */
+  static closeDrawer() {
+    console.log("MDC.closeDrawer() - drawer.root.classList=" + MDC.drawers.get("app-drawer").root_.classList);
+    const drawer = MDC.drawers.get("app-drawer");
+    // Don't do this, it doesn't work well if you try clicking the drawer button very fast multiple times
+    // Random Bug: Sometimes the drawer won't "close" (toggle) because it's in a stuck state with these two classes. Removing them helps
+    // drawer.root_.classList.remove("mdc-drawer--closing", "mdc-drawer--opening", "mdc-drawer--animate");
+    drawer.foundation_.close();
   }
 
 }

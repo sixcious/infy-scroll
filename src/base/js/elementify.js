@@ -20,10 +20,10 @@ class Elementify {
    * should only be used on the first page (original document).
    *
    * @param {Element[]} elements - the page elements to use to get the insertion point from
+   * @param {boolean} useInsertBefore - (optional) if true, attempts to use the insertBeforePath
    * @param {string} type - (optional) the path type to use ("selector", "xpath") or context ("document", "shadow", "iframe")
    * @param {string} path - (optional) the selector, xpath, or js path
    * @param {boolean} withDetails - (optional) whether to include the details object or not
-   * @param {boolean} useInsertBefore - (optional) if true, attempts to use the insertBeforePath
    * @returns {Node|{Node, Object}} the insertion point or an object that includes it with extra details
    * @public
    */
@@ -44,7 +44,7 @@ class Elementify {
         details = chrome.i18n.getMessage("insertion_point_before");
       }
     } catch (e) {
-      console.log("getInsertionPoint() - error checking insertBefore path. Error:");
+      console.log("Elementify.getInsertionPoint() - error checking insertBefore path. Error:");
       console.log(e);
       details = e.message;
     }
@@ -66,12 +66,12 @@ class Elementify {
           details = chrome.i18n.getMessage("insertion_point_new");
         }
       } catch (e) {
-        console.log("getInsertionPoint() - error checking lastElement. Error:");
+        console.log("Elementify.getInsertionPoint() - error checking lastElement. Error:");
         console.log(e);
         details = e.message;
       }
     }
-    console.log("getInsertionPoint() - type=" + type + ", path=" + path + "details=" + details + ", insertionPoint=");
+    console.log("Elementify.getInsertionPoint() - type=" + type + ", path=" + path + "details=" + details + ", insertionPoint=");
     console.log(insertionPoint_);
     return withDetails ? [insertionPoint_, details] : insertionPoint_;
   }
@@ -96,7 +96,7 @@ class Elementify {
     const result = DOMNode.getElements(path, type, doc);
     const pageElements_ = result.elements;
     const details = { error: result.error };
-    // console.log("getPageElements() - type=" + type + ", path=" + path + ", elements=");
+    // console.log("Elementify.getPageElements() - type=" + type + ", path=" + path + ", elements=");
     // console.log(pageElements_);
     return withDetails ? [pageElements_, details] : pageElements_;
   }
@@ -119,7 +119,7 @@ class Elementify {
       excludedPageElements = excludedPageElements.concat(page.pageElements, page.divider);
     }
     const filteredPageElements = totalPageElements.filter(pageElement => !excludedPageElements.includes(pageElement));
-    console.log("getFilteredPageElements() - filteredPageElements, totalPageElements, excludedPageElements=");
+    console.log("Elementify.getFilteredPageElements() - filteredPageElements, totalPageElements, excludedPageElements=");
     console.log(filteredPageElements);
     console.log(totalPageElements);
     console.log(excludedPageElements);
@@ -134,10 +134,12 @@ class Elementify {
 class AutoDetectPageElement {
 
   /**
-   * Variables
+   * Fields
    *
    * TODO: Convert map to object for easier filtering/reducing?
    * @param {Map<Element, Object>} elements - the map of parent element candidates with data for the auto detect page element function
+   * @param {string} details - the details of how the auto detection ocurred
+   *
    */
   static elements;
   static details;
@@ -157,7 +159,7 @@ class AutoDetectPageElement {
    * @public
    */
   static detect(type, algorithm, quote, optimized) {
-    console.log("autoDetectPageElement() - type=" + type);
+    console.log("AutoDetectPageElement.detect() - type=" + type);
     AutoDetectPageElement.elements = new Map();
     let el;
     let path = "";
@@ -167,13 +169,13 @@ class AutoDetectPageElement {
       if (!AutoDetectPageElement.elements || AutoDetectPageElement.elements.size <= 0) {
         throw new Error("The elements map is empty or undefined!");
       }
-      console.log("autoDetectPageElement() - elements=");
+      console.log("AutoDetectPageElement.detect() - elements=");
       console.log(AutoDetectPageElement.elements);
       el = AutoDetectPageElement.elements.entries().next().value[0];
       path = DOMPath.generatePath(el, type, algorithm, quote, optimized).path + (type === "xpath" ? "/*" : " > *");
-      console.log("autoDetectPageElement() - path=" + path);
+      console.log("AutoDetectPageElement.detect() - path=" + path);
     } catch (e) {
-      console.log("autoDetectPageElement() - Error:");
+      console.log("AutoDetectPageElement.detect() - Error:");
       console.log(e);
     }
     return { el: el, path: path, details: AutoDetectPageElement.details };
@@ -186,7 +188,7 @@ class AutoDetectPageElement {
    * @private
    */
   static #checkChildren(element) {
-    // console.log("checkChildren() - element=" + (element ? element.nodeName : ""));
+    // console.log("AutoDetectPageElement.checkChildren() - element=" + (element ? element.nodeName : ""));
     if (!element || !element.children || element.children.length <= 0) {
       return;
     }
@@ -209,13 +211,13 @@ class AutoDetectPageElement {
         // Note: We use the !! to make it truthy (otherwise returns '') and we check if the element has the property to be safe
         const nodeName = !!child.nodeName && typeof child.nodeName.toUpperCase === "function" ? child.nodeName.toUpperCase() : "";
         if (!nodeName || BANNED_NODES.includes(nodeName)) {
-          console.log("checkChildren() - continuing because banned node encountered:  " + (nodeName ? nodeName : "undefined"));
+          console.log("AutoDetectPageElement.checkChildren() - continuing because banned node encountered:  " + (nodeName ? nodeName : "undefined"));
           continue;
         }
         const id = !!child.id && typeof child.id.toLowerCase === "function" ? child.id.toLowerCase() : "";
         // const id = child.hasAttribute("id") && typeof child.getAttribute("id").toLowerCase === "function" ? child.getAttribute("id").toLowerCase() : "";
         if (id && BANNED_ATTRIBUTES.includes(id)) {
-          console.log("checkChildren() - continuing because banned id encountered:    " + id);
+          console.log("AutoDetectPageElement.checkChildren() - continuing because banned id encountered:    " + id);
           continue;
         }
         // // Note: SVGs can't have classNames and will throw an exception if we don't check if toLowerCase() is a function
@@ -230,7 +232,7 @@ class AutoDetectPageElement {
           for (let clazz of classList) {
             clazz = (!!clazz && typeof clazz.toLowerCase === "function" ? clazz.toLowerCase() : "").trim();
             if (clazz && BANNED_ATTRIBUTES.includes(clazz)) {
-              console.log("checkChildren() - continuing because banned class encountered: " + clazz);
+              console.log("AutoDetectPageElement.checkChildren() - continuing because banned class encountered: " + clazz);
               continue first;
             }
           }
@@ -242,7 +244,7 @@ class AutoDetectPageElement {
             continue;
           }
         } catch (e) {
-          console.log("checkChildren() - Error calling window.getComputedStyle()r:");
+          console.log("AutoDetectPageElement.checkChildren() - Error calling window.getComputedStyle()r:");
           console.log(e);
         }
         // nodeName can't possibly be null or empty
@@ -263,7 +265,7 @@ class AutoDetectPageElement {
         }
         AutoDetectPageElement.#checkChildren(child);
       } catch (e) {
-        console.log("checkChildren() - Error:");
+        console.log("AutoDetectPageElement.checkChildren() - Error:");
         console.log(e);
       }
     }
@@ -276,7 +278,7 @@ class AutoDetectPageElement {
    * @private
    */
   static #parseMap() {
-    console.log("parseResults()");
+    console.log("AutoDetectPageElement.parseResults()");
     // This is a bit hacky, but we never want the body. We always start out with it in the beginning.
     // TODO: Find a way to start out without using the body?
     AutoDetectPageElement.elements.delete(document.body);
@@ -297,7 +299,7 @@ class AutoDetectPageElement {
       //   }
       //   // overflowing = getTotalWidth(document) < rect.right;
       // } catch (e) {
-      //   console.log("parseMap() - error calling getBoundingClientRect()");
+      //   console.log("AutoDetectPageElement.parseMap() - error calling getBoundingClientRect()");
       // }
       return v.nodeNames.size > 0 && (rect && typeof rect.height === "number" && typeof rect.width === "number" ? rect.height > 500 || rect.width > 500 : true);
       // return v.nodeNames.size > 0 && (height > 500 || height === 0);
@@ -331,7 +333,7 @@ class AutoDetectPageElement {
    * @private
    */
   static #sortMap(property) {
-    console.log("sortMap() - property=" + property);
+    console.log("AutoDetectPageElement.sortMap() - property=" + property);
     // This used to be multiple lines long but we were able to make it a one liner. Reminder: a[0] is the key (element) and a[1] is the value (object, containing nodeNames and classNames)
     // Note the double ... ...: Math.max takes in an arguments in parenthesis, NOT arrays so we convert the map to an array (first ...) then we convert the array [1,2,3] to arguments in parenthesis (1,2,3) for the second ...
     return new Map([...AutoDetectPageElement.elements].sort((a, b) => Math.max(...[...[...b[1][property].values()]]) - Math.max(...[...[...a[1][property].values()]])));

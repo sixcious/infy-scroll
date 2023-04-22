@@ -5,8 +5,8 @@
  */
 
 /**
- * Workflow is a class that handles the workflow business logic of performing actions and appending pages. The
- * core function is the execute() function.
+ * Workflow handles the workflow business logic of performing actions and appending pages.
+ * The core function is the execute() function.
  *
  * The basic workflow:
  * 1. Scroll.shouldAppend() - As the user scrolls, shouldAppend() is called. If true, sets isLoading to true and calls Workflow.execute()
@@ -66,30 +66,24 @@ class Workflow {
    * @private
    */
   static #preWorkflow(action, caller) {
-    console.log("preWorkflow()");
+    console.log("Workflow.preWorkflow()");
+    // This if part was from Scroll.scrollDetection() before we moved it here:
+    if (caller === "scrollDetection") {
+      V.instance.isLoading = true;
+    }
     // Handle Down:
-    if (action === "down" && !V.instance.autoEnabled && !V.instance.isLoading && ((V.instance.currentPage + 1) > V.pages.length)) {
-      // TODO: Write a better check for this isLoading situation, integrating it with the normal appending we do when scrolling. We need to guard against excessive user actions (shortcuts and button clicks). Normal appends via scrolling should handle isLoading properly
+    if (action === "down" &&
+      // Non-Auto: TODO: Write a better check for this isLoading situation, integrating it with the normal appending we do when scrolling. We need to guard against excessive user actions (shortcuts and button clicks). Normal appends via scrolling should handle isLoading properly
       // IMPORTANT: Setting isLoading to true is necessary to guard against the user trying to perform the down command too many times very fast (e.g. holding down the shortcut key or pressing Down Button too rapidly)
       // If the action is no longer a "down" (i.e. it is now the instance.action as changed above), we are now performing the action itself and we should set the instance's isLoading to true.
       // This will avoid performing multiple actions if the user tries to press the Down Shortcut multiple times quickly when on the last page
-      console.log("preWorkflow() - changing the down action to the instance.action=" + V.instance.action);
+      ((!V.instance.autoEnabled && !V.instance.isLoading && ((V.instance.currentPage + 1) > V.pages.length)) ||
+       // Auto Slideshow: TODO: Should buttons/shortcuts increment or decrement autoTimes? Also need to handle Up for Auto Slideshow if decrementing auto times
+       // If slideshow mode and have enough pages, action is always just down; otherwise Regular auto or slideshow without enough pages is always the scroll action (appends a new page); otherwise it's just going down one page (only slideshow)
+      (V.instance.autoEnabled && caller === "auto" && V.instance.autoSlideshow && V.pages.length <= V.instance.autoTimesOriginal))) {
+      console.log("Workflow.preWorkflow() - changing the down action to the instance.action=" + V.instance.action);
       action = V.instance.action;
       V.instance.isLoading = true;
-      // if (!instance.autoEnabled && action === "down") {
-      // action = instance.isLoading || instance.currentPage + 1 <= pages.length ? "down" : instance.action;
-    }
-    // Handle Auto Slideshow:
-    if (action === "down" && V.instance.autoEnabled && caller === "auto" && V.instance.autoSlideshow && V.pages.length <= V.instance.autoTimesOriginal) {
-      // TODO: Handle Auto Slideshow, should buttons/shortcuts increment or decrement autoTimes?
-      // TODO: Also need to handle Up for Auto Slideshow if decrementing auto times
-      // If slideshow mode and have enough pages, action is always just down; otherwise Regular auto or slideshow without enough pages is always the scroll action (appends a new page); otherwise it's just going down one page (only slideshow)
-      console.log("preWorkflow() - (auto) changing the down action to the instance.action=" + V.instance.action);
-      action = V.instance.action;
-      V.instance.isLoading = true;
-      // V.instance.autoTimes--;
-      // if (V.instance.autoEnabled && caller === "auto" && action === "down") {
-      // action = V.instance.autoSlideshow && pages.length > V.instance.autoTimesOriginal ? "down" : V.instance.action;
     }
     return action;
   }
@@ -105,7 +99,7 @@ class Workflow {
    * @private
    */
   static async #mainWorkflow(action, caller, extra) {
-    console.log("mainWorkflow()");
+    console.log("Workflow.mainWorkflow()");
     let actionPerformed;
     // Workflow 1 - Sub Actions (Just perform the action, these actions do not need to append anything)
     if (Workflow.#SUB_ACTIONS.includes(action)) {
@@ -151,7 +145,7 @@ class Workflow {
    * @private
    */
   static async #postWorkflow(action, caller, actionPerformed) {
-    console.log("postWorkflow()");
+    console.log("Workflow.postWorkflow()");
     // Handle Auto Slideshow after Down/Up
     if (V.instance.autoEnabled && V.instance.autoSlideshow && caller === "auto" && action === "down") {
       Auto.autoListener();
@@ -163,8 +157,7 @@ class Workflow {
       Promisify.runtimeSendMessage({receiver: "background", greeting: "setBadge", badge: badge, temporary: true});
     }
     // Send a message to update the popup if it's opened or if this is a relevant action (this process wakes up the Background, so we don't want to always do it)
-    // if (caller === "popupClickActionButton" || ["auto", "power", "blacklist", "whitelist"].includes(action)) {
-    if (V.instance.popupOpened || caller === "popupClickActionButton" || ["auto", "power", "blacklist", "whitelist"].includes(action)) {
+    if ((V.instance.popupOpened && actionPerformed && V.instance.autoEnabled) || caller === "popupClickActionButton" || ["auto", "power", "blacklist", "whitelist"].includes(action)) {
       // If a new page was appended (action is now a MAIN_ACTION), we need to set current page to total pages in case scrolling is smooth (finishes after sending instance to popup)
       if (!V.instance.autoEnabled && Workflow.#MAIN_ACTIONS.includes(action)) {
         V.instance.currentPage = V.pages.length;
@@ -182,7 +175,36 @@ class Workflow {
     }
     // We impose a delay on main actions to prevent them from calling the workflow again quickly
     // Note: Scroll.delay() checks scrollDetection and this will call the workflow again if needed
-    await Scroll.delay(caller);
+    await Workflow.delay(caller);
+  }
+
+  /**
+   * Imposes a delay before allowing the V.instance to load another page. This delay prevents Infy from making too many
+   * requests in a small time frame. This function is used by Workflow.postWorkflow() and Scroll.start() to manage
+   * preparing the first page.
+   *
+   * @param {string} caller - the caller who called this function
+   * @public
+   */
+  static async delay(caller) {
+    console.log("Workflow.delay() - caller=" + caller);
+    // If the caller is popup (e.g. ACCEPT Button) or auto there is no reason to delay
+    await Promisify.sleep(caller === "popup" || caller === "auto" ? 100 : V.instance.appendDelay || 2000);
+    V.instance.isLoading = false;
+    // Don't call the autoListener in start/prepareFirstPage because Popup will have already called startAutoTimer()
+    if (V.instance.autoEnabled && caller !== "start") {
+      Auto.autoListener();
+    } else {
+      // At this point we can perform the action again if necessary. For example, if there is still no scrollbar, we
+      // can perform the action (appending another page). We can also decide to check shouldAppend(), which will check
+      // if we are near the bottom in terms of pages or pixels. This is a very important decision, as the extension
+      // can keep appending more pages automatically at this point. If we only check for the scrollbar, we can force
+      // the extension to only append one page at a time when scrolling, which seems safer. If we do the check for
+      // shouldAppend(), we can check if the caller is prepareFirstPage so that it won't append more pages automatically
+      // on each page load and waits until the user actually starts scrolling.
+      // TODO: Consider implementing a maximum number of consecutive appends that can be done by the pixels and pages thresholds (share this limit with scrollbarAppends?)
+      Scroll.scrollDetection();
+    }
   }
 
   // /**
@@ -194,7 +216,7 @@ class Workflow {
   //  * @private
   //  */
   // function updatePopup(action, caller) {
-  //   console.log("updatePopup()");
+  //   console.log("Workflow.updatePopup()");
   //   // Send a message to update the popup if this is a relevant action (this process wakes up the Background, so we don't want to always do it)
   //   if ((caller === "popupClickActionButton") || ["auto", "power", "blacklist", "whitelist"].includes(action)) {
   //     // If a new page was appended (action is now a MAIN_ACTION), we need to set current page to total pages in case scrolling is smooth (finishes after sending instance to popup)

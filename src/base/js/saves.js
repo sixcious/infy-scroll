@@ -21,7 +21,7 @@ class Saves {
    * @public
    */
   static async addSave(instance) {
-    console.log("addSave() - adding a new saved url, type=" + instance.saveType + ", url=" + instance.saveURL);
+    console.log("Saves.addSave() - adding a new saved url, type=" + instance.saveType + ", url=" + instance.saveURL);
     // Get the saves and checks if this ID or URL has already been saved. If it has, deletes the existing save
     const saves = await Saves.deleteSave(instance.saveID, instance.saveURL, false);
     // Generates a new ID by finding the the save with the highest ID and incrementing it by 1 (or 1 if no save exists)
@@ -100,9 +100,9 @@ class Saves {
       }
     }
     if (instance.action === "click") {
-      save.buttonPath = instance.buttonPath;
-      if (instance.buttonDetection === "manual") {
-        save.buttonPosition = instance.buttonPosition;
+      save.clickElementPath = instance.clickElementPath;
+      if (instance.clickElementDetection === "manual") {
+        save.clickElementPosition = instance.clickElementPosition;
       }
     }
     if (instance.action === "list") {
@@ -154,6 +154,11 @@ class Saves {
             save[o] = instance[o];
           }
         }
+      } else {
+        // AJAX Iframe only:
+        if (typeof instance.iframeDelay === "number") {
+          save.iframeDelay = instance.iframeDelay;
+        }
       }
     }
     // These settings below are technically only needed for Element Iframe and AJAX Iframe
@@ -179,18 +184,17 @@ class Saves {
       }
     }
     // Type (Fixed or Auto, only save if fixed type)
-    for (let type of ["nextLinkType", "prevLinkType", "buttonType", "pageElementType"]) {
+    for (let type of ["nextLinkType", "prevLinkType", "clickElementType", "pageElementType"]) {
       if (["selector", "xpath", "js"].includes(instance[type + "Mode"])) {
         save[type] = instance[type];
       }
     }
     // Translate the instance back to the source keys
     Instance.translateInstance(save, "instance>source");
-    console.log("addSave() - generated save=" + JSON.stringify(save));
-    // Unshift adds the save to the beginning of the saves array; then we sort it by order and date and save in storage
+    console.log("Saves.addSave() - generated save=" + JSON.stringify(save));
+    // Unshift adds the save to the beginning of the saves array
     saves.unshift(save);
     // We always sort URLs by length to allow for more specific URL patterns to be found before more general URL patterns (if length is same, then we sort by earliest ID)
-    // saves.sort((a, b) => (a.url && b.url && a.url.length < b.url.length) ? 1 : -1);
     saves.sort((a, b) => b.url?.length - a.url?.length || a.id - b.id);
     // saves.map(save => console.log({ "length": save.url.length, "id": save.id }));
     await Promisify.storageSet({"saves": saves});
@@ -211,7 +215,7 @@ class Saves {
    * @public
    */
   static async deleteSave(id, url, writeToStorage) {
-    console.log("deleteSave() - id=" + id + ", url=" + url + ", writeToStorage=" + writeToStorage);
+    console.log("Saves.deleteSave() - id=" + id + ", url=" + url + ", writeToStorage=" + writeToStorage);
     let saves = await Promisify.storageGet("saves");
     // Filter out saves with this URL; this also removes duplicate saves with the same URL (e.g. overwriting an existing save with this url)
     // TODO: Business Logic Decision: Should we filter out the ID e.g. overwrite this save even if it doesn't match the URL anymore?
@@ -242,7 +246,7 @@ class Saves {
    * @public
    */
   static matchesSave(url, save) {
-    // console.log("matchesSave() - url=" + url +", save=");
+    // console.log("Saves.matchesSave() - url=" + url +", save=");
     // console.log(save);
     let result = { matches: false };
     if (url && save && save.url) {
@@ -261,7 +265,7 @@ class Saves {
             break;
         }
       } catch (e) {
-        console.log("matchesSave() - Error:");
+        console.log("Saves.matchesSave() - Error:");
         console.log(e);
       }
     }
@@ -292,7 +296,7 @@ class Saves {
    * @public
    */
   static matchesList(url, altURL, list, listName) {
-    console.log("matchesList() - url=" + url + ", altURL=" + altURL + ", list=" + list + ", listName=" + listName);
+    console.log("Saves.matchesList() - url=" + url + ", altURL=" + altURL + ", list=" + list + ", listName=" + listName);
     const result = { matches: false, url: "", type: "" };
     for (let item of list) {
       // TODO: In the case of Exact, Regex, and Alt, Make result.url = item.slice(1,-1)? But we need to save the "type" when reporting the URL in the Popup Hover/Title Icon (for possibly database white/blacklists?)
@@ -314,13 +318,13 @@ class Saves {
           result.type = "pattern";
         }
         if (result.type) {
-          console.log("matchesList() - Found a " + listName + " URL (" + result.type + "): " + item);
+          console.log("Saves.matchesList() - Found a " + listName + " URL (" + result.type + "): " + item);
           result.matches = true;
           result.url = item;
           break;
         }
       } catch (e) {
-        console.log("matchesList() - error checking a " + listName + " URL: " + item + " - Error:");
+        console.log("Saves.matchesList() - error checking a " + listName + " URL: " + item + " - Error:");
         console.log(e);
       }
     }

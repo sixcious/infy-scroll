@@ -20,13 +20,13 @@ class Iframe {
    * @public
    */
   static loadIframe(iframe) {
-    console.log("loadIframe() - iframe=");
+    console.log("Iframe.loadIframe() - iframe=");
     console.log(iframe);
     return new Promise((resolve, reject) => {
       iframe.onload = resolve;
       iframe.onerror = function () {
-        console.log("loadIframe() onerror()");
-        reject("loadIframe() onerror() - promise rejected");
+        console.log("Iframe.loadIframe() - onerror()");
+        reject("Iframe.loadIframe() - onerror() - promise rejected");
       };
     });
   }
@@ -41,7 +41,7 @@ class Iframe {
    * @public
    */
   static async createIframe(src, style, mode, caller) {
-    console.log("createIframe() - mode=" + mode + ", caller=" + caller);
+    console.log("Iframe.createIframe() - mode=" + mode + ", caller=" + caller);
     // Step 1 Create
     V.iframe = document.createElement("iframe");
     V.iframe.id = V.instance.append === "ajax" ? V.AJAX_IFRAME_ID : V.PAGE_ID + (V.pages.length + 1);
@@ -58,7 +58,7 @@ class Iframe {
     if (mode === "trim") {
       // The insertion point may have been "moved" by the website and no longer have a parentNode, so we re-calculate it to be the last element
       if (!V.insertionPoint || !V.insertionPoint.parentNode || V.insertionPoint.ownerDocument !== document) {
-        console.log("createIframe() - the insertion point's hierarchy in the DOM was altered. " + (V.insertionPoint ? ("parentNode=" + V.insertionPoint.parentNode + ", ownerDocument === document=" + (V.insertionPoint.ownerDocument === document)) : "insertionPoint is undefined!"));
+        console.log("Iframe.createIframe() - the insertion point's hierarchy in the DOM was altered. " + (V.insertionPoint ? ("parentNode=" + V.insertionPoint.parentNode + ", ownerDocument === document=" + (V.insertionPoint.ownerDocument === document)) : "insertionPoint is undefined!"));
         V.insertionPoint = Elementify.getInsertionPoint(Elementify.getPageElements(document), false);
       }
       DOMNode.insertBefore(V.iframe, V.insertionPoint);
@@ -72,14 +72,14 @@ class Iframe {
       await Iframe.loadIframe(V.iframe);
     } catch (e) {
       // If error (promise rejected), there won't be an iframe.contentDocument, so we don't need to handle it here
-      console.log("createIframe() - error loading iframe, Error:");
+      console.log("Iframe.createIframe() - error loading iframe, Error:");
       console.log(e);
     }
-    console.log("createIframe() - iframe loaded");
+    console.log("Iframe.createIframe() - iframe loaded");
     // Step 3 contentDocument
     // If the iframe's document doesn't exist, we can't continue
     if (!V.iframe.contentDocument) {
-      console.log("createIframe() - error, no iframe.contentDocument!");
+      console.log("Iframe.createIframe() - error, no iframe.contentDocument!");
       // TODO: We need to reset the instance's URL back to the previous URL so Next.findLink() doesn't return a duplicate URL when we try again. We should refactor the code so that the instance URL is only set after the page has been successfully appended...
       if (V.pages && V.pages.length > 0 && V.pages[V.pages.length - 1]) {
         V.instance.url = V.pages[V.pages.length - 1].url;
@@ -95,7 +95,7 @@ class Iframe {
       // instance.isLoading = false;
       return;
     }
-    console.log("createIframe() -` iframe.contentDocument.readyState=" + V.iframe.contentDocument.readyState);
+    console.log("Iframe.createIframe() -` iframe.contentDocument.readyState=" + V.iframe.contentDocument.readyState);
     // Note that in the Element Iframe modes, we will again later clone the iframe.contentDocument and set it to currentDocument after we're sure the page elements/next link have been loaded
     V.currentDocument = V.iframe.contentDocument.cloneNode(true);
     // Step 4 Debug
@@ -117,7 +117,7 @@ class Iframe {
    * @public
    */
   static async prepareIframe(actionPerformed, caller) {
-    console.log("prepareIframe() - actionPerformed=" + actionPerformed + ", caller=" + caller);
+    console.log("Iframe.prepareIframe() - actionPerformed=" + actionPerformed + ", caller=" + caller);
     // // Prepend the divider early?
     // if (actionPerformed) {
     //   Scroll.prepend(caller);
@@ -149,9 +149,10 @@ class Iframe {
           }
           Iframe.scrollIframe();
         }
-        // Technically just need the button, but wait for the page elements as well to be safe
-        // await Promise.all([getButtonFromIframe(iframeDocument), getPageElementsFromIframe(iframeDocument)]);
-        await Iframe.getButtonFromIframe(V.iframe?.contentDocument);
+        // Technically just need the click element, but some websites (bb) need extra time before we can click the button
+        // So let's wait a minimum of 1 second and wait for the page elements as well to be safe
+        // await Iframe.getClickElementFromIframe(V.iframe?.contentDocument);
+        await Promise.all([Promisify.sleep(typeof V.instance.iframeDelay === "number" ? V.instance.iframeDelay : 1000), Iframe.getClickElementFromIframe(V.iframe?.contentDocument), Iframe.getPageElementsFromIframe(V.iframe?.contentDocument)]);
         await Action.execute(V.instance.action, "prepareFirstPage");
       }
       return;
@@ -191,7 +192,7 @@ class Iframe {
    * @public
    */
   static resizeIframe(iframe) {
-    console.log("resizeIframe()");
+    console.log("Iframe.resizeIframe()");
     try {
       if ((V.instance.append === "iframe" || (V.instance.append === "element" && V.instance.pageElementIframe === "trim")) && iframe && iframe.contentDocument) {
         if (V.instance.iframeResize) {
@@ -214,7 +215,7 @@ class Iframe {
         }
       }
     } catch (e) {
-      console.log("resizeIframe() - Error:");
+      console.log("Iframe.resizeIframe() - Error:");
       console.log(e);
     }
   }
@@ -226,7 +227,7 @@ class Iframe {
    * @public
    */
   static async scrollIframe(ms = 10000) {
-    console.log("scrollIframe()");
+    console.log("Iframe.scrollIframe()");
     if (!V.instance.scrollIframeEnabled) {
       return;
     }
@@ -249,12 +250,12 @@ class Iframe {
     while (V.instance.enabled && V.instance.scrollIframe) {
       // TODO: Always just scroll the full iframe? Worried Util.getTotalHeight() may not return the full height on some sites, so using a hybrid approach for now
       // await scrollIframe(iframe, "full");
-      console.log("scrollIframe() - attempt=" + attempt + ", mode=" + ((((attempt) % 2) === 0) ? "full" : "element"));
+      console.log("Iframe.scrollIframe() - attempt=" + attempt + ", mode=" + ((((attempt) % 2) === 0) ? "full" : "element"));
       // Firefox Dead Object Error: Need to wrap this in a try-catch because the iframe document may have changed after we slept, and the pageElements may be dead
       try {
         await Iframe.#scrollIframe2(V.iframe, ((attempt++) % 2) === 0 ? "full" : "element");
       } catch (e) {
-        console.log("scrollIframe() - Error (most likely Firefox Dead Object Error):");
+        console.log("Iframe.scrollIframe() - Error (most likely Firefox Dead Object Error):");
         console.log(e);
         break;
       }
@@ -329,12 +330,12 @@ class Iframe {
    * @private
    */
   static async #mirrorPage() {
-    console.log("mirrorPage() - mirroring the top-level document to the iframe");
+    console.log("Iframe.mirrorPage() - mirroring the top-level document to the iframe");
     const iframeDocument = V.iframe?.contentDocument;
     switch (V.instance.mirrorPage) {
       case "puppet":
         const puppetScript = V.instance.puppet.split(";\n").filter(Boolean);
-        console.log("mirrorPage() - puppet=");
+        console.log("Iframe.mirrorPage() - puppet=");
         console.log(puppetScript);
         if (Array.isArray(puppetScript) && puppetScript.length > 0) {
           // await scrollIframe(2000);
@@ -343,10 +344,10 @@ class Iframe {
           for (const line of puppetScript) {
             const regex = new RegExp("click\\([\"|\'](.*)[\"|\']\\)").exec(line);
             if (regex && regex[1]) {
-              console.log("mirrorPage() - puppet click(), path=" + regex[1]);
+              console.log("Iframe.mirrorPage() - puppet click(), path=" + regex[1]);
               const path = regex[1];
-              await Iframe.getButtonFromIframe(iframeDocument, "selector", path);
-              Click.clickButton(path, "selector", iframeDocument);
+              await Iframe.getClickElementFromIframe(iframeDocument, "selector", path);
+              Click.clickElement(path, "selector", iframeDocument);
             }
           }
           V.instance.scrollIframe = false;
@@ -403,12 +404,13 @@ class Iframe {
       await Promisify.sleep(200);
       return await Iframe.getNextLinkFromIframe(iframeDoc, attempt + 1);
     }
-    console.log("getNextLinkFromIframe() - took " + (attempt * 200) + "ms, result.url=" + result?.url);
+    console.log("Iframe.getNextLinkFromIframe() - took " + (attempt * 200) + "ms, result.url=" + result?.url);
     return result;
   }
 
   /**
-   * Gets the button from an iframe. This is only used by the AJAX Iframe append mode.
+   * Gets the click element from an iframe. This is only used by the AJAX Iframe append mode to verify that the click element
+   * is in the iframe when preparing the first page or mirroring it.
    *
    * @param {Document} iframeDoc - the iframe document
    * @param {string} type - (optional) the path type to use ("selector", "xpath") or context ("document", "shadow", "iframe")
@@ -417,17 +419,17 @@ class Iframe {
    * @returns {Element} the button
    * @public
    */
-  static async getButtonFromIframe(iframeDoc, type = undefined, path = undefined, attempt = 0) {
-    path = typeof path === "string" ? path : V.instance.buttonPath;
-    type = typeof type === "string" ? type : V.instance.buttonType;
-    const result = Click.findButton(path, type, iframeDoc, false);
-    // Recursively call this function and try again if no next link was found.
+  static async getClickElementFromIframe(iframeDoc, type = undefined, path = undefined, attempt = 0) {
+    path = typeof path === "string" ? path : V.instance.clickElementPath;
+    type = typeof type === "string" ? type : V.instance.clickElementType;
+    const result = Click.findElement(path, type, iframeDoc, false);
+    // Recursively call this function and try again if no element was found.
     // TODO: This will always take the full amount of attempts on the last page! Is there a way to detect this is the last page at this point and increase the max attempts?
-    if (attempt < 25 && !result?.button) {
+    if (attempt < 25 && !result?.element) {
       await Promisify.sleep(200);
-      return await Iframe.getButtonFromIframe(iframeDoc, type, path, attempt + 1);
+      return await Iframe.getClickElementFromIframe(iframeDoc, type, path, attempt + 1);
     }
-    console.log("getButtonFromIframe() - took " + (attempt * 200) + "ms, result.button=" + result?.button);
+    console.log("Iframe.getClickElementFromIframe() - took " + (attempt * 200) + "ms, result.button=" + result?.element);
     return result;
   }
 
@@ -451,7 +453,7 @@ class Iframe {
     for (let i = 0; i < innerHTMLs.length - 1; i++) {
       if (innerHTMLs[i] === innerHTMLs[i + 1]) {
         isLikelyGhostNodes = true;
-        console.log("getPageElementsFromIframe() - ghost nodes encountered");
+        console.log("Iframe.getPageElementsFromIframe() - ghost nodes encountered");
         break;
       }
     }
@@ -460,7 +462,7 @@ class Iframe {
       const loadElements = DOMNode.getElements(V.instance.loadElementPath, V.instance.pageElementType, iframeDoc).elements;
       if (loadElements.length > 0) {
         hasLoadElements = true;
-        console.log("getPageElementsFromIframe() - loadElements encountered, loadElements=");
+        console.log("Iframe.getPageElementsFromIframe() - loadElements encountered, loadElements=");
         console.log(loadElements);
       }
     }
@@ -469,7 +471,7 @@ class Iframe {
       await Promisify.sleep(200);
       return await Iframe.getPageElementsFromIframe(iframeDoc, attempt + 1);
     }
-    console.log("getPageElementsFromIframe() - took " + (attempt * 200) + "ms, pageElements.length=" + pageElements?.length + ", isLikelyGhostNodes=" + isLikelyGhostNodes);
+    console.log("Iframe.getPageElementsFromIframe() - took " + (attempt * 200) + "ms, pageElements.length=" + pageElements?.length + ", isLikelyGhostNodes=" + isLikelyGhostNodes);
     return pageElements;
   }
 

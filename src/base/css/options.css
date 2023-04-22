@@ -76,8 +76,13 @@ input[type="image"]:focus {
   padding-right: 1rem;
 }
 
-.table:not(.table-no-margin) {
+.table:not(.table-no-margin):not(.table-no-margin-top) {
   margin-top: 2rem;
+}
+
+.sub-header {
+  font-weight: 500;
+  margin-bottom: 1rem;
 }
 
 /* Dialogs */
@@ -489,10 +494,6 @@ table tbody .url-cell .saves-dialog-opener, table tbody .database-dialog-opener 
 
 #database-buttons > button:not(:last-child) {
   margin-right: 2rem;
-}
-
-#database-options-label {
-  font-weight: 500;
 }
 
 #database-blacklist-whitelist-text-field-container {

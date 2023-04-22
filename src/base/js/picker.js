@@ -52,7 +52,7 @@ var Picker = class Picker {
    */
   static async openPicker() {
     await Picker.closePicker();
-    console.log("openPicker() - opening the Picker");
+    console.log("Picker.openPicker() - opening the Picker");
     const instance = await Picker.#getInstance();
     instance.pickerEnabled = true;
     await Picker.#setInstance(instance);
@@ -67,7 +67,7 @@ var Picker = class Picker {
    * @public
    */
   static async closePicker() {
-    console.log("closePicker() - closing the Picker");
+    console.log("Picker.closePicker() - closing the Picker");
     const instance = await Picker.#getInstance();
     instance.pickerEnabled = false;
     await Picker.#setInstance(instance);
@@ -97,7 +97,7 @@ var Picker = class Picker {
     // ElementPicky's picker is always just "picky"
     Picker.picker = instance.picker;
     // Note that element and remove both use pageElementType. Element Picky just uses type, as it could be selector, xpath, or property
-    Picker.type = Picker.picker === "next" ? instance.nextLinkType : Picker.picker === "prev" ? instance.prevLinkType : Picker.picker === "button" ? instance.buttonType : ["element", "load", "remove"].includes(Picker.picker) ? instance.pageElementType : Picker.picker === "picky" ? instance.pickerType : "";
+    Picker.type = Picker.picker === "next" ? instance.nextLinkType : Picker.picker === "prev" ? instance.prevLinkType : Picker.picker === "click" ? instance.clickElementType : ["element", "load", "remove"].includes(Picker.picker) ? instance.pageElementType : Picker.picker === "picky" ? instance.pickerType : "";
     Picker.algorithm = algorithm_;
     Picker.quote = quote_;
     Picker.optimized = optimized_;
@@ -120,7 +120,7 @@ var Picker = class Picker {
    * @public
    */
   static changePicker(change, value) {
-    console.log("changePicker() - change=" + change + ", value=" + value);
+    console.log("Picker.changePicker() - change=" + change + ", value=" + value);
     // In case we're dealing with elements inside iframes, we can't just use instanceof Element; must use the element's defaultView
     const DFElement = Picker.element.ownerDocument?.defaultView?.Element || Element;
     let newElement = Picker.element;
@@ -173,7 +173,8 @@ var Picker = class Picker {
    * @public
    */
   static updatePicker(newElement) {
-    console.log("updatePicker()");
+    console.log("Picker.updatePicker() - newElement=");
+    console.log(newElement);
     if (newElement) {
       Picker.element = newElement;
     }
@@ -202,13 +203,13 @@ var Picker = class Picker {
     elementObject.previous = Picker.#getElementDetails(Picker.element.previousElementSibling);
     // Note do not send out the type as that is how we differentiate between first-time updates (type only) and successive updates
     Promisify.runtimeSendMessage({receiver: "background", greeting: "updatePickerUI", data: Picker.data, meta: Picker.meta, element: elementObject});
-    // console.log("parents:");
+    // console.log("Picker.updatePicker() - parents:");
     // let parent = Picker.element.parentNode;
     // while (parent) {
     //   console.log(parent.tagName);
     //   parent = parent.parentNode;
     // }
-    // console.log("children:");
+    // console.log("Picker.updatePicker() - children:");
     // let child = Picker.element.firstElementChild;
     // while (child) {
     //   console.log(child.tagName);
@@ -226,7 +227,7 @@ var Picker = class Picker {
    */
   static async savePicker() {
     const instance = await Picker.#getInstance();
-    console.log("savePicker() - saving picker... picker=" + Picker.picker);
+    console.log("Picker.savePicker() - saving picker... picker=" + Picker.picker);
     switch (Picker.picker) {
       case "next":
         instance.nextLinkType = Picker.type || instance.nextLinkType;
@@ -238,9 +239,9 @@ var Picker = class Picker {
         instance.prevLinkPath =  Picker.data || instance.prevLinkPath;
         instance.prevLinkKeywordsEnabled = false;
         break;
-      case "button":
-        instance.buttonType = Picker.type || instance.buttonType;
-        instance.buttonPath = Picker.data || instance.buttonPath;
+      case "click":
+        instance.clickElementType = Picker.type || instance.clickElementType;
+        instance.clickElementPath = Picker.data || instance.clickElementPath;
         break;
       case "element":
         instance.pageElementType = Picker.type || instance.pageElementType;
@@ -274,11 +275,11 @@ var Picker = class Picker {
    * @public
    */
   static async copyPicker() {
-    console.log("copyPicker() - copying data to clipboard... data=" + Picker.data);
+    console.log("Picker.copyPicker() - copying data to clipboard... data=" + Picker.data);
     try {
       await navigator.clipboard.writeText(Picker.data);
     } catch (e) {
-      console.log("copyPicker() - Error");
+      console.log("Picker.copyPicker() - Error");
       console.log(e);
     }
     // TODO: Should we also close the picker after copying?
@@ -292,7 +293,7 @@ var Picker = class Picker {
    * @public
    */
   static resizePicker(size) {
-    console.log("resizePicker() - size=" + size);
+    console.log("Picker.resizePicker() - size=" + size);
     switch(size) {
       case "minimize":
         Picker.ui.style.setProperty("width", "256px", "important");
@@ -313,7 +314,7 @@ var Picker = class Picker {
    * @public
    */
   static movePicker(corner) {
-    console.log("movePicker() - corner=" + corner);
+    console.log("Picker.movePicker() - corner=" + corner);
     const margin = "8px";
     switch(corner) {
       default:
@@ -351,7 +352,7 @@ var Picker = class Picker {
    */
   static #addUI() {
     // Picker.#removeUI();
-    console.log("addUI()");
+    console.log("Picker.addUI()");
     // Note: For the border, we use black no matter the theme. However, if desired, we can have PickerUI send a message back to us to initPicker(), and we can get the theme's border color and override it then
     const UI_STYLE = "background: initial; border: 1px solid black; border-radius: 0; box-shadow: none; clear: both; display: block; float: none; height: 200px; max-width: none; max-height: none; min-height: 0; min-width: 0; margin: 0; opacity: 1; outline: 0; overflow: hidden; padding: 0; pointer-events: auto; position: fixed; visibility: visible;  width: 500px; z-index: 2147483647;";
     Picker.ui = document.createElement("iframe");
@@ -364,7 +365,7 @@ var Picker = class Picker {
     // Important: If we set the onload listener before appending the iframe to the document, the onload will execute twice, so we do it after appending
     // @see https://stackoverflow.com/questions/10781880/dynamically-created-iframe-triggers-onload-event-twice
     Picker.ui.onload = function () {
-      console.log("addUI() - ui iframe loaded");
+      console.log("Picker.addUI() - ui iframe loaded");
     }
     // Note: This must be a web_accessible_resource in manifest.json
     Picker.ui.contentWindow.location = chrome.runtime.getURL("/html/picker-ui.html");
@@ -378,7 +379,7 @@ var Picker = class Picker {
    * @private
    */
   static #removeUI() {
-    console.log("removeUI()");
+    console.log("Picker.removeUI()");
     if (Picker.ui && typeof Picker.ui.remove === "function") {
       Picker.ui.remove();
     }
@@ -428,7 +429,7 @@ var Picker = class Picker {
       // // In case of something ridiculous, like being an element (e.g. via parentNode)
       // value = JSON.stringify(value);
     } catch (e) {
-      console.log("updatePicker() - error getting property");
+      console.log("Picker.updatePicker() - error getting property");
       console.log(e);
       value = e.message;
     }

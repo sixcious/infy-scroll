@@ -29,7 +29,7 @@ class Increment {
    * @public
    */
   static findSelection(url, strategy, selectionCustom, previousException) {
-    console.log("findSelection() - url=" + url + ", preference=" + strategy + ", selectionCustom=" + selectionCustom + ", previousException=" + previousException);
+    console.log("Increment.findSelection() - url=" + url + ", preference=" + strategy + ", selectionCustom=" + selectionCustom + ", previousException=" + previousException);
     try {
       if (strategy === "custom" && selectionCustom) {
         // TODO: Validate custom regex with current url for alphanumeric selection
@@ -84,14 +84,14 @@ class Increment {
     switch (base) {
       case "date":
         const selectionDate = IncrementDate.incrementDate("increment", selection, 0, baseDateFormat);
-        console.log("validateSelection() - base=date, selection=" + selection +", selectionDate=" + selectionDate);
+        console.log("Increment.validateSelection() - base=date, selection=" + selection +", selectionDate=" + selectionDate);
         if (selectionDate !== selection) {
           error = "base_date_invalid_error";
         }
         break;
       case "decimal":
         const selectionFloat = parseFloat(selection);
-        console.log("validateSelection() - base=decimal, selection=" + selection +", selectionFloat=" + selectionFloat);
+        console.log("Increment.validateSelection() - base=decimal, selection=" + selection +", selectionFloat=" + selectionFloat);
         if (!/^\d+\.\d+$/.test(selection) || isNaN(selectionFloat)) {
           error = "base_decimal_invalid_error";
         } else if (selectionFloat >= Number.MAX_SAFE_INTEGER) {
@@ -100,14 +100,14 @@ class Increment {
         break;
       case "roman":
         const selectionRoman = IncrementRoman.incrementRoman("increment", selection, 0, baseRoman);
-        console.log("validateSelection() - base=roman, selection=" + selection +", selectionRoman=" + selectionRoman);
+        console.log("Increment.validateSelection() - base=roman, selection=" + selection +", selectionRoman=" + selectionRoman);
         if (selectionRoman !== selection) {
           error = "base_roman_invalid_error";
         }
         break;
       case "custom":
         const selectionCustom = Increment.#incrementBaseCustom("increment", selection, 0, baseCustom, leadingZeros);
-        console.log("validateSelection() - base=custom, selection=" + selection +", selectionCustom=" + selectionCustom);
+        console.log("Increment.validateSelection() - base=custom, selection=" + selection +", selectionCustom=" + selectionCustom);
         if (selectionCustom === "SELECTION_TOO_LARGE!") {
           error = "selection_toolarge_error";
         } else if (selectionCustom !== selection) {
@@ -116,7 +116,7 @@ class Increment {
         break;
       // Base 2-36
       default:
-        console.log("validateSelection() - base=" + base + ", selection=" + selection);
+        console.log("Increment.validateSelection() - base=" + base + ", selection=" + selection);
         if (!(base >= 2 && base <= 36)) {
           error = "base_invalid_error";
         } else if (!/^[a-z0-9]+$/i.test(selection)) {
@@ -132,7 +132,7 @@ class Increment {
         }
         break;
     }
-    console.log("validateSelection() - error=" + error);
+    console.log("Increment.validateSelection() - error=" + error);
     return error;
   }
 
@@ -282,7 +282,7 @@ class Increment {
     if (base10num > Number.MAX_SAFE_INTEGER) {
       return "SELECTION_TOO_LARGE!";
     }
-    console.log("incrementBaseCustom() - done decoding, base10num=" + base10num);
+    console.log("Increment.incrementBaseCustom() - done decoding, base10num=" + base10num);
     // Increment or Decrement Decimal
     base10num += action.startsWith("increment") ? interval : -interval;
     // Part 2 Encode Decimal to Base
@@ -303,7 +303,7 @@ class Increment {
     else if (leadingZeros && selection.startsWith("0") && selection.length > selectionmod.length) {
       selectionmod = "0".repeat(selection.length - selectionmod.length) + selectionmod;
     }
-    console.log("incrementBaseCustom() - done encoding, base10num done encode=" + base10num + ", selectionmod=" + selectionmod);
+    console.log("Increment.incrementBaseCustom() - done encoding, base10num done encode=" + base10num + ", selectionmod=" + selectionmod);
     return selectionmod;
   }
 
@@ -360,12 +360,12 @@ class IncrementMulti {
       // urlLengthDiff handles both positive and negative changes (e.g. if URL became shorter OR longer)
       const urlLengthDiff = instance.url.length - urlmod.length;
       const thisPartSelectionStart = instance.multi[instance.multiPart].selectionStart;
-      console.log("multiPost() - part=" + instance.multiPart + ", urlLengthDiff=" + urlLengthDiff + "thisPartSelectionStart=" + thisPartSelectionStart);
+      console.log("IncrementMulti.multiPost() - part=" + instance.multiPart + ", urlLengthDiff=" + urlLengthDiff + "thisPartSelectionStart=" + thisPartSelectionStart);
       for (let i = 1; i <= instance.multiCount; i++) {
         if (i !== instance.multiPart) {
           // If the i part comes after this part in the URL, adjust the selectionStarts of the i part
           if (instance.multi[i].selectionStart > thisPartSelectionStart) {
-            console.log("multiPost() - adjusted part" + i + "'s selectionStart from: " + instance.multi[i].selectionStart + " to:" + (instance.multi[i].selectionStart - urlLengthDiff));
+            console.log("IncrementMulti.multiPost() - adjusted part" + i + "'s selectionStart from: " + instance.multi[i].selectionStart + " to:" + (instance.multi[i].selectionStart - urlLengthDiff));
             instance.multi[i].selectionStart = instance.multi[i].selectionStart - urlLengthDiff;
           }
           // Adjust the other multi parts' selections in case they overlap with this multiPart's selection
@@ -414,7 +414,7 @@ class IncrementDate {
    * @public
    */
   static incrementDate(action, selection, interval, dateFormat) {
-    console.log("incrementDate() - action=" + action + ", selection=" + selection + ", interval=" + interval + ", dateFormat=" + dateFormat);
+    console.log("IncrementDate.incrementDate() - action=" + action + ", selection=" + selection + ", interval=" + interval + ", dateFormat=" + dateFormat);
     let selection2;
     try {
       const parts = IncrementDate.#splitDateParts(selection, dateFormat);
@@ -422,7 +422,7 @@ class IncrementDate {
       const date2 = IncrementDate.#incDecDate(action, date, dateFormat, interval);
       selection2 = IncrementDate.#dateToStr(date2, dateFormat, parts.dateFormatParts);
     } catch (e) {
-      console.log("incrementDate() - Error:");
+      console.log("IncrementDate.incrementDate() - Error:");
       console.log(e);
       selection2 = "DateError";
     }
@@ -604,7 +604,7 @@ class IncrementRoman {
    * @public
    */
   static incrementRoman(action, roman, interval, type) {
-    console.log("incrementDecremenRoman() - action=" + action + ", roman=" + roman + ", interval=" + interval, ", type=" + type);
+    console.log("IncrementRoman.incrementDecremenRoman() - action=" + action + ", roman=" + roman + ", interval=" + interval, ", type=" + type);
     const latinCase = type === "latin" ? /[A-Z]/.test(roman[0]) ? "uppercase" : /[a-z]/.test(roman[0]) ? "lowercase" : "unknown" : undefined;
     if (latinCase) {
       roman = roman.toUpperCase();
@@ -730,7 +730,7 @@ class IncrementArray {
    * @public
    */
   static precalculateURLs(instance) {
-    console.log("precalculateURLs() - precalculating URLs for an instance that is " + (instance.toolkitEnabled ? "toolkitEnabled" : instance.autoEnabled ? "autoEnabled" : "normal"));
+    console.log("IncrementArray.precalculateURLs() - precalculating URLs for an instance that is " + (instance.toolkitEnabled ? "toolkitEnabled" : instance.autoEnabled ? "autoEnabled" : "normal"));
     let urls = [];
     let currentIndex = 0;
     // If instance is in a state in which a list should be generated...
@@ -777,7 +777,7 @@ class IncrementArray {
    * @private
    */
   static #buildURLs(instance, action, quantity) {
-    console.log("buildURLs() - instance.url=" + instance.url + ", instance.selection=" + instance.selection + ", action=" + action + ", quantity=" + quantity);
+    console.log("IncrementArray.buildURLs() - instance.url=" + instance.url + ", instance.selection=" + instance.selection + ", action=" + action + ", quantity=" + quantity);
     const urls = [];
     const url = instance.url;
     const selection = instance.selection;

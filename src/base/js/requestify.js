@@ -29,7 +29,7 @@ class Requestify {
    * @public
    */
   static async request(url, documentCharacterSet, documentContentType, method = "GET", api = "fetch", fallback = true) {
-    console.log("request() - url=" + url + ", documentCharacterSet=" + documentCharacterSet + ", documentContentType=" + documentContentType + ", method=" + method + ", api=" + api + ", fallback=" + fallback);
+    console.log("Requestify.request() - url=" + url + ", documentCharacterSet=" + documentCharacterSet + ", documentContentType=" + documentContentType + ", method=" + method + ", api=" + api + ", fallback=" + fallback);
     let doc;
     try {
       switch (api) {
@@ -96,11 +96,11 @@ class Requestify {
       request.open(method, url);
       request.responseType = responseType;
       request.onload = function (event) {
-        console.log("xhrify() onload() - request.response=" + request.response);
+        console.log("Requestify.xhrify() onload() - request.response=" + request.response);
         resolve(request.response);
       };
       request.onerror = function () {
-        console.log("xhrify() onerror() - request=" + request);
+        console.log("Requestify.xhrify() onerror() - request=" + request);
         reject("xhrify() onerror() - promise rejected");
       };
       request.send();

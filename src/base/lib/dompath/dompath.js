@@ -37,13 +37,13 @@ var DOMPath = class DOMPath {
    * @public
    */
   static generateContextPath(node, type = "selector", algorithm = "internal", quote = "single", optimized =  true, target = "generic",  js = false) {
-    console.log("generateContextPath()");
+    console.log("DOMPath.generateContextPath()");
     const contexts = DOMNode.getAncestorContexts(node);
     // If this is the top-level document context (i.e. only one context), just return the regular path
     if (contexts.length < 2) {
       // If the original type was a js path type and the node currently picked only has one context, we need to reset to selector (ideally we would reset to preferred path type)
       if (!["selector", "xpath"].includes(type)) {
-        console.log("generateContextPath() - changing type from " + type + " to selector because this node has one context and is no longer a js path type");
+        console.log("DOMPath.generateContextPath() - changing type from " + type + " to selector because this node has one context and is no longer a js path type");
         type = "selector";
       }
       return DOMPath.generatePath(node, type, algorithm, quote, optimized, target, js);
@@ -75,7 +75,7 @@ var DOMPath = class DOMPath {
    * @public
    */
   static generatePath(node, type = "selector", algorithm = "internal", quote = "single", optimized =  true, target = "generic",  js = false, contextPath = "") {
-    console.log("generatePath() - type=" + type + ", algorithm=" + algorithm + ", quote=" + quote + ", optimized=" + optimized + ", target=" + target + ", contextPath=" + contextPath + ", node=");
+    console.log("DOMPath.generatePath() - type=" + type + ", algorithm=" + algorithm + ", quote=" + quote + ", optimized=" + optimized + ", target=" + target + ", contextPath=" + contextPath + ", node=");
     console.log(node);
     if (!node || node.nodeType !== Node.ELEMENT_NODE) {
       return { path: "", meta: "error" };
@@ -108,39 +108,39 @@ var DOMPath = class DOMPath {
       finalPath = contextPath + jsPrefix + chromiumPath + jsSuffix;
       // if (evaluatePath(context ? finalPath + jsQuote + ")" : chromiumPath, type) === node) {
       if (DOMPath.#evaluatePath(context ? finalPath : chromiumPath, type) === node) {
-        console.log("generatePath() - returning chromiumPath");
+        console.log("DOMPath.generatePath() - returning chromiumPath");
         return { path: finalPath, meta: "" };
       }
-      console.log("generatePath() - chromiumPath failed, checking internalPath ...");
+      console.log("DOMPath.generatePath() - chromiumPath failed, checking internalPath ...");
     }
     // algorithm = "internal"
     internalPath = InternalPath.generatePath(node, type, quote, optimized, target, false, false);
     finalPath = contextPath + jsPrefix + internalPath + jsSuffix;
     if (DOMPath.#evaluatePath(context ? finalPath : internalPath, type) === node) {
-      console.log("generatePath() - returning internalPath");
+      console.log("DOMPath.generatePath() - returning internalPath");
       return { path: finalPath, meta: algorithm === "chromium" ? "fallback" : ""};
     }
     internalPath = InternalPath.generatePath(node, type, quote, optimized, target, true, false);
     finalPath = contextPath + jsPrefix + internalPath + jsSuffix;
     if (DOMPath.#evaluatePath(context ? finalPath : internalPath, type) === node) {
-      console.log("generatePath() - returning internalPath (fallback)");
+      console.log("DOMPath.generatePath() - returning internalPath (fallback)");
       return { path: finalPath, meta: algorithm === "chromium" ? "fallback" : ""};
     }
     internalPath = InternalPath.generatePath(node, type, quote, optimized, target, true, true);
     finalPath = contextPath + jsPrefix + internalPath + jsSuffix;
     if (DOMPath.#evaluatePath(context ? finalPath : internalPath, type) === node) {
-      console.log("generatePath() - returning internalPath (fallback2)");
+      console.log("DOMPath.generatePath() - returning internalPath (fallback2)");
       return { path: finalPath, meta: algorithm === "chromium" ? "fallback" : "" };
     }
     if (algorithm === "internal") {
       chromiumPath = ChromiumPath.generatePath(node, type, quote, optimized);
       finalPath = contextPath + jsPrefix + chromiumPath + jsSuffix;
       if (DOMPath.#evaluatePath(context ? finalPath : chromiumPath, type) === node) {
-        console.log("generatePath() - returning chromiumPath (fallback because internalPath failed)");
+        console.log("DOMPath.generatePath() - returning chromiumPath (fallback because internalPath failed)");
         return { path: finalPath, meta: "fallback" };
       }
     }
-    console.log("generatePath() - both the internalPath and chromiumPath failed! The alternate path was:");
+    console.log("DOMPath.generatePath() - both the internalPath and chromiumPath failed! The alternate path was:");
     console.log(algorithm === "chromium" ? internalPath : chromiumPath);
     finalPath = contextPath + jsPrefix + (algorithm === "chromium" ? chromiumPath : internalPath) + jsSuffix;
     return { path: finalPath, meta: "error" };
@@ -202,7 +202,7 @@ var DOMPath = class DOMPath {
         error = history.errors[0];
       }
     }
-    console.log("determinePathType() - path=" + path + ", type=" + type + ", error=" + error + ", history=");
+    console.log("DOMPath.determinePathType() - path=" + path + ", type=" + type + ", error=" + error + ", history=");
     console.log(history);
     return { type: type, error: error };
   }
@@ -226,7 +226,7 @@ var DOMPath = class DOMPath {
       node = result.element;
     } catch (e) {
       // Don't need to log this as DOMNode.getElement() will log errors
-      // console.log("evaluatePath() - error evaluating " + type + " path. Error:");
+      // console.log("DOMPath.evaluatePath() - error evaluating " + type + " path. Error:");
       // console.log(e);
       if (throwError) {
         throw new Error(e);
@@ -341,7 +341,7 @@ var InternalPath = class InternalPath {
           }
         }
       }
-      // console.log("nodeHasSiblingWithSameClass=" + nodeHasSiblingWithSameClass + " - " + node.getAttribute("class"));
+      // console.log("InternalPath.generatePath()nodeHasSiblingWithSameClass=" + nodeHasSiblingWithSameClass + " - " + node.getAttribute("class"));
       // [@class] - We only use a node's class if it doesn't have a sibling with the same class name
       let clazz = "";
       if (!elementHasSiblingWithSameClass && element.hasAttribute("class") && element.getAttribute("class").trim() !== "") {
@@ -434,7 +434,7 @@ var InternalPath = class InternalPath {
     try {
       escape = CSS.escape(str);
     } catch (e) {
-      console.log("escapeCSS() - Error:");
+      console.log("InternalPath.escapeCSS() - Error:");
       console.log(e);
     }
     return escape || str;

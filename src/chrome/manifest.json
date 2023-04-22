@@ -1,8 +1,8 @@
 {
-  "background": { "scripts": ["js/background.js", "js/database.js", "js/promisify.js", "js/storage.js", "js/util.js"], "persistent": false },
+  "background": { "scripts": ["js/database.js", "js/promisify.js", "js/storage.js", "js/util.js", "js/background.js"], "persistent": false },
   "browser_action": { "default_title": "__MSG_title__", "default_icon": { "16": "img/icon.png", "24": "img/icon.png", "32": "img/icon.png" }, "default_popup": "html/popup.html" },
-  "commands": { "down": { "description": "Down one page"}, "up": { "description": "Up one page" }, "power": { "description": "Turn on or off" }, "blacklist": { "description":  "Blacklist or whitelist a URL" }, "auto": { "description": "Pause or resume Auto" }},
-  "content_scripts": [ { "matches": ["<all_urls>"], "run_at": "document_idle", "js": ["js/action.js", "js/append.js", "js/auto.js", "js/click.js", "js/cryptography.js", "js/elementify.js", "js/iframe.js", "js/increment.js", "js/instance.js", "js/list.js", "js/next.js", "js/promisify.js", "js/requestify.js", "js/saves.js", "js/scripts.js", "js/scroll.js", "js/util.js", "js/v.js", "js/workflow.js", "lib/domnode/domnode.js", "lib/dompath/dompath.js", "lib/iframe-resizer/iframeResizer.js"] } ],
+  "commands": { "down": { "description": "Down one page" }, "up": { "description": "Up one page" }, "power": { "description": "Turn on or off" }, "blacklist": { "description":  "Blacklist or whitelist a URL" }, "auto": { "description": "Pause or resume Auto" }},
+  "content_scripts": [ { "matches": ["<all_urls>"], "run_at": "document_idle", "js": ["js/action.js", "js/append.js", "js/auto.js", "js/click.js", "js/cryptography.js", "js/elementify.js", "js/iframe.js", "js/increment.js", "js/instance.js", "js/list.js", "js/next.js", "js/promisify.js", "js/requestify.js", "js/saves.js", "js/scripts.js", "js/scroll.js", "js/util.js", "js/v.js", "js/workflow.js", "lib/domnode/domnode.js", "lib/dompath/dompath.js", "lib/iframe-resizer/iframeResizer.js", "js/content.js"] } ],
   "default_locale": "en",
   "description": "__MSG_description__",
   "icons": { "16": "img/icon.png", "48": "img/icon.png", "128": "img/icon.png" },

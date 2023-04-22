@@ -5,7 +5,7 @@
  */
 
 /**
- * Promisify is a class that contains promise-based wrappers for common tasks, like getting storage items, getting tabs, and
+ * Promisify contains promise-based wrappers for common tasks, like getting storage items, getting tabs, and
  * sending messages between different parts of the extension.
  *
  * Because the chrome.* api uses callbacks, Promisify was created for convenience and allows us to use async/await
@@ -20,11 +20,11 @@ class Promisify {
    *
    * @param {string|string[]|null} key - (optional) the storage item key to get or null for all items
    * @param {string} namespace - (optional) the storage namespace, either "local", "sync", or "session"
-   * @param {string[]} deletes - (optional) the items to delete from the cache; databases and saves are assumed to be deleted
+   * @param {string[]} deletes - (optional) the items to delete from the cache (e.g. items that take up a lot of space/memory)
    * @returns {Promise<{}>} the storage items
    * @public
    */
-  static storageGet(key = null, namespace = "local", deletes = ["databaseAP", "databaseIS", "saves"]) {
+  static storageGet(key = null, namespace = "local", deletes = []) {
     return new Promise(resolve => {
       chrome.storage[namespace].get(key, items => {
         deletes.forEach(del => { if (del !== key) { delete items[del]; } });
@@ -87,7 +87,7 @@ class Promisify {
       chrome.runtime.openOptionsPage(response => {
         resolve(response);
         if (chrome.runtime.lastError) {
-          console.log("runtimeOpenOptionsPage() - lastError= " + chrome.runtime.lastError.message);
+          console.log("Promisify.runtimeOpenOptionsPage() - lastError= " + chrome.runtime.lastError.message);
         }
       });
     });
@@ -107,7 +107,7 @@ class Promisify {
       chrome.runtime.sendMessage(message, response => {
         resolve(response);
         if (chrome.runtime.lastError) {
-          console.log("runtimeSendMessage() - lastError= " + chrome.runtime.lastError.message);
+          console.log("Promisify.runtimeSendMessage() - lastError= " + chrome.runtime.lastError.message);
         }
       });
     });
@@ -128,7 +128,7 @@ class Promisify {
       chrome.tabs.sendMessage(tabId, message, response => {
         resolve(response);
         if (chrome.runtime.lastError) {
-          console.log("tabsSendMessage() - lastError= " + chrome.runtime.lastError.message);
+          console.log("Promisify.tabsSendMessage() - lastError= " + chrome.runtime.lastError.message);
         }
       });
     });
@@ -153,7 +153,7 @@ class Promisify {
           { target: {tabId: tabId}, files: [details.file] },
           () => {
             if (chrome.runtime.lastError) {
-              console.log("tabsExecuteScript() - lastError= " + chrome.runtime.lastError.message);
+              console.log("Promisify.tabsExecuteScript() - lastError= " + chrome.runtime.lastError.message);
               reject(chrome.runtime.lastError.message);
             } else {
               resolve();
@@ -164,7 +164,7 @@ class Promisify {
       else {
         chrome.tabs.executeScript(tabId, details, results => {
           if (chrome.runtime.lastError) {
-            console.log("tabsExecuteScript() - lastError= " + chrome.runtime.lastError.message);
+            console.log("Promisify.tabsExecuteScript() - lastError= " + chrome.runtime.lastError.message);
             reject(chrome.runtime.lastError.message);
           } else {
             resolve(results);
@@ -203,7 +203,7 @@ class Promisify {
   //   return new Promise((resolve, reject) => {
   //     chrome.downloads.download(options, downloadId => {
   //       if (chrome.runtime.lastError) {
-  //         console.log("downloadsDownload() - " + chrome.runtime.lastError.message);
+  //         console.log("Promisify.downloadsDownload() - " + chrome.runtime.lastError.message);
   //         reject(downloadId);
   //       } else {
   //         resolve(downloadId);
@@ -236,7 +236,7 @@ class Promisify {
   // static permissionsRequest(permission) {
   //   return new Promise(resolve => {
   //     chrome.permissions.request(permission, granted => {
-  //       console.log("permissionsRequest() - granted=" + granted);
+  //       console.log("Promisify.permissionsRequest() - granted=" + granted);
   //       resolve(granted);
   //     });
   //   })
@@ -252,7 +252,7 @@ class Promisify {
   // static permissionsRemove(permission) {
   //   return new Promise(resolve => {
   //     chrome.permissions.remove(permission, removed => {
-  //       console.log("permissionsRemove() - removed=" + removed);
+  //       console.log("Promisify.permissionsRemove() - removed=" + removed);
   //       resolve(removed);
   //     });
   //   });

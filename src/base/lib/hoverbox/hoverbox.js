@@ -20,9 +20,9 @@
 var HoverBox = class HoverBox {
 
   /**
-   * Class Fields
+   * Fields
    *
-   * @param {Element} hoverBox - the hover box div that draws the box around hovered element
+   * @param {Element} hoverBox - the actual div that draws the box around a hovered element
    * @param {Element} container - the container to append the hover box to (e.g. document.body)
    * @param {string} selectors - the selector string that must match for the hovered element (via Element.matches() method)
    * @param {string} background - the hover box background color
@@ -158,7 +158,7 @@ var HoverBox = class HoverBox {
     // }
     this.shadows = new Set();
     this.iframes = new Set();
-    this.listeners = [];
+    // this.listeners = [];
     this.styles = [];
     this.hoverBox.remove();
   }
@@ -174,7 +174,7 @@ var HoverBox = class HoverBox {
    */
   highlightElement(element, close = false, timeout = 3000) {
     try {
-      console.log("highlightElement()");
+      console.log("HoverBox.highlightElement()");
       console.log(this.hoverBox);
       if (element) {
         this.#mouseListener( {target: element});
@@ -187,7 +187,7 @@ var HoverBox = class HoverBox {
         }, timeout);
       }
     } catch (e) {
-      console.log("highlightElement() - error=")
+      console.log("HoverBox.highlightElement() - error=")
       console.log(e);
     }
   }
@@ -240,7 +240,7 @@ var HoverBox = class HoverBox {
    * @private
    */
   #createStyle(contextName = ":root") {
-    console.log("createStyle() - contextName=" + contextName);
+    console.log("HoverBox.createStyle() - contextName=" + contextName);
     const style = document.createElement("style");
     style.textContent =
       contextName + ",\n" +
@@ -267,19 +267,19 @@ var HoverBox = class HoverBox {
   #mouseListener = (e) => {
     let target = e.target;
     this.#previousEvent = e;
-    // console.log("mouseListener() - target=");
+    // console.log("HoverBox.mouseListener() - target=");
     // console.log(target);
-    // console.log("mouseListener() - TCL: HoverBox -> this._moveHoverBox -> target", target);
+    // console.log("HoverBox.mouseListener() - TCL: HoverBox -> this._moveHoverBox -> target", target);
     if (this.ignoreElements.includes(target)) {
       // if (this.ignoreElements.indexOf(target) === -1 && target.matches(this.selectors)
       // && (this.container.contains(target) || target === this.hoverBox)) { // is NOT ignored elements
-      // console.log("mouseListener() - hiding hover box because this is an ignored element...");
+      // console.log("HoverBox.mouseListener() - hiding hover box because this is an ignored element...");
       this.hoverBox.style.setProperty("width", "0", "important");
       return;
     }
-    // console.log("mouseListener() - TCL: target", target);
+    // console.log("HoverBox.mouseListener() - TCL: target", target);
     if (target === this.hoverBox) {
-      // console.log("mouseListener() - target === this.hoverBox");
+      // console.log("HoverBox.mouseListener() - target === this.hoverBox");
       // the truly hovered element behind the added hover box
       // Note: We wrap this in a try/catch due to some elements x and y coordinates being funky, e.g.:
       // TypeError: Failed to execute 'elementsFromPoint' on 'Document': The provided double value is non-finite.
@@ -287,12 +287,12 @@ var HoverBox = class HoverBox {
       try {
         hoveredElement = document.elementsFromPoint(e.clientX, e.clientY)[1];
       } catch (e) {
-        console.log("mouseListener() - error setting hoveredElement using document.elementsFromPoint. Error:");
+        console.log("HoverBox.mouseListener() - error setting hoveredElement using document.elementsFromPoint. Error:");
         console.log(e);
         return;
       }
-      console.log("mouseListener() - screenX: " + e.screenX + ", screenY: " + e.screenY + ", clientX: " + e.clientX + ", clientY: " + e.clientY);
-      console.log("mouseListener() - TCL: hoveredElement", hoveredElement);
+      console.log("HoverBox.mouseListener() - screenX: " + e.screenX + ", screenY: " + e.screenY + ", clientX: " + e.clientX + ", clientY: " + e.clientY);
+      console.log("HoverBox.mouseListener() - TCL: hoveredElement", hoveredElement);
       if (this.#previousTarget === hoveredElement) {
         // Avoid repeated calculation and rendering
         return;
@@ -316,13 +316,11 @@ var HoverBox = class HoverBox {
       contextOffset.left += rect.left;
     }
     const targetOffset = target.getBoundingClientRect();
-    const targetHeight = targetOffset.height;
-    const targetWidth = targetOffset.width;
-    this.hoverBox.style.setProperty("width", targetWidth + this.borderWidth * 2 + "px", "important");
-    this.hoverBox.style.setProperty("height", targetHeight + this.borderWidth * 2 + "px", "important");
     // Need scrollX and scrollY to account for scrolling
     this.hoverBox.style.setProperty("top", contextOffset.top + targetOffset.top + window.scrollY - this.borderWidth + "px", "important");
     this.hoverBox.style.setProperty("left", contextOffset.left + targetOffset.left + window.scrollX - this.borderWidth + "px", "important");
+    this.hoverBox.style.setProperty("width", targetOffset.width + this.borderWidth * 2 + "px", "important");
+    this.hoverBox.style.setProperty("height", targetOffset.height + this.borderWidth * 2 + "px", "important");
     if (this.#triggered && this.action.callback) {
       this.action.callback(target);
       this.#triggered = false;
@@ -340,7 +338,7 @@ var HoverBox = class HoverBox {
    */
   #clickListener = (e) => {
     let target = e.target;
-    console.log("clickListener() - target=");
+    console.log("HoverBox.clickListener() - target=");
     console.log(target);
     // This allows us to click into elements inside the shadowRoot or iframe
     if (this.shadows.has(target) || this.iframes.has(target)) {

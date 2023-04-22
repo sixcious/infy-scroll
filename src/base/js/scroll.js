@@ -5,16 +5,132 @@
  */
 
 /**
- * Scroll is the main content script and handles all infinite scrolling logic. Scroll determines when a page should be
- * appended as the user scrolls down to the bottom. It then delegates business logic of performing actions and the
- * actual appending of pages to Workflow, Action, and Append.
+ * Scroll handles all infinite scrolling logic. It determines when a page should be appended as the user scrolls down to the
+ * bottom. It then delegates business logic of performing actions and the actual appending of pages to Workflow, Action, and
+ * Append.
  *
- * Scroll detection can either be implemented via a Scroll Listener or Intersection Observer. Infy Scroll supports both.
+ * Note: Scroll detection can either be implemented via a Scroll Listener or Intersection Observer. Infy Scroll supports both.
  */
 class Scroll {
 
   /**
-   * Adds the scroll detection (either Scroll Listener or Intersection Observer).
+   * This function is only called when the extension wants to "start" running on this page.
+   * This will create some of Infy Scroll's one-time only elements (like the overlay and loading) for the very first time and actually add the scroll detection.
+   *
+   * Note: This function typically only runs one time. The difference between it and init() is that init() runs on each
+   * page request, whereas start() only runs when the extension should be "started" (enabled) for the very first time
+   * or restarted again (e.g. if after a stop() or if the user clicks the ACCEPT button in the Popup).
+   *
+   * Note: This function is public for Action.power(), Action.blacklist(), and Action.whitelist().
+   *
+   * @param {string} caller - the caller who called this function
+   * @public
+   */
+  static async start(caller) {
+    console.log("Scroll.start() - caller=" + caller);
+    // TODO: Is the enabled needed because we might start via shortcuts? The Popup normally sets this to true after clicking Accept
+    V.instance.enabled = true;
+    // This is the only opportunity (besides the Popup) that we have of getting the tab ID to identify this V.instance (don't need to await this, so let's set the badge early)
+    Promisify.runtimeSendMessage({receiver: "background", greeting: "setBadge", badge: "on", temporary: false, needsTabId: true}).then((tabId) => { V.instance.tabId = tabId; });
+    if (!V.instance.started) {
+      console.log("Scroll.start() - was not started, so setting V.instance.started=true and doing initialization work...");
+      V.instance.started = true;
+      V.scrollListener = Util.throttle(Scroll.scrollDetection, 200);
+      // If caller is command and via is items, this was a down action while not enabled, or it was a re-start if it was previously enabled already (somehow?)
+      if (caller === "command" && V.instance.via === "items") {
+        // We need to initialize it with the default action and append (next page) if we didn't find a save or database URL
+        V.instance.action = "next";
+        V.instance.append = "page";
+        // If the previous action/append mode was workflowReverse, that will be true so we need to reset it back to false
+        V.instance.workflowReverse = false;
+        V.instance.workflowPrepend = "";
+        V.instance.documentType = "current";
+        V.instance.transferNodeMode = "adopt";
+        // We need to determine whether keywords should be enabled or not. We only enable keywords if the path failed on page 1 for a Keyboard Shortcut Command
+        const link = Next.findLink(V.instance.nextLinkPath, V.instance.nextLinkType, V.instance.nextLinkProperty, undefined, V.items.nextLinkKeywords, undefined, true, document, false);
+        V.instance.nextLinkKeywordsEnabled = link.method === "keyword";
+        V.instance.nextLinkKeyword = link.keywordObject;
+      }
+      // resetStyling();
+      await Append.prepareFirstPage("start");
+      // We need to now trigger the AP CustomEvent that we have loaded. This is for external scripts that may be listening for them
+      Util.triggerCustomEvent(V.EVENT_ON, document, {}, V.instance.customEventsEnabled, V.items.browserName);
+    }
+    if (!V.items.on) {
+      console.log("Scroll.start() - was not on, so setting items.on=true");
+      V.items.on = true;
+      Promisify.storageSet({"on": true});
+    }
+    // Note: We ned to call appendBottom() before addScrollDetection() so the bottomObserver can observe the bottom
+    Scroll.#createOverlay();
+    Scroll.#createLoading();
+    Append.appendBottom();
+    Scroll.#addScrollDetection();
+    Scroll.#injectAjaxScript();
+    // The AJAX Observer is only added if we are in native mode and removing or hiding elements
+    if (V.instance.append === "ajax" &&  V.instance.ajaxMode === "native" && (V.instance.removeElementPath || V.instance.hideElementPath)) {
+      V.ajaxObserver = new MutationObserver(Scroll.#ajaxObserverCallback);
+      // TODO: Should we switch back to subtree: false? Need true for p int
+      // ajaxObserver.observe(insertionPoint?.parentNode || document.body, { childList: true, subtree: false });
+      V.ajaxObserver.observe(document.body, { childList: true, subtree: true });
+    }
+    // Note that we will always make isLoading=false every time start is called, resetting any weird states (e.g. to add Auto in the Popup after being enabled, isLoading might be previously true)
+    Workflow.delay("start");
+  }
+
+  /**
+   * This function is called when the extension wants to "stop" running on this page. This code handles all non-instance
+   * specific stopping logic, such as removing the scrollDetection and hiding the overlay and loading elements.
+   *
+   * This will put the V.instance in a disabled or stopped state in case the user decides to turn the extension back on
+   * before refreshing the page. The V.instance will not be deleted, but pages will not be appended while it is stopped.
+   *
+   * The stop action can be initiated directly from a power (off) action for this tab, or if the Background sends a
+   * message to a tab's content script (after receiving a power "off" notification from another tab).
+   *
+   * Note: This function is public for Action.power(), Action.blacklist(), and Action.whitelist().
+   *
+   * @param {string} caller - the caller who called this function
+   * @public
+   */
+  static stop(caller) {
+    console.log("Scroll.stop() - caller=" + caller);
+    // Only show the off badge if it is currently enabled (on) so we can call stop silently for other situations where the V.instance may not be enabled
+    if (V.instance.enabled) {
+      Promisify.runtimeSendMessage({receiver: "background", greeting: "setBadge", badge: "off", temporary: true});
+    }
+    // V.instance.started will always remain true, do not reset it to false in the case the user re-enables the extension on this page
+    V.instance.enabled = false;
+    Scroll.#removeScrollDetection();
+    // Disconnect MutationObservers
+    if (V.ajaxObserver) {
+      V.ajaxObserver.disconnect();
+      V.ajaxObserver = undefined;
+    }
+    if (V.spaObserver && caller !== "spaObserverCallback") {
+      V.spaObserver.disconnect();
+      V.spaObserver = undefined;
+    }
+    // Remove all infy-scroll specific elements (they can be re-added when restarting)
+    if (V.overlay && typeof V.overlay.remove === "function") {
+      V.overlay.remove();
+    }
+    if (V.loading && typeof V.loading.remove === "function") {
+      V.loading.remove();
+    }
+    if (V.bottom && typeof V.bottom.remove === "function") {
+      V.bottom.remove();
+    }
+    // Auto
+    if (V.instance.autoEnabled) {
+      Auto.stopTimer("stop");
+    }
+    // Items: Get the updated on/off state for this page's storage items cache
+    Promisify.storageGet("on").then(on => { V.items.on = on; });
+  }
+
+  /**
+   * Adds the scroll detection, either Intersection Observer ("io") or Scroll Listener ("sl").
    *
    * @see https://developer.mozilla.org/docs/Web/API/Document/scroll_event
    * @see https://developer.mozilla.org/docs/Web/API/Intersection_Observer_API
@@ -22,8 +138,9 @@ class Scroll {
    */
   static #addScrollDetection() {
     Scroll.#removeScrollDetection();
-    console.log("addScrollDetection() - adding " + V.instance.scrollDetection);
-    // Can't use Intersection Observer when the append mode is none because we are not observing the button/page elements
+    console.log("Scroll.addScrollDetection() - adding " + V.instance.scrollDetection);
+    // Can't use Intersection Observer when the append mode is none because even if we set bottomObserver to the bottom
+    // and use offset, some on some sites, appending the bottom element at the end of the body won't make it at the bottom (e.g. sr.com)
     // TODO: Add IO support for none by observing the button element?
     if (V.instance.scrollDetection === "io" && V.instance.append !== "none") {
       // root: null means document. rootMargin: "0px 0px 1% 0px" is what we were previously using (basically 0px with extra bottom of 1%). Alternatively, "0px 0px -99% 0px" will only trigger when the top of the next page has been intersected. Use 0% or 1% to intersect the earliest (when any part of the next page is on the screen)
@@ -52,14 +169,14 @@ class Scroll {
   }
 
   /**
-   * Removes the scroll detection (either Scroll Listener or Intersection Observer).
+   * Removes the scroll detection, either Intersection Observer ("io") or Scroll Listener ("sl").
    *
    * @see https://developer.mozilla.org/docs/Web/API/Document/scroll_event
    * @see https://developer.mozilla.org/docs/Web/API/Intersection_Observer_API
    * @private
    */
   static #removeScrollDetection() {
-    console.log("removeScrollDetection() - removing " + V.instance.scrollDetection);
+    console.log("Scroll.removeScrollDetection() - removing " + V.instance.scrollDetection);
     // Note: We set the intersectionObserver to undefined because we check if it exists to determine which scroll detection mode we are in shouldAppend()
     if (V.intersectionObserver) {
       V.intersectionObserver.disconnect();
@@ -80,7 +197,7 @@ class Scroll {
    * @private
    */
   static #intersectionObserverCallback(entries) {
-    console.log("intersectionObserverCallback() - entries=");
+    console.log("Scroll.intersectionObserverCallback() - entries=");
     console.log(entries);
     // Gotcha Note: entries will only consist of entries whose isIntersecting boolean state has CHANGED (not all observed entries!).
     // If an observed entry is still intersecting (or still not intersecting), it won't be part of the entries
@@ -95,7 +212,7 @@ class Scroll {
       console.log(entry);
     }
     // We then always call scrollDetection to update the current page
-    Scroll.#scrollDetection();
+    Scroll.scrollDetection();
   }
 
   /**
@@ -109,134 +226,10 @@ class Scroll {
   static #bottomObserverCallback(entries) {
     // There should only be one entry (bottom) being observed, but to be safe, we look at the last one's isIntersecting state
     V.instance.bottomIntersected = entries[entries.length - 1].isIntersecting;
-    console.log("bottomObserverCallback() - V.instance.bottomIntersected=" + V.instance.bottomIntersected + ", entries=");
+    console.log("Scroll.bottomObserverCallback() - V.instance.bottomIntersected=" + V.instance.bottomIntersected + ", entries=");
     console.log(entries);
     // We then always call scrollDetection, but this is only so we can call shouldAppend(). We don't really need detectCurrentPage()
-    Scroll.#scrollDetection();
-  }
-
-  /**
-   * The callback function for the AJAX Mutation Observer. Observes when a mutation occurs to the sub tree and reacts by
-   * removing the specified elements.
-   *
-   * Note: This observer is only for the AJAX Native mode.
-   *
-   * @param {MutationRecord[]} mutations - the array of mutation records
-   * @private
-   */
-  static #ajaxObserverCallback(mutations) {
-    console.log("ajaxObserverCallback() - mutations.length=" + mutations.length);
-    for (const mutation of mutations) {
-      console.log("mutation, type=" + mutation.type + " mutation.addedNodes=" + mutation.addedNodes.length);
-      if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
-        const removeElements = DOMNode.getElements(V.instance.removeElementPath, V.instance.pageElementType).elements;
-        for (const element of removeElements) {
-          element.remove();
-        }
-        const hideElements = DOMNode.getElements(V.instance.hideElementPath, V.instance.pageElementType).elements;
-        for (const element of hideElements) {
-          element.style.display = "none";
-          // TODO: Test this more:
-          // element.setProperty("display", "none", "important");
-        }
-        break;
-      }
-    }
-  }
-
-  /**
-   * The callback function for both the SPA Mutation Observer and Navigate Event Listener. Observes when a
-   * navigation or mutation occurs to the sub tree and reacts by checking if the instance should be enabled or disabled.
-   *
-   * @param {MutationRecord[]} mutations - the array of mutation records
-   * @param {MutationObserver} observer - the mutation observer who invoked this callback
-   * @param {string} caller - the caller who called this function (e.g. "navigation")
-   * @private
-   */
-  static async #spaObserverCallback(mutations, observer, caller) {
-    // Don't do this anymore, we always want the most up to date navigate call to proceed in case the url changes
-    // // Introduce an SPA Check lock to stop this from being called multiple times while we're still checking
-    // if (checks.checkingSPA) {
-    //   console.log("spaObserverCallback() - already checking SPA, so returning... caller=" + caller);
-    //   return;
-    // }
-    // checks.checkingSPA = true;
-    console.log("spaObserverCallback() - mutations.length=" + mutations.length + ", caller=" + caller);
-    // // Need to delay in case navigate fires fast and the elements from the past pages are still on the screen (i.e. shouldStop will return false)
-    // if (caller === "navigate") {
-    //   await Promisify.sleep(1000);
-    // }
-    let shouldStop = true;
-    // Why pickerEnabled?
-    if (V.instance.enabled || V.instance.pickerEnabled) {
-      // If append is none, then the only criteria is that the button no longer exists (can't rely on the page.element buttons as the site may have added a new button at the bottom)
-      if (V.instance.append === "none") {
-        shouldStop = !Click.findButton(V.instance.buttonPath, V.instance.buttonType, document, false).button;
-      } else {
-        // Must have at least one page (i.e. still in the middle of prepareFirstPage() AJAX Iframe) and a page must be active for it to check if page.element is still in the document (e.g. the page wasn't removed in removePages())
-        shouldStop = V.pages.length > 0 && V.pages.every(page => !page.active || !document.contains(page.element) || (page.observableElement && !document.contains(page.observableElement)));
-      }
-    }
-    console.log("spaObserverCallback() - shouldStop=" + shouldStop);
-    if (shouldStop) {
-      await Scroll.stop("spaObserverCallback");
-      // Clean up existing pages before resetting
-      for (const page of V.pages) {
-        // Remove all the iframes
-        if (page.iframe && typeof page.iframe.remove === "function") {
-          console.log("spaObserverCallback() - removing iframe");
-          page.iframe.remove();
-        }
-        // Need to manually remove the dividers in case the website only handles its specific elements like (p when sorting from old to new or vice versa)
-        if (page.divider && typeof page.divider.remove === "function") {
-          console.log("spaObserverCallback() - removing divider");
-          page.divider.remove();
-        }
-        // TODO: This seems risky
-        // if (page.pageElements && page.pageElements.length > 0) {
-        //   for (const pageElement of page.pageElements) {
-        //     console.log("spaObserverCallback() - removing pageElements");
-        //     pageElement.remove();
-        //   }
-        // }
-      }
-      // Need to manually remove the AJAX Iframe in case we haven't appended any pages yet
-      if (V.iframe && typeof V.iframe.remove === "function") {
-        V.iframe.remove();
-      }
-      // Note that we are now always removing all the pages and resetting currentDocument and iframe if it's going to stop so that when it starts again,
-      // the currentDocument is able to find the next link on the top-level document, not the old cloned document
-      // We always need to reset the documents so we can still find the new next link on the new page
-      V.pages = [];
-      V.currentDocument = document;
-      V.insertionPoint = V.pageElements = V.button = V.iframe = V.lazys = V.bottom = V.loading = V.divider = V.overlay = undefined;
-      V.offset = 0;
-      V.timeouts = V.checks = {};
-      // // We are still using checks.checkingSPA so don't reset this entire object
-      // checks = { checkingSPA: true };
-      const tab = { id: 0, url: window.location.href };
-      console.log("spaObserverCallback() - tab.url=" + tab.url);
-      // Note that the potential SPA database items and saves are still in our storage items cache and we don't have to get the full storage items again
-      // Unless: this is a navigate event!
-      if (caller === "navigate") {
-        V.items = await Promisify.storageGet(undefined, undefined, []);
-      }
-      // V.instance = await Instance.buildInstance(tab, items);
-      // Here is where we may be waiting quite some time (e.g. 5 seconds)
-      const temp = await Instance.buildInstance(tab, V.items, 3);
-      console.log("spaObserverCallback() - temp V.instance=");
-      console.log(temp);
-      if (!V.instance.enabled) {
-        V.instance = temp;
-        delete V.instance.items;
-        if (V.instance.enabled) {
-          console.log("spaObserverCallback() - starting!");
-          await Scroll.start(caller);
-        }
-      }
-    }
-    // // Remove the SPA Check lock
-    // checks.checkingSPA = false;
+    Scroll.scrollDetection();
   }
 
   /**
@@ -247,12 +240,12 @@ class Scroll {
    * 1. detectCurrentPage() - What the current page is as the user scrolls
    * 2. shouldAppend() - When a new page should be added
    *
-   * @private
+   * @public
    */
-  static #scrollDetection() {
+  static scrollDetection() {
     Scroll.#detectCurrentPage();
     if (Scroll.#shouldAppend()) {
-      V.instance.isLoading = true;
+      // V.instance.isLoading = true;
       Workflow.execute(V.instance.action, "scrollDetection");
     }
   }
@@ -285,7 +278,7 @@ class Scroll {
         V.instance.scrollbarHeight = documentHeight;
       }
     }
-    console.log("scrollbarExists() - scrollbarExists=" + V.instance.scrollbarExists + ", scrollbarAppends=" + V.instance.scrollbarAppends + ", window.innerHeight=" + window.innerHeight + ", documentHeight=" + documentHeight);
+    console.log("Scroll.scrollbarExists() - scrollbarExists=" + V.instance.scrollbarExists + ", scrollbarAppends=" + V.instance.scrollbarAppends + ", window.innerHeight=" + window.innerHeight + ", documentHeight=" + documentHeight);
     return exists;
   }
 
@@ -300,7 +293,7 @@ class Scroll {
    * @private
    */
   static #scrolledNearBottomIO() {
-    console.log("scrolledNearBottomIO() - bottomIntersected=" + V.instance.bottomIntersected + ", bottomPage=" + V.instance.bottomPage + ", totalPages=" + V.instance.totalPages);
+    console.log("Scroll.scrolledNearBottomIO() - bottomIntersected=" + V.instance.bottomIntersected + ", bottomPage=" + V.instance.bottomPage + ", totalPages=" + V.instance.totalPages);
     // If the bottom is still on the page, check to see if it's intersected; otherwise, fallback to whether V.instance.bottomPage is the last page
     // Note that for the fallback, we use V.instance.bottomPage instead of V.instance.currentPage. The bottomPage is only used to determined if it should append or not, not the currentPage
     return V.bottomObserver && V.bottom?.nodeType === Node.ELEMENT_NODE && document?.body?.contains(V.bottom) ? V.instance.bottomIntersected : ((V.instance.totalPages - V.instance.bottomPage) <= 0);
@@ -327,7 +320,7 @@ class Scroll {
     const pixelsLeft = Math.floor(contentBottom - scrollPosition);
     // The user has scrolled near the bottom if the pixels left is less than or equal to the threshold (e.g. 1000 pixels)
     const scrolledNearBottom = pixelsLeft <= V.instance.appendThreshold;
-    console.log("scrolledNearBottomSL() - contentBottom=" + contentBottom + ", totalBottom=" + totalBottom + ", offset=" + V.offset + ", scrollPosition=" + scrollPosition + ", pixelsLeft=" + pixelsLeft + ", appendThreshold=" + V.instance.appendThreshold + ", scrolledNearBottom=" + scrolledNearBottom);
+    console.log("Scroll.scrolledNearBottomSL() - contentBottom=" + contentBottom + ", totalBottom=" + totalBottom + ", offset=" + V.offset + ", scrollPosition=" + scrollPosition + ", pixelsLeft=" + pixelsLeft + ", appendThreshold=" + V.instance.appendThreshold + ", scrolledNearBottom=" + scrolledNearBottom);
     return scrolledNearBottom;
   }
 
@@ -343,7 +336,7 @@ class Scroll {
    * @private
    */
   static #shouldAppend() {
-    console.log("shouldAppend() - intersectionObserver=" + V.intersectionObserver + ", V.instance.isLoading=" + V.instance.isLoading);
+    console.log("Scroll.shouldAppend() - intersectionObserver=" + V.intersectionObserver + ", V.instance.isLoading=" + V.instance.isLoading);
     // Scrollbar Exists check only needs to occur when in Intersection Observer mode because the pixels checks this already implicitly
     return V.instance.enabled && !V.instance.isLoading && !V.instance.pickerEnabled && !V.instance.autoEnabled && (V.intersectionObserver ? !Scroll.#scrollbarExists() || Scroll.#scrolledNearBottomIO() : Scroll.#scrolledNearBottomSL());
   }
@@ -369,7 +362,7 @@ class Scroll {
         if (!V.intersectionObserver || !currentSet) {
           currentSet = true;
           V.instance.currentPage = page.number;
-          console.log("detectCurrentPage() - page.number=" + page.number + ", page.url=" + page.url);
+          console.log("Scroll.detectCurrentPage() - page.number=" + page.number + ", page.url=" + page.url);
           // If this is not a local file URL, can update history or title
           if (!V.instance.isLocal) {
             // Check if the address bar (window.location.href) hasn't already been updated with this page's url to avoid unnecessarily setting it again
@@ -442,21 +435,21 @@ class Scroll {
     }
     // Page, Iframe, and Media Append modes always have an offset of 0
     if (V.instance.append === "page" || V.instance.append === "iframe" || V.instance.append === "media") {
-      console.log("calculateOffset() - append mode is page, iframe, or media, so setting offset to 0");
+      console.log("Scroll.calculateOffset() - append mode is page, iframe, or media, so setting offset to 0");
       V.offset = 0;
       return;
     }
-    // In Click Button Action Manual mode, it's just buttonPosition and no need to calculate it
-    if (V.instance.action === "click" && V.instance.append === "none" && V.instance.buttonDetection === "manual") {
-      console.log("calculateOffset() - action is button and buttonDetection is manual, so setting offset to buttonPosition=" + V.instance.buttonPosition);
-      V.offset = V.instance.buttonPosition;
+    // In Click Element Action Manual mode, it's just clickElementPosition and no need to calculate it
+    if (V.instance.action === "click" && V.instance.append === "none" && V.instance.clickElementDetection === "manual") {
+      console.log("Scroll.calculateOffset() - action is click and clickElementDetection is manual, so setting offset to clickElementPosition=" + V.instance.clickElementPosition);
+      V.offset = V.instance.clickElementPosition;
       return;
     }
     // Everything Else either uses pageElements (Element, Element Iframe, AJAX) or Auto Button Detection (None)
     // First get the absolute bottom position (total height of the document) in pixels
     const bottom_ = Util.getTotalHeight(document);
     // Check where the element point is on the document and find its position. Its position (top) can then be used to calculate the offset
-    let elementPosition = V.instance.append === "none" ? DOMNode.getElementPosition(V.button) : DOMNode.getElementPosition(V.insertionPoint);
+    let elementPosition = V.instance.append === "none" ? DOMNode.getElementPosition(V.clickElement) : DOMNode.getElementPosition(V.insertionPoint);
     // TODO: Experiment with NOT doing this anymore on the elementPosition and just relying on option 2 if insert isn't an element
     // If the insertion point isn't an element, we must wrap it inside an element to calculate its position
     // if (insertionPoint && insertionPoint.nodeType === Node.TEXT_NODE) {
@@ -474,7 +467,7 @@ class Scroll {
     let difference = elementPosition.top;
     // 2nd Option: If in element/ajax mode, fall back to calculating the elements' bottom position and use the biggest value
     if ((V.instance.append === "element" || V.instance.append === "ajax") && (!difference || difference <= 0)) {
-      console.log("calculateOffset() - no value found from the insertion point's top, calculating each element's bottom position ...");
+      console.log("Scroll.calculateOffset() - no value found from the insertion point's top, calculating each element's bottom position ...");
       // If setting the V.instance (changing the append mode) and we haven't yet set the page elements for the first time
       if (!V.pageElements) {
         V.pageElements = Elementify.getPageElements(document);
@@ -485,39 +478,14 @@ class Scroll {
     }
     // 3rd Option: Fall back to using the total document height * 0.75
     if (!difference || difference <= 0) {
-      console.log("calculateOffset() - no value found from any of the elements' bottom position, calculating the document's bottom * 0.75 ...");
+      console.log("Scroll.calculateOffset() - no value found from any of the elements' bottom position, calculating the document's bottom * 0.75 ...");
       difference = bottom_ * 0.75;
     }
     // ceil (round up 1 pixel) just in case?
     V.offset = Math.ceil(bottom_ - difference);
     console.log(V.pageElements ? ("calculateOffset() - the elements' max bottom position was:" + Math.max(...(V.pageElements.filter(e => e.nodeType === Node.ELEMENT_NODE).map(e => DOMNode.getElementPosition(e).bottom)))) : "");
-    console.log("calculateOffset() - bottom=" + bottom_ + ", offset=" + V.offset + ", elementPosition=" + elementPosition.top + ", backup bottom*0.75=" + (bottom_ * .75) + ", and the value chosen was=" + difference);
+    console.log("Scroll.calculateOffset() - bottom=" + bottom_ + ", offset=" + V.offset + ", elementPosition=" + elementPosition.top + ", backup bottom*0.75=" + (bottom_ * .75) + ", and the value chosen was=" + difference);
   }
-
-  // TODO: This usually works really well but has occasionally given incorrect values, so we'll need to rethink this approach
-  // /**
-  //  * Converts a text node into a HTML element (namely the insertion point) so that we can use Node.ELEMENT_NODE
-  //  * functions, like getBoundingClientRect in order to calculate the scroll position.
-  //  *
-  //  * @param {Node} node - the node
-  //  * @returns {HTMLSpanElement|*} the converted element
-  //  * @private
-  //  */
-  // static #convertTextToElement(node) {
-  //   console.log("convertTextToElement()");
-  //   try {
-  //     if (node.nodeType === Node.TEXT_NODE) {
-  //       const element = document.createElement("span");
-  //       DOMNode.insertBefore(element, node);
-  //       element.appendChild(node);
-  //       return element;
-  //     }
-  //   } catch (e) {
-  //     console.log("convertTextToElement() - Error:");
-  //     console.log(e);
-  //   }
-  //   return node;
-  // }
 
   /**
    * Creates the optional overlay that is fixed on the page. The overlay shows the current page # / total page # and is
@@ -566,7 +534,7 @@ class Scroll {
       });
       V.overlay.appendChild(close);
       // Icon
-      if (V.instance.scrollIcon) {
+      if (V.instance.showIcon) {
         const icon = Util.createIcon("infinity", { color: overlayColor });
         V.overlay.appendChild(icon);
       } else {
@@ -606,7 +574,7 @@ class Scroll {
    * @private
    */
   static #updateOverlay() {
-    console.log("updateOverlay() - pageOverlay=" + V.instance.pageOverlay)
+    console.log("Scroll.updateOverlay() - pageOverlay=" + V.instance.pageOverlay)
     if ((V.instance.pageOverlay || V.instance.debugEnabled) && V.overlay && V.overlay.children[2]) {
       V.overlay.children[2].textContent = chrome.i18n.getMessage("page_label") + " " + V.instance.currentPage + " / " + V.instance.totalPages;
       if (V.instance.debugEnabled && V.overlay.children[3] && V.overlay.children[3].children[1]) {
@@ -643,11 +611,11 @@ class Scroll {
    * @private
    */
   static #createLoading() {
-    console.log("createLoading() - scrollLoading=" + V.instance.scrollLoading);
+    console.log("Scroll.createLoading() - showLoading=" + V.instance.showLoading);
     if (V.loading && typeof V.loading.remove === "function") {
       V.loading.remove();
     }
-    if (V.instance.scrollLoading) {
+    if (V.instance.showLoading) {
       V.loading = document.createElement("div");
       V.loading.id = V.LOADING_ID;
       V.loading.style = Util.processStyle("all: initial; display: none; position: fixed; bottom: 0; right: 0; padding: 8px; z-index: 2147483647;");
@@ -670,7 +638,7 @@ class Scroll {
       // script.src = chrome.runtime.getURL("/js/ajax.js?") + new URLSearchParams({eventName: V.EVENT_AJAX});
       script.src = chrome.runtime.getURL("/js/ajax.js");
       script.onload = function () {
-        console.log("injectAjaxScript() - ajax.js script loaded");
+        console.log("Scroll.injectAjaxScript() - ajax.js script loaded");
         V.checks.ajaxScriptInjected = true;
         setTimeout(() => {
           // V.instance.customEventsEnabled || isRequired
@@ -695,507 +663,32 @@ class Scroll {
   }
 
   /**
-   * Uses window.matchMedia to derive the current system theme. This is in the content script due to there not being a browser
-   * provided API/listener to detect these changes in the background. Note that the MV2 background can use window.matchMedia
-   * changes, but not listen for them. Service Workers can't do either.
+   * The callback function for the AJAX Mutation Observer. Observes when a mutation occurs to the sub tree and reacts by
+   * removing the specified elements.
    *
-   * @see https://github.com/sixcious/infy-scroll/issues/55
-   * @see https://github.com/w3c/webextensions/issues/229
-   * @private
-   * ]'
-   */
-  static #addThemeListener() {
-    console.log("addThemeListener()");
-    try {
-      const prefersColorSchemeDark = window.matchMedia("(prefers-color-scheme: dark)");
-      if (chrome.extension?.inIncognitoContext) {
-        console.log("addThemeListener() - incognito tab, sending message to background");
-        //} && (V.items.icon === "dark" || (V.items.icon === "system" && prefersColorSchemeDark))) {
-        Promisify.runtimeSendMessage({sender: "contentscript", receiver: "background", greeting: "setIcon", icon: "light", tabSpecific: true });
-      } else if (V.items.icon === "system") {
-        Promisify.runtimeSendMessage({sender: "contentscript", receiver: "background", greeting: "setIcon", icon: prefersColorSchemeDark.matches ? "light" : "dark"});
-        prefersColorSchemeDark.addEventListener("change", function(e) {
-          console.log("prefers-color-scheme change, dark=" + e.matches);
-          // Update the toolbar icon and send a message to the Options and Popup to update the favicon (not really necessary for the Popup)
-          Promisify.runtimeSendMessage({sender: "contentscript", receiver: "background", greeting: "setIcon", icon: e.matches ? "light" : "dark"});
-          Promisify.runtimeSendMessage({sender: "contentscript", receiver: "popup", greeting: "themeChanged", theme: e.matches ? "dark" : "light"});
-          Promisify.runtimeSendMessage({sender: "contentscript", receiver: "options", greeting: "themeChanged", theme: e.matches ? "dark" : "light"});
-        });
-      }
-    } catch (e) {
-      console.log("addThemeListener() - Error:")
-      console.log(e);
-    }
-  }
-
-  /**
-   * Adds the Navigation API's navigate listener to help detect browser navigations when browsing SPAs.
+   * Note: This observer is only for the AJAX Native mode.
    *
-   * Note: Navigation is currently only supported in Chrome/Edge 102+ (not currently supported in Firefox).
-   *
-   * @param {Object} tab - the tab object containing this tab's URL
-   * @param {Object} items - the storage items containing the navigationBlacklist
-   * @see https://developer.chrome.com/docs/web-platform/navigation-api/
-   * @see https://developer.mozilla.org/docs/Web/API/Navigation_API
-   * @see https://developer.mozilla.org/docs/Web/API/Navigation
-   * @see https://stackoverflow.com/questions/75313690/is-there-chrome-api-event-listener-that-fires-when-modern-web-apps-update-their
+   * @param {MutationRecord[]} mutations - the array of mutation records
    * @private
    */
-  static #addNavigationListener(tab, items) {
-    console.log("addNavigationListener()");
-    try {
-      const matches = Saves.matchesList(tab.url, tab.url, items?.navigationBlacklist, "Navigation Blacklist")?.matches;
-      if (!matches && typeof navigation !== "undefined" && typeof navigation?.addEventListener === "function") {
-        console.log("addNavigationListener() - adding navigation listener");
-        // We add a timeout just in case this is fired very early to let init() build the V.instance first? Can't catch errors unless we add an inner try-catch here
-        // setTimeout(() => { navigation.addEventListener("navigate", navigateEvent => { spaObserverCallback([], {}, "navigate") }); }, 1000);
-        // This timeout seems to cause issues vs awaiting promisify 1 second inside the function
-        navigation.addEventListener("navigate", navigateEvent => {
-          console.log("navigationListener() - fired navigate event");
-          clearTimeout(V.timeouts.navigationListener);
-          V.timeouts.navigationListener = setTimeout(() => { Scroll.#spaObserverCallback([], {}, "navigate"); }, 1000);
-        });
-      }
-    } catch (e) {
-      console.log("addNavigationListener() - error initializing navigation listener, Error:")
-      console.log(e);
-    }
-  }
-
-  /**
-   * Checks to see if the databases need to be updated; if so, updates the databases.
-   *
-   * This function resides in the content script instead of the background's startup listener because that only fires
-   * when Chrome starts, and users tend to keep their browser open for days or weeks before restarting.
-   *
-   * @private
-   */
-  static async #updateDatabases() {
-    console.log("updateDatabase()");
-    try {
-      // This checks to see if the database needs to be updated (if the update was more than X number of days ago).
-      // Note: 1 Day = 86400000 ms
-      if ((V.items.databaseAPEnabled || V.items.databaseISEnabled) && V.items.databaseUpdate >= 1 && (!V.items.databaseDate || ((new Date() - new Date(V.items.databaseDate)) >= (86400000 * V.items.databaseUpdate)))) {
-        console.log("updateDatabase() - updating database because databaseDate=" + V.items.databaseDate + " and databaseUpdate=" + V.items.databaseUpdate);
-        const response = await Promisify.runtimeSendMessage({receiver: "background", greeting: "downloadDatabase", downloadAP: V.items.databaseAPEnabled, downloadIS: V.items.databaseISEnabled, downloadLocation: V.items.databaseLocation});
-        console.log("updateDatabase() - download response=" + JSON.stringify(response));
-      }
-    } catch (e) {
-      console.log("updateDatabase() - Error:");
-      console.log(e);
-    }
-  }
-
-  /**
-   * This function is only called when the extension wants to "start" running on this page.
-   * This will create some of Infy Scroll's one-time only elements (like the overlay and loading) for the very first time and actually add the scroll detection.
-   *
-   * Note: This function typically only runs one time. The difference between it and init() is that init() runs on each
-   * page request, whereas start() only runs when the extension should be "started" (enabled) for the very first time
-   * or restarted again (e.g. if after a stop() or if the user clicks the ACCEPT button in the Popup).
-   *
-   * Note: This function is public for Action.power(), Action.blacklist(), and Action.whitelist().
-   *
-   * @param {string} caller - the caller who called this function
-   * @public
-   */
-  static async start(caller) {
-    console.log("start() - caller=" + caller);
-    // TODO: Is the enabled needed because we might start via shortcuts? The Popup normally sets this to true after clicking Accept
-    V.instance.enabled = true;
-    // This is the only opportunity (besides the Popup) that we have of getting the tab ID to identify this V.instance (don't need to await this, so let's set the badge early)
-    Promisify.runtimeSendMessage({receiver: "background", greeting: "setBadge", badge: "on", temporary: false, needsTabId: true}).then((tabId) => { V.instance.tabId = tabId; });
-    if (!V.instance.started) {
-      console.log("start() - was not started, so setting V.instance.started=true and doing initialization work...");
-      V.instance.started = true;
-      V.scrollListener = Util.throttle(Scroll.#scrollDetection, 200);
-      // If caller is command and via is items, this was a down action while not enabled, or it was a re-start if it was previously enabled already (somehow?)
-      if (caller === "command" && V.instance.via === "items") {
-        // We need to initialize it with the default action and append (next page) if we didn't find a save or database URL
-        V.instance.action = "next";
-        V.instance.append = "page";
-        // If the previous action/append mode was workflowReverse, that will be true so we need to reset it back to false
-        V.instance.workflowReverse = false;
-        V.instance.workflowPrepend = "";
-        V.instance.documentType = "current";
-        V.instance.transferNodeMode = "adopt";
-        // We need to determine whether keywords should be enabled or not. We only enable keywords if the path failed on page 1 for a Keyboard Shortcut Command
-        const link = Next.findLink(V.instance.nextLinkPath, V.instance.nextLinkType, V.instance.nextLinkProperty, undefined, V.items.nextLinkKeywords, undefined, true, document, false);
-        V.instance.nextLinkKeywordsEnabled = link.method === "keyword";
-        V.instance.nextLinkKeyword = link.keywordObject;
-      }
-      // resetStyling();
-      await Append.prepareFirstPage("start");
-      // We need to now trigger the AP CustomEvent that we have loaded. This is for external scripts that may be listening for them
-      Util.triggerCustomEvent(V.EVENT_ON, document, {}, V.instance.customEventsEnabled, V.items.browserName);
-    }
-    if (!V.items.on) {
-      console.log("start() - was not on, so setting items.on=true");
-      V.items.on = true;
-      Promisify.storageSet({"on": true});
-    }
-    // Note: We ned to call appendBottom() before addScrollDetection() so the bottomObserver can observe the bottom
-    Scroll.#createOverlay();
-    Scroll.#createLoading();
-    Append.appendBottom();
-    Scroll.#addScrollDetection();
-    Scroll.#injectAjaxScript();
-    // The AJAX Observer is only added if we are in native mode and removing or hiding elements
-    if (V.instance.append === "ajax" &&  V.instance.ajaxMode === "native" && (V.instance.removeElementPath || V.instance.hideElementPath)) {
-      V.ajaxObserver = new MutationObserver(Scroll.#ajaxObserverCallback);
-      // TODO: Should we switch back to subtree: false? Need true for p int
-      // ajaxObserver.observe(insertionPoint?.parentNode || document.body, { childList: true, subtree: false });
-      V.ajaxObserver.observe(document.body, { childList: true, subtree: true });
-    }
-    // Note that we will always make isLoading=false every time start is called, resetting any weird states (e.g. to add Auto in the Popup after being enabled, isLoading might be previously true)
-    Scroll.delay("start");
-  }
-
-  /**
-   * This function is called when the extension wants to "stop" running on this page. This code handles all non-instance
-   * specific stopping logic, such as removing the scrollDetection and hiding the overlay and loading elements.
-   *
-   * This will put the V.instance in a disabled or stopped state in case the user decides to turn the extension back on
-   * before refreshing the page. The V.instance will not be deleted, but pages will not be appended while it is stopped.
-   *
-   * The stop action can be initiated directly from a power (off) action for this tab, or if the Background sends a
-   * message to a tab's content script (after receiving a power "off" notification from another tab).
-   *
-   * Note: This function is public for Action.power(), Action.blacklist(), and Action.whitelist().
-   *
-   * @param {string} caller - the caller who called this function
-   * @public
-   */
-  static stop(caller) {
-    console.log("stop() - caller=" + caller);
-    Scroll.#removeScrollDetection();
-    // Disconnect MutationObservers
-    if (V.ajaxObserver) {
-      V.ajaxObserver.disconnect();
-      V.ajaxObserver = undefined;
-    }
-    if (V.spaObserver && caller !== "spaObserverCallback") {
-      V.spaObserver.disconnect();
-      V.spaObserver = undefined;
-    }
-    // Remove all infy-scroll specific elements (they can be re-added when restarting)
-    if (V.overlay && typeof V.overlay.remove === "function") {
-      V.overlay.remove();
-    }
-    if (V.loading && typeof V.loading.remove === "function") {
-      V.loading.remove();
-    }
-    if (V.bottom && typeof V.bottom.remove === "function") {
-      V.bottom.remove();
-    }
-    // Instance Business Logic: This was...?
-    if (V.instance.autoEnabled) {
-      Auto.stopTimer("stop");
-    }
-    // Only show the off badge if it was previously on so we can call stop silently for other situations where the V.instance may not be enabled?
-    if (V.instance.enabled) {
-      Promisify.runtimeSendMessage({receiver: "background", greeting: "setBadge", badge: "off", temporary: true});
-    }
-    // V.instance: For callers like popup that still need the V.instance, disable it and reset all auto properties
-    // V.instance.started will always remain true, do not reset it to false in the case the user re-enables the extension on this page
-    V.instance.enabled = false;
-    // All this auto stuff is done in Auto.stopAutoTimer
-    // V.instance.enabled = V.instance.autoEnabled = V.instance.autoPaused = V.instance.autoSlideshow = false;
-    // V.instance.autoTimes = V.instance.autoTimesOriginal;
-    // V.instance.autoRepeatCount = 0;
-    // Items: Get the updated on/off state for this page's storage items cache
-    Promisify.storageGet("on").then(on => { V.items.on = on; });
-    // // For callers like popup that still need the V.instance, disable all states and reset auto, multi, and urls array
-    // V.instance.enabled = V.instance.multiEnabled = V.instance.autoEnabled = V.instance.autoPaused = V.instance.autoSlideshow = V.instance.shuffleURLs = false;
-    // V.instance.multi = {"1": {}, "2": {}, "3": {}};
-    // V.instance.multiCount = V.instance.autoRepeatCount = 0;
-    // V.instance.urls = [];
-    // Scroll Instance Cleanup ... TODO: Why was this current page assignment needed?
-    // V.instance.currentPage = V.instance.totalPages;
-  }
-
-  /**
-   * Imposes a delay before allowing the V.instance to load another page. This delay prevents Infy from making too many
-   * requests in a small time frame. This function is used by Workflow.postWorkflow() and Scroll.start() to manage
-   * preparing the first page.
-   *
-   * @param {string} caller - the caller who called this function
-   * @public
-   */
-  static async delay(caller) {
-    console.log("delay() - caller=" + caller);
-    // If the caller is popup (e.g. ACCEPT Button) or auto there is no reason to delay
-    await Promisify.sleep(caller === "popup" || caller === "auto" ? 100 : V.instance.appendDelay || 2000);
-    V.instance.isLoading = false;
-    // Don't call the autoListener in start/prepareFirstPage because Popup will have already called startAutoTimer()
-    if (V.instance.autoEnabled && caller !== "start") {
-      Auto.autoListener();
-    } else {
-      // At this point we can perform the action again if necessary. For example, if there is still no scrollbar, we
-      // can perform the action (appending another page). We can also decide to check shouldAppend(), which will check
-      // if we are near the bottom in terms of pages or pixels. This is a very important decision, as the extension
-      // can keep appending more pages automatically at this point. If we only check for the scrollbar, we can force
-      // the extension to only append one page at a time when scrolling, which seems safer. If we do the check for
-      // shouldAppend(), we can check if the caller is prepareFirstPage so that it won't append more pages automatically
-      // on each page load and waits until the user actually starts scrolling.
-      // TODO: Consider implementing a maximum number of consecutive appends that can be done by the pixels and pages thresholds (share this limit with scrollbarAppends?)
-      Scroll.#scrollDetection();
-    }
-  }
-
-  /**
-   * This function is called everytime an extension shortcut (command) is initiated.
-   * This works very similarly to how Popup.clickActionButton() works with a few special cases (the if statement).
-   * For example, the down action can start the V.instance.
-   *
-   * @param {string} action - the shortcut command
-   * @param {string} caller - the caller who called this function
-   * @private
-   */
-  static async #command(action, caller) {
-    // Down action while not enabled allows it to start using default settings or re-start if it was previously enabled already (this is already handled in start())
-    if (action === "down" && !V.instance.enabled) {
-      await Scroll.start(caller);
-    } else if (((action === "down" || action === "up") && V.instance.enabled) ||
-                (action === "auto" && V.instance.autoEnabled) ||
-                (action === "blacklist" && V.instance.databaseFound && !V.instance.autoEnabled) ||
-                (action === "power")) {
-      // // Update Scroll's local items cache on state to false while this window is still open. The storage items will be updated in performAction so we don't have to do it here
-      // if (action === "power") {
-      //   V.items.on = !V.items.on;
-      //   // TODO: Should we set V.instance.enabled to false here?
-      // }
-      // If this is a blacklist action, we need to toggle it to whitelist if the user has auto activate set to false
-      if (action === "blacklist" && V.items.databaseMode !== "blacklist") {
-        action = "whitelist";
-      }
-      Workflow.execute(action, caller);
-    }
-  }
-
-  /**
-   * Listen for requests from chrome.tabs.sendMessage (Extension Environment: Background / Popup)
-   * Note: Every request should be responded to via sendResponse. Otherwise we introduce an unnecessary delay in waiting
-   * for the response.
-   *
-   * @param {Object} request - the request containing properties to parse (e.g. greeting message)
-   * @param {Object} sender - the sender who sent this message, with an identifying tab
-   * @param {function} sendResponse - the optional callback function (e.g. for a reply back to the sender)
-   * @private
-   */
-  static async #messageListener(request, sender, sendResponse) {
-    console.log("messageListener() - request=");
-    console.log(request);
-    let response = {};
-    switch (request.greeting) {
-      case "getInstance":
-        response = V.instance;
-        break;
-      case "setInstance":
-        // Note: This setInstance message is only called from the Popup (Accept Button)
-        // Store the current page and append mode before setting the V.instance to do some post setInstance work
-        const currentPage = V.instance.currentPage;
-        const append = V.instance.append;
-        const workflowReverse = V.instance.workflowReverse;
-        // Clone to be safe?
-        V.instance = Util.clone(request.instance);
-        // We may need to reset the iframe if the user is changing the append mode so that we always load a new iframe with the latest V.instance.url
-        // If we didn't do this, then if the pre-existing iframe had an older V.instance.url, we would use that for the next workflow's action/append
-        // const isIframe = (V.instance.append === "iframe" || (V.instance.append === "element" && V.instance.pageElementIframe) || (V.instance.append === "ajax" && V.instance.ajaxMode !== "native"));
-        if (append !== V.instance.append && V.iframe) {
-          // If the user is changing from the regular iframe to another append, then we shouldn't remove the previously appended iframe (all other cases, we probably ought to though)
-          // iframe.remove();
-          V.iframe = undefined;
+  static #ajaxObserverCallback(mutations) {
+    console.log("Scroll.ajaxObserverCallback() - mutations.length=" + mutations.length);
+    for (const mutation of mutations) {
+      console.log("Scroll.ajaxObserverCallback() - mutation, type=" + mutation.type + " mutation.addedNodes=" + mutation.addedNodes.length);
+      if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+        const removeElements = DOMNode.getElements(V.instance.removeElementPath, V.instance.pageElementType).elements;
+        for (const element of removeElements) {
+          element.remove();
         }
-        // This causes issues when setting the V.instance for the first time in the popup when the workflowReverse is true (e.g. just starting in Element Iframe mode)
-        if (!workflowReverse && V.instance.workflowReverse && Array.isArray(V.pages) && V.pages.length > 0 && V.instance.started) {
-          await Iframe.prepareIframe(true, "setInstance");
-        }
-        // TODO: We need to reset the V.instance's URL back to the previous URL so Next.findLink() doesn't return a duplicate URL when we try again. We should refactor the code so that the V.instance URL is only set after the page has been successfully appended...
-        // TODO: We need to revert currentDocument back to previous document...?
-        if (workflowReverse && !V.instance.workflowReverse && Array.isArray(V.pages) && V.pages[V.pages.length - 1]) {
-          V.instance.url = V.pages[V.pages.length - 1].url;
-        }
-        // Popup sometimes has out of date values for the current page and total pages
-        V.instance.currentPage = currentPage;
-        V.instance.totalPages = V.pages.length || 1;
-        // Recalculate the offset in case the append mode changed
-        Scroll.calculateOffset();
-        break;
-      case "start":
-        // Note: This start message is only called from the Popup (Accept Button)
-        await Scroll.start(request.caller);
-        break;
-      case "stop":
-        Scroll.stop(request.caller);
-        break;
-      case "executeWorkflow":
-        Workflow.execute(request.action, request.caller, request.extra);
-        break;
-      case "popupOpened":
-        V.instance.popupOpened = request.popupOpened;
-        break;
-      case "checkSave":
-        response = Saves.matchesSave(request.url, request.save);
-        break;
-      case "checkNextPrev":
-        response = Next.findLinkWithProperties(request.path, request.type, request.property, request.keywordsEnabled, request.keywords, request.keywordObject, true, [V.currentDocument, V.iframe?.contentDocument], V.pages, V.instance.url, request.highlight);
-        break;
-      case "checkButton":
-        response = Click.findButton(request.buttonPath, request.buttonType, V.instance.documentType === "iframe" ? V.iframe?.contentDocument : document, request.highlight).details;
-        break;
-      case "checkPageElement":
-        // Note: If we are using auto detect, we always use the live document; otherwise use the current (latest) document to reflect the most accurate results
-        const pageElements_ = Elementify.getPageElements(request.autoDetected || V.instance.documentType === "top" ? document : V.instance.documentType === "iframe" ? V.iframe?.contentDocument : V.currentDocument, request.pageElementType, request.pageElementPath, true);
-        const insertionPoint_ = Elementify.getInsertionPoint(pageElements_[0], true, request.pageElementType, request.insertBeforePath, true);
-        const parent = insertionPoint_[0] ? insertionPoint_[0].parentNode : undefined;
-        response = { found: (pageElements_[0].length > 0 && !!insertionPoint_[0] && !!parent), elementsLength: pageElements_[0].length, error: pageElements_[1].error, insertDetails: insertionPoint_[1], parentNode: parent ? parent.nodeName : ""};
-        if (request.highlight && typeof HoverBox !== "undefined") {
-          new HoverBox().highlightElement(parent, true);
+        const hideElements = DOMNode.getElements(V.instance.hideElementPath, V.instance.pageElementType).elements;
+        for (const element of hideElements) {
+          element.style.display = "none";
+          // TODO: Test this more:
+          // element.setProperty("display", "none", "important");
         }
         break;
-      case "autoDetectPageElement":
-        // Do not use our storage items cache of path properties as it may be out of date compared to the Popup's
-        // Use V.instance.pageElementType instead of items.preferredPathType in case the user has changed the type to a fixed type to generate a path using that path type
-        // When returning the response, note that we can't send back the element, so just send the path and details
-        const autoDetectResult = AutoDetectPageElement.detect(request.instance.pageElementType, request.algorithm, request.quote, request.optimized);
-        response = {path: autoDetectResult.path, details: autoDetectResult.details};
-        if (request.highlight && typeof HoverBox !== "undefined") {
-          new HoverBox().highlightElement(autoDetectResult.el, true);
-        }
-        break;
-      case "determinePathType":
-        // Note: We always check the preferred path type on the first attempt, so we don't use request.type
-        response = DOMPath.determinePathType(request.path, V.items.preferredPathType).type;
-        break;
-      case "findLinks":
-        response = List.findLinks();
-        break;
-      case "openPicker":
-        Picker.openPicker();
-        break;
-      case "closePicker":
-        Picker.closePicker();
-        break;
-      case "initPicker":
-        Picker.initPicker(request.algorithm, request.quote, request.optimized, request.js, request.property, request.size, request.corner);
-        break;
-      case "changePicker":
-        Picker.changePicker(request.change, request.value);
-        break;
-      case "savePicker":
-        Picker.savePicker();
-        break;
-      case "copyPicker":
-        Picker.copyPicker();
-        break;
-      case "resizePicker":
-        Picker.resizePicker(request.size);
-        break;
-      case "movePicker":
-        Picker.movePicker(request.corner);
-        break;
-      case "startAutoTimer":
-        // Only called by the Popup when Auto is toggled on
-        Auto.startTimer(request.caller);
-        break;
-      case "stopAutoTimer":
-        // Only called by the Popup when Auto is toggled off
-        Auto.stopTimer(request.caller);
-        break;
-      case "incrementValidateSelection":
-        response = Increment.validateSelection(request.instance.selection, request.instance.base, request.instance.baseCase, request.instance.baseDateFormat, request.instance.baseRoman, request.instance.baseCustom, request.instance.leadingZeros);
-        break;
-      case "incrementPrecalculateURLs":
-        response = IncrementArray.precalculateURLs(request.instance);
-        break;
-      case "addSave":
-        response = await Saves.addSave(request.instance);
-        break;
-      case "deleteSave":
-        // Not doing response = because the saves array might be really big
-        await Saves.deleteSave(request.id, request.url, request.writeToStorage);
-        break;
-      case "command":
-        Scroll.#command(request.action, request.caller);
-        break;
-      default:
-        break;
-    }
-    sendResponse(response);
-  }
-
-  /**
-   * Scroll initialization (IIFE).
-   *
-   * This function is this content script's entry point. It runs on every page request and determines if the
-   * extension should start itself or not on this tab. It initializes the storage items and V.instance on the page.
-   *
-   * Note: This function only runs one time.
-   *
-   * @see https://stackoverflow.com/a/61203517
-   * @private
-   */
-  static #init = (async () => {
-    console.log("init()");
-    // Scroll Listeners
-    // Message Listener: We need to return immediately if the function will be performing asynchronous work
-    chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) { if (!request || request.receiver !== "contentscript") { return; } Scroll.#messageListener(request, sender, sendResponse); if (request && request.async) { return true; } });
-    // Initialize Scroll
-    // Note: Previously we had timing issues with some websites, but due to the new multiple checks for activation, we no
-    // longer need to force an initial timeout due to dynamic content. Also, we have a separate timeout for calculating
-    // the offset, so there is no real reason to delay initialization
-    await Promisify.sleep(1);
-    const tab = { id: 0, url: window.location.href };
-    V.items = await Promisify.storageGet(undefined, undefined, []);
-    // Change the icon to light if this tab is incognito
-    Scroll.#addThemeListener();
-    // Add the navigation listener relatively early before we await the next few things
-    Scroll.#addNavigationListener(tab, V.items);
-    // Note that this is the best time we can update the databases (not in the background). Do not await this; try and start as fast as possible, and have the updated database ready for the next page request
-    Scroll.#updateDatabases(V.items);
-    // const startTime = performance.now();
-    V.instance = await Instance.buildInstance(tab, V.items);
-    V.items = V.instance.items;
-    // Delete the items cache in the V.instance (we need to do this now in case the user enters the Popup early and tries to copy their debug data)
-    delete V.instance.items;
-    // If the V.instance's source is still items, check a few more times in case dynamic content hasn't finished loading
-    if (V.instance.via === "items" || V.instance.via === "placeholder") {
-      // Here is where we may be waiting quite some time (e.g. 5 seconds)
-      const temp = await Instance.buildInstance(tab, V.items, 1);
-      // The V.instance may have been set by the user in the time it took to await the previous statement; only set it if it hasn't been enabled
-      console.log("init() - temp.via=" + temp.via + ", enabled=" + V.instance.enabled + ", pickerEnabled=" + V.instance.pickerEnabled + ", pickerSet=" + V.instance.pickerSet);
-      if (temp.via !== "items" && !V.instance.enabled && !V.instance.pickerEnabled && !V.instance.pickerSet) {
-        console.log("init() - setting V.instance to temp, temp=");
-        console.log(temp);
-        if (V.instance.popupOpened) {
-          Promisify.runtimeSendMessage({receiver: "popup", greeting: "updatePopupInstance", caller: "init", action: "", instance: temp});
-        }
-        V.instance = temp;
       }
     }
-    // const endTime = performance.now();
-    // console.log("Call to do test took " + (endTime - startTime) + " milliseconds");
-    console.log("init() - after filtering, saves.length=" + V.items.saves.length + ", databaseIS.length=" + V.items.databaseIS.length + ", databaseAP.length=" + V.items.databaseAP.length);
-    console.log("init() - saves=\n" + (V.items.saves.map(x => x.url).join("\n")));
-    console.log("init() - databaseIS=\n" + (V.items.databaseIS.map(x => x.url).join("\n")));
-    console.log("init() - databaseAP=\n" + (V.items.databaseAP.map(x => x.url).join("\n")));
-    // Delete the items cache in the V.instance
-    delete V.instance.items;
-    // Note: We do not want to delete the database or saves from the items cache to streamline checking them again later if this is an SPA
-    console.log("init() - V.instance=");
-    console.log(V.instance);
-    if (V.instance.enabled) {
-      await Scroll.start("init");
-    }
-    // If this is an SPA, watch this page.
-    // Note: We don't want to enable this on every website. For example, simply entering text in https://regex101.com/ keeps firing mutation changes
-    if (V.instance.spa && V.items.on && (V.instance.databaseFound ? V.items.databaseMode === "blacklist" ? !V.instance.databaseBlacklisted : V.instance.databaseWhitelisted : true)) {
-      console.log("init() - watching SPA");
-      // V.spaObserver = new MutationObserver(Scroll.#spaObserverCallback);
-      V.spaObserver = new MutationObserver(Util.throttle(Scroll.#spaObserverCallback, 1000));
-      V.spaObserver.observe(document.body, { childList: true, subtree: true });
-    }
-  })();
+  }
 
 }
