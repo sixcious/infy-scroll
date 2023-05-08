@@ -21,7 +21,7 @@ Infy Scroll can let you add customized infinite scrolling to websites and auto-l
 ## Features
 - 4 Actions: Next Link, Click Element, Increment URL, URL List
 - 6 Append Modes: Page (for simple websites), Iframe (for complex websites), Element (AutoPagerize Mode), Media (for images like 001.jpg), AJAX (for AJAX/SPA sites), and None (for sites that only require clicks)
-- Paths: Understands Selectors, XPath expressions, and JS Paths, and can auto-detect what type of path you are entering is, or can be set to a fixed type by toggling the label (SE/XP/JS)
+- Paths: Infy understands Selectors, XPath expressions, and JS Paths, and can auto-detect what type of path you are entering, or can be set to a fixed path type by toggling the label (SE/XP/JS)
 - Element Picker: Pick an element on the page and generate its Selector or XPath expression automatically or use the EP's buttons to traverse the DOM in any direction (May not work on complex websites)
 - Auto Detect Page Element (a new innovative feature): Let Infy's algorithm try to detect the page element for you (May not work well on complex websites)
 - Next Link Algorithm: Let Infy's algorithm also try to figure out the next link for you by using your own customizable keywords
