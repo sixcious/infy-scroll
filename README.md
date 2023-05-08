@@ -16,21 +16,23 @@ Infy is currently in beta. This means it might contain a few bugs and it might n
 <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
 
 ## About
-Infy Scroll is an extension in beta that can auto-load the next page and let you add customized infinite scrolling to websites. It's also compatible with the AutoPagerize Database, which means it supports thousands of websites automatically. Infy supports 4 different actions and 4 different append modes so you can customize each site's infinite scrolling to how you want it to be. Infy understands both CSS Selector and XPath expressions for finding next links, and it features an Element Picker that can generate them for you, similar to the original AutoPager. It can also increment URLs and perform special actions, like clicking "Load More" buttons. You can save your settings for each URL and Infy will auto-activate the next time you visit them.
+Infy Scroll can let you add customized infinite scrolling to websites and auto-load the next page as you scroll down. It's also compatible with the AutoPagerize Database, which means it supports thousands of websites automatically. Infy supports 4 different actions and 6 different append modes so you can customize each site's infinite scrolling to how you want it to be. Infy understands both CSS Selector and XPath expressions for finding next links, and it features an Element Picker that can generate them for you, similar to the original AutoPager. It can also increment URLs and perform special actions, like clicking "Load More" buttons. You can save your settings for each URL and Infy will auto-activate the next time you visit them.
 
 ## Features
-- 4 Actions: Next Link, Increment URL, Click Button, URL List
-- 4 Append Modes: Page (for Simple Websites), Iframe (for Complex Websites), Element (AutoPagerize Mode), and Media (for Images like 001.jpg)
-- Element Picker: Pick an element on the page and generate its CSS Selector or XPath expression automatically or use the EP's buttons to traverse the DOM in any direction (May not work on complex websites)
-- Auto Detect Page Element (a new innovative feature): Let Infy's algorithm try to detect the page element for you roughly ~50% of the time (May not work well on complex websites)
+- 4 Actions: Next Link, Click Element, Increment URL, URL List
+- 6 Append Modes: Page (for simple websites), Iframe (for complex websites), Element (AutoPagerize Mode), Media (for images like 001.jpg), AJAX (for AJAX/SPA sites), and None (for sites that only require clicks)
+- Paths: Understands Selectors, XPath expressions, and JS Paths, and can auto-detect what type of path you are entering is, or can be set to a fixed type by toggling the label (SE/XP/JS)
+- Element Picker: Pick an element on the page and generate its Selector or XPath expression automatically or use the EP's buttons to traverse the DOM in any direction (May not work on complex websites)
+- Auto Detect Page Element (a new innovative feature): Let Infy's algorithm try to detect the page element for you (May not work well on complex websites)
 - Next Link Algorithm: Let Infy's algorithm also try to figure out the next link for you by using your own customizable keywords
-- Auto Mode: Automatically append pages, or use Slideshow Mode with Pause and Repeat
+- Auto Mode: Automatically append pages, or use Slideshow Mode (supports Pause and Repeat)
+- AJAX & SPA Support: Infy features two unique AJAX append modes (Iframe and Native) and supports the Navigation API and page mirroring to provide compatibility with many complex AJAX and SPA sites (Experimental)
 - Save URLs: Infy can save custom site-specific settings and then auto-activate on your favorite URLs
-- AutoPagerize Database: Infy can use the AP Database to pre-configure thousands of websites for you automatically
+- Database Support: Infy supports the AutoPagerize Database allowing it to support thousands of websites for you automatically
 - Custom Scripts: Infy has custom scripts for a few popular websites (such as Google Search) that will try to fix missing image thumbnails
-- Advanced Features: Fix lazy loading or use the Element Iframe mode to fix missing images while in AP mode
-- Chrome / Edge: Uses 0 Background Memory when inactive
-- Firefox: Support for Firefox for Android (Fenix Nightly with Collections Workaround, Some features may not work perfectly)
+- Advanced Features: Fix lazy loading or use the Element Iframe mode to fix missing images
+- Support for Firefox for Android (Fenix Nightly with Collections Workaround, some features may not work perfectly)
+- Uses 0 Background Memory when inactive
 - No Ads, No Tracking, No Bloat
 
 ## Introducing AJAX
@@ -81,7 +83,7 @@ I'm real sorry, but due to the new Manifest V3 (MV3) restrictions, I was forced 
 I'm super sorry, but starting in Version 0.8, these two collections have been merged into your [Saves](https://github.com/sixcious/infy-scroll/wiki/Saves). The reason I had to merge them is because of how complex the activation code has become. As you can imagine, it became extremely hard to manage four different collections: Saves, Regular Database, Save Whitelist, and Custom Database. I decided to invest heavily into further developing Saves, and because you can now add and edit Saves in the Options, and because the save keys now use the the same naming convention of the Custom Database, I really hope that this helps make up for this change. Even though Infy is still in beta, please know that I will always make sure that your data is *never* lost. With this said, I totally understand that the convenience of maintaining a simple list of URLs and database rules as a single text input is now gone, and for that I'm very sorry.
 
 #### Can you help me make it work for a specific website?
-I really wish I could. I've spent the last couple years helping people both privately and on GitHub, but there's just too many websites out there for one person to help *everyone* with. I totally understand that "Actions," "Append Modes," "Selectors," "XPath," and all the settings may be difficult to learn, so I've poured lots of time into writing descriptive tooltips and a [help guide](https://github.com/sixcious/infy-scroll/wiki). You may also want to check to make sure that the [website isn't incompatible](https://github.com/sixcious/infy-scroll/wiki/Incompatible-Websites) with Infy. If you're still stumped, by all means, please [open an issue](https://github.com/sixcious/infy-scroll/issues). I'll try my best to reply as soon as I can.
+I really wish I could. I've spent the last couple years helping people both privately and on GitHub, but there's just too many websites out there for one person to help *everyone* with. I totally understand that "Actions," "Append Modes," "Selectors," "XPath," and all the settings may be difficult to learn, so I've poured lots of time into writing descriptive tooltips and a [help guide](https://github.com/sixcious/infy-scroll/wiki). You may also want to check to make sure that the [website isn't incompatible](https://github.com/sixcious/infy-scroll/wiki/Incompatible-Websites) with Infy. If you're still stumped, please [open an issue](https://github.com/sixcious/infy-scroll/issues). I'll try my best to reply as soon as I can.
 
 #### Why can't Infy Scroll execute custom scripts?
 Unfortunately, because browsers strongly discourage this from a security standpoint (especially now that Manifest V3 is out!). However, there's a workaround: you can write your own custom scripts inside a Userscript Manager (like [Violentmonkey](https://github.com/violentmonkey/violentmonkey)) by listening for Custom Events that Infy triggers whenever a new node or page has been appended or by implementing a [MutationObserver](https://developer.mozilla.org/docs/Web/API/MutationObserver). Feel free to read the [Scripts and Styles](https://github.com/sixcious/infy-scroll/wiki/Scripts-and-Styles) section for examples and more information.
@@ -114,8 +116,9 @@ Infy Scroll does *not* track you. It does *not* use analytic services. It does *
   <li>DOM Paths: <a href="https://github.com/chromium/chromium" target="_blank">Chromium</a></li>
   <li>CDNs: <a href="https://www.jsdelivr.com" target="_blank">Jsdelivr</a>, <a href="http://statically.io" target="_blank">Statically</a></li>
   <li>Database: <a href="http://wedata.net/users" target="_blank">Wedata Contributors</a></li>
-  <li>Shoutout To: <a href="#AutoPagerByWindLi">AutoPager</a>, <a href="https://github.com/swdyh/autopagerize" target="_blank">AutoPagerize</a>, <a href="https://github.com/Griever/userChromeJS/tree/master/uAutoPagerize">uAutoPagerize</a>, <a href="https://github.com/jkoomjian/PageZipper" target="_blank">PageZipper</a>, <a href="https://github.com/hoothin/UserScripts/tree/master/Pagetual" target="_blank">Pagetual</a>, <a href="https://github.com/machsix/Super-preloader" target="_blank">Super-preloader</a></li>
-  <li>With Special Thanks: <a href="#lostpacket">LostPacket</a>, <a href="#daydreaming5">DayDreaming</a>, <a href="https://github.com/Tanookirby" target="_blank">Tanookirby</a>, and <a href="https://github.com/alexolog" target="_blank">Alex</a></li>
+  <li>Shoutout To: <a href="#AutoPagerByWindLi">AutoPager</a>, <a href="https://github.com/swdyh/autopagerize" target="_blank">AutoPagerize</a>, <a href="https://github.com/hoothin/UserScripts/tree/master/Pagetual" target="_blank">Pagetual</a>, <a href="https://github.com/jkoomjian/PageZipper" target="_blank">PageZipper</a>, <a href="https://github.com/machsix/Super-preloader" target="_blank">Super-preloader</a>, <a href="https://github.com/Griever/userChromeJS/tree/master/uAutoPagerize">uAutoPagerize</a></li>
+  <li>With Special Thanks: <a href="#lostpacket">LostPacket</a>, <a href="#daydreaming5">DayDreaming</a>, <a href="https://github.com/Tanookirby" target="_b
+  '}:lank">Tanookirby</a>, and <a href="https://github.com/alexolog" target="_blank">Alex</a></li>
 </ul>
 
 ... and most of all you for using Infy
