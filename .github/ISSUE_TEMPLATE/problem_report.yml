@@ -1,16 +1,16 @@
-name: Bug Report
-description: File a bug report
+name: Problem Report
+description: Report a problem
 body:
 - type: markdown
   attributes:
     value: |
-      Thanks for taking the time to fill out this bug report!
+      Thanks for taking the time to fill out this report!
 - type: textarea
-  id: issue
+  id: problem
   attributes:
-    label: Issue
-    description: What is the issue? You can describe what you tried and what you expected to happen. You can upload any screenshots here to help explain the problem (but please do not upload images of the mascot).
-    placeholder: Describe the issue
+    label: Problem
+    description: What is the problem or issue? You can describe what you tried and what you expected to happen. You can upload any screenshots here to help explain the problem (but please do not upload images of the mascot).
+    placeholder: Describe the problem
   validations:
     required: true
 - type: input
