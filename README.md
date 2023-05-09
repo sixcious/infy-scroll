@@ -16,14 +16,14 @@ Infy is currently in beta. This means it might contain a few bugs and it might n
 <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
 
 ## About
-Infy Scroll can let you add customized infinite scrolling to websites and auto-load the next page as you scroll down. It's also compatible with the AutoPagerize Database, which means it supports thousands of websites automatically. Infy supports 4 different actions and 6 different append modes so you can customize each site's infinite scrolling to how you want it to be. Infy understands both CSS Selector and XPath expressions for finding next links, and it features an Element Picker that can generate them for you, similar to the original AutoPager. It can also increment URLs and perform special actions, like clicking "Load More" buttons. You can save your settings for each URL and Infy will auto-activate the next time you visit them.
+Infy Scroll can let you add customized infinite scrolling to websites and auto load the next page as you scroll down. It's also compatible with the AutoPagerize Database, which means it supports thousands of websites automatically. Infy supports 4 different actions and 6 different append modes so you can customize each site's infinite scrolling to how you want it to be. Infy understands both CSS Selector and XPath expressions for finding next links, and it features an Element Picker that can generate them for you, similar to the original AutoPager. It can also increment URLs and perform special actions, like clicking "Load More" buttons. You can save your settings for each URL and Infy will auto-activate the next time you visit them.
 
 ## Features
 - 4 Actions: Next Link, Click Element, Increment URL, URL List
 - 6 Append Modes: Page (for simple websites), Iframe (for complex websites), Element (AutoPagerize Mode), Media (for images like 001.jpg), AJAX (for AJAX/SPA sites), and None (for sites that only require clicks)
-- Paths: Infy understands Selectors, XPath expressions, and JS Paths, and can auto-detect what type of path you are entering, or can be set to a fixed path type by toggling the label (SE/XP/JS)
+- Paths: Infy understands CSS Selectors, XPath expressions, and JS Paths, and can auto-detect what type of path you are entering, or can be set to a fixed path type by toggling the label (SE/XP/JS)
 - Element Picker: Pick an element on the page and generate its Selector or XPath expression automatically or use the EP's buttons to traverse the DOM in any direction (May not work on complex websites)
-- Auto Detect Page Element (a new innovative feature): Let Infy's algorithm try to detect the page element for you (May not work well on complex websites)
+- Auto Detect Page Element (an innovative feature): Let Infy's algorithm try to detect the page element for you (May not work well on complex websites)
 - Next Link Algorithm: Let Infy's algorithm also try to figure out the next link for you by using your own customizable keywords
 - Auto Mode: Automatically append pages, or use Slideshow Mode (supports Pause and Repeat)
 - AJAX & SPA Support: Infy features two unique AJAX append modes (Iframe and Native) and supports the Navigation API and page mirroring to provide compatibility with many complex AJAX and SPA sites (Experimental)
