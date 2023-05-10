@@ -104,7 +104,7 @@ Infy Scroll does *not* track you. It does *not* use analytic services. It does *
 <ul>
   <li>Infy: <a href="https://twitter.com/thejoyfool" target="_blank">Joyfool</a></li>
   <li>UI: <a href="https://material.io" target="_blank">Material Design</a></li>
-  <li>Fonts: <a href="https://fonts.google.com/specimen/Roboto" target="_blank">Roboto</a></li>
+  <li>Fonts: <a href="https://fonts.google.com/specimen/Roboto" target="_blank">Roboto</a>, <a href="https://fonts.adobe.com/fonts/lithos" target="_blank">Lithos</a></li>
   <li>Icons: <a href="https://fontawesome.com" target="_blank">FontAwesome</a>, <a href="https://github.com/feathericons/feather" target="_blank">Feather</a></li>
   <li>Animations: <a href="https://ianlunn.github.io/Hover" target="_blank">Hover.css</a></li>
   <li>Tooltips: <a href="https://kazzkiq.github.io/balloon.css" target="_blank">Balloon.css</a></li>
