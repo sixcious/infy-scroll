@@ -1,5 +1,5 @@
 name: Feature Request
-description: Request a new feature
+description: Request a feature
 body:
 - type: markdown
   attributes:
