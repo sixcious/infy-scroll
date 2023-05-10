@@ -1,15 +1,15 @@
 name: Feature Request
-description: Suggest an idea
+description: Request a new feature
 body:
 - type: markdown
   attributes:
     value: |
-      Thanks for taking the time to fill out this feature request.
+      Thank you for taking the time to fill out this feature request.
 - type: textarea
   id: feature-request
   attributes:
     label: Feature Request
-    description: Please describe your feature request. The more detailed you can be, the better! You can upload any screenshots here as well (but please do not upload images of the mascot). Please do not use this Feature Request report to ask how to make it work with a specific website.
+    description: Please describe your feature request. The more detailed you can be, the better. You can upload any screenshots here as well (but please do not upload images of the mascot). Please do not use this Feature Request report to ask how to make it work with a specific website.
     placeholder: Describe your feature request
   validations:
     required: true
