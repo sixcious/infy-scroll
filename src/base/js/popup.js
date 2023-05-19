@@ -1387,10 +1387,6 @@ const Popup = (() => {
       await Promisify.tabsSendMessage(tabs[0].id, {receiver: "contentscript", greeting: "deleteSave", id: _.saveID, url: _.saveURL, writeToStorage: true});
       _.saveID = undefined;
     }
-    // As we are awaiting the tabsSendMessage to add/delete the save, this should be fine to do in the Popup instead of Saves
-    if (items.backupAuto && ["add", "edit", "delete"].includes(saveAction)) {
-      Util.downloadBackup();
-    }
   }
 
   /**

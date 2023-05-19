@@ -92,9 +92,6 @@ const Options = (() => {
       console.log(undo);
       if (undo && undo.saves && Array.isArray(undo.saves) && undo.saves.length > 0) {
         await Promisify.storageSet({"saves": undo.saves});
-        if (items.backupAuto) {
-          Util.downloadBackup();
-        }
         populateValuesFromStorage("saves");
         MDC.openSnackbar(chrome.i18n.getMessage("saves_snackbar_undo_label"));
       }
@@ -240,7 +237,6 @@ const Options = (() => {
     DOM["#backup-text-button"].addEventListener("click", copyText);
     DOM["#restore-text-button"].addEventListener("click", uploadText);
     // DOM["#backup-schedule-input"].addEventListener("change", function () { if (+this.value >= 0 && +this.value <= 52) { saveInput(this, "backupSchedule", "number");} });
-    DOM["#backup-auto-input"].addEventListener("change", function () { chrome.storage.local.set({"backupAuto": this.checked}); items.backupAuto = this.checked; });
     // Edge: Note that while Edge will redirect chrome:// to edge://, it has its own URI/namespace so we should probably use that
     // Firefox: There is no programmatic way to go to the download settings screen, so display message telling the user where to go instead
     DOM["#download-settings-button"].addEventListener("click", function () {
@@ -392,7 +388,6 @@ const Options = (() => {
       DOM["#debug-enable-input"].checked = items.debugEnabled;
       // Backup
       // DOM["#backup-schedule-input"].value = items.backupSchedule;
-      DOM["#backup-auto-input"].checked = items.backupAuto;
       // About
       DOM["#manifest-name"].textContent = chrome.runtime.getManifest().name;
       DOM["#manifest-version"].textContent = chrome.runtime.getManifest().version;
@@ -609,9 +604,6 @@ const Options = (() => {
       // Resort back to default sort order
       saves.sort((a, b) => b.url?.length - a.url?.length || a.id - b.id);
       await Promisify.storageSet({saves: saves});
-      if (items.backupAuto) {
-        Util.downloadBackup();
-      }
       populateValuesFromStorage("saves");
       MDC.dialogs.get("save-dialog").close();
       MDC.openSnackbar(chrome.i18n.getMessage("saves_snackbar_success_" + type + "_label"));
@@ -649,9 +641,6 @@ const Options = (() => {
       // Resort back to default sort order
       newSaves.sort((a, b) => b.url?.length - a.url?.length || a.id - b.id);
       await Promisify.storageSet({saves: newSaves});
-      if (items.backupAuto) {
-        Util.downloadBackup();
-      }
       populateValuesFromStorage("saves");
       // Make sure to give the user infinite time to undo this operation
       MDC.openSnackbar(chrome.i18n.getMessage("saves_snackbar_delete_label"), -1, "mdc-snackbar-undo");
@@ -1222,7 +1211,7 @@ const Options = (() => {
         const map = new Map();
         map.set("number", ["databaseUpdate"]);
         map.set("string", ["installVersion", "icon", "theme", "databaseAPLocation", "databaseISLocation", "databaseLocation", "databaseMode", "installDate", "databaseAPDate", "databaseISDate", "databaseDate"]);
-        map.set("boolean", ["savesEnabled", "databaseAPEnabled", "databaseISEnabled", "statsEnabled", "backupAuto"]);
+        map.set("boolean", ["savesEnabled", "databaseAPEnabled", "databaseISEnabled", "statsEnabled"]);
         map.set("array", ["saves", "databaseAP", "databaseIS", "databaseBlacklist", "databaseWhitelist", "navigationBlacklist"]);
         map.set("object", ["stats"]);
         for (const [type, keys] of map) {

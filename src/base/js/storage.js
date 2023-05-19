@@ -131,7 +131,6 @@ class Storage {
     _.debugEnabled = false;
     _.backupDate = null;
     // _.backupSchedule = 0;
-    _.backupAuto = false;
     _.stats = { actions: [0,0,0,0], appends: [0,0,0,0,0,0], elements: [0,0,0,0,0,0] };
     _.statsEnabled = true;
     // Iffy on:
@@ -652,7 +651,6 @@ class Storage {
       "debugEnabled": false,
       "backupDate": null,
       // "backupSchedule": 0,
-      "backupAuto": false,
       "stats": { actions: [0,0,0,0], appends: [0,0,0,0,0,0], elements: [0,0,0,0,0,0] },
       "statsEnabled": false,
       "navigationBlacklist": [],
