@@ -23,25 +23,26 @@ Infy Scroll can let you add customized infinite scrolling to websites and auto l
 - 6 Append Modes: Page (for simple websites), Iframe (for complex websites), Element (AutoPagerize Mode), Media (for images like 001.jpg), AJAX (for AJAX/SPA sites), and None (for sites that only require clicks)
 - Paths: Infy understands CSS Selectors, XPath expressions, and JS Paths, and can auto-detect what type of path you are entering, or can be set to a fixed path type by toggling the label (SE/XP/JS)
 - Element Picker: Pick an element on the page and generate its Selector or XPath expression automatically or use the EP's buttons to traverse the DOM in any direction (May not work on complex websites)
-- Auto Detect Page Element (an innovative feature): Let Infy's algorithm try to detect the page element for you (May not work well on complex websites)
-- Next Link Algorithm: Let Infy's algorithm also try to figure out the next link for you by using your own customizable keywords
+- Auto Detect (an innovative feature): Let Infy's algorithm try to detect the next link, page element, and click elements for you (May not work well on complex websites)
 - Auto Mode: Automatically append pages, or use Slideshow Mode (supports Pause and Repeat)
-- AJAX & SPA Support: Infy features two unique AJAX append modes (Iframe and Native) and supports the Navigation API and page mirroring to provide compatibility with many complex AJAX sites and Single-page applications (Experimental)
+- AJAX Support: Infy features two unique AJAX append modes: Iframe and Native (Experimental)
+- SPA Support: Infy supports the Navigation API to detect navigation events and can use a MutationObserver to watch for changes on the page to provide compatibility with many complex AJAX and Single-page Application sites (Experimental)
 - Save URLs: Infy can save custom site-specific settings and then auto-activate on your favorite URLs
 - Database Support: Infy supports the AutoPagerize and InfyScroll Databases allowing it to support thousands of websites for you automatically
 - Custom Scripts: Infy has custom scripts for a few popular websites (such as Google Search) that will try to fix missing image thumbnails
 - Advanced Features: Fix lazy loading or use the Element Iframe mode to fix missing images
-- Support for Firefox for Android (Fenix Nightly with Collections Workaround, some features may not work perfectly)
+- User Interface: A simple UI custom built using Material Design
+- Mobile Support: Support for Firefox for Android and Kiwi Browser (Some features may not work perfectly)
 - Uses 0 Background Memory when inactive
 - No Ads, No Tracking, No Bloat
 
 ## Introducing AJAX
-Since releasing Infy Scroll in August 2020, if you were to ask me what is the one feature I was working my hardest to implement — it's always been an append mode for [AJAX websites](https://developer.mozilla.org/docs/Glossary/AJAX). After two years of on and off development, I'm really proud to offer this completely new and innovative append mode in Version 0.8, The Eightfinity Edition. AJAX comes in two flavors: Iframe and Native. AJAX is mostly in the proof of concept stage right now, but does work on many sites, including Pixiv.
+Since releasing Infy Scroll in August 2020, if you were to ask me what is the one feature I was working my hardest to implement — it's always been an append mode for [AJAX websites](https://developer.mozilla.org/docs/Glossary/AJAX). After two years of on and off development, I'm really proud to offer this completely new and innovative append mode in Version 0.8, The Eightfinity Edition. AJAX comes in two versions: Iframe and Native. AJAX is mostly in the proof of concept stage right now, but does work on many sites, including Pixiv.
 
 #### AJAX Demo (Pixiv)
 <img src="https://raw.githubusercontent.com/sixcious/infy-scroll/main/assets/ajax.gif">
 
-##### Settings Used (Version 0.8):
+##### Settings Used:
 ````
 {
   "action": "click",
@@ -56,7 +57,7 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
 *You can copy and paste these settings using the Add Save feature in the Options. (Tested on December 22, 2022.)*
 
 ## SPA Support
-[SPAs (Single-page Applications)](https://developer.mozilla.org/docs/Glossary/SPA) are tricky to deal with because they update their page content dynamically, and sometimes don't even update the address bar. However, Infy now supports the [Navigation API](https://developer.mozilla.org/docs/Web/API/Navigation_API) (Chrome/Edge 102+ Only) to detect browser navigations and it can also watch for changes on the page and auto-activate and auto-deactivate itself if the website changes its content dynamically. It even works here on GitHub and on Pixiv. Just check the Late Activation setting in the UI Window (Version 0.8) and save it. No more refreshing the page!
+[SPAs (Single-page Applications)](https://developer.mozilla.org/docs/Glossary/SPA) are tricky to deal with because they update their page content dynamically, and sometimes don't even update the address bar. However, Infy now supports the [Navigation API](https://developer.mozilla.org/docs/Web/API/Navigation_API) (Chrome/Edge 102+ Only) to detect browser navigations and it can also watch for changes on the page and auto-activate and auto-deactivate itself if the website changes its content dynamically. It even works here on GitHub and on Pixiv. (If you're on Firefox, you can check the Late Activation setting in the UI Window's Scripts dialog and save the URL.) No more refreshing the page!
 
 ## Installation
 Installing from GitHub is super simple. First, [download the zip](https://github.com/sixcious/infy-scroll/archive/refs/heads/main.zip) and unzip it. Then:
@@ -82,8 +83,8 @@ I'm real sorry, but due to the new Manifest V3 (MV3) restrictions, I was forced 
 #### What happend to the Custom Database and Save Whitelist?
 I'm super sorry, but starting in Version 0.8, these two collections have been merged into your [Saves](https://github.com/sixcious/infy-scroll/wiki/Saves). The reason I had to merge them is because of how complex the activation code has become. As you can imagine, it became extremely hard to manage four different collections: Saves, Regular Database, Save Whitelist, and Custom Database. I decided to invest heavily into further developing Saves, and because you can now add and edit Saves in the Options, and because the save keys now use the the same naming convention of the Custom Database, I really hope that this helps make up for this change. Even though Infy is still in beta, please know that I will always make sure that your data is *never* lost. With this said, I totally understand that the convenience of maintaining a simple list of URLs and database rules as a single text input is now gone, and for that I'm very sorry.
 
-#### Can you help me make it work for a specific website?
-I really wish I could. I've spent the last couple years helping people both privately and on GitHub, but there's just too many websites out there for one person to help *everyone* with. I totally understand that "Actions," "Append Modes," "Selectors," "XPath," and all the settings may be difficult to learn, so I've poured lots of time into writing descriptive tooltips and a [help guide](https://github.com/sixcious/infy-scroll/wiki). You may also want to check to make sure that the [website isn't incompatible](https://github.com/sixcious/infy-scroll/wiki/Incompatible-Websites) with Infy. If you're still stumped, please [open an issue](https://github.com/sixcious/infy-scroll/issues). I'll try my best to reply as soon as I can.
+#### Can you help me make it work with a specific website?
+I really wish I could. I've spent the last couple years helping people both privately and on GitHub, but there's just too many websites out there for one person to help *everyone* with. I totally understand that "Actions," "Append Modes," "Selectors," "XPath," and all the settings may be difficult to learn, so I've poured lots of time into writing descriptive tooltips and a [help guide](https://github.com/sixcious/infy-scroll/wiki). You may also want to read the [Complex Websites](https://github.com/sixcious/infy-scroll/wiki/Complex-Websites) section first if you're dealing with a more complicated site. If you're still stumped, please [open an issue](https://github.com/sixcious/infy-scroll/issues). I'll try my best to reply as soon as I can.
 
 #### Why can't Infy Scroll execute custom scripts?
 Unfortunately, because browsers strongly discourage this from a security standpoint (especially now that Manifest V3 is out!). However, there's a workaround: you can write your own custom scripts inside a Userscript Manager (like [Violentmonkey](https://github.com/violentmonkey/violentmonkey)) by listening for Custom Events that Infy triggers whenever a new node or page has been appended or by implementing a [MutationObserver](https://developer.mozilla.org/docs/Web/API/MutationObserver). Feel free to read the [Scripts and Styles](https://github.com/sixcious/infy-scroll/wiki/Scripts-and-Styles) section for examples and more information.
