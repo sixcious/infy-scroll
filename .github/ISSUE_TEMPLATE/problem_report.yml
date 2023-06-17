@@ -51,7 +51,7 @@ body:
     label: Device
     description: What type of device are you using?
     options:
-      - Select a Device
+      - 
       - PC
       - Phone
       - Other
