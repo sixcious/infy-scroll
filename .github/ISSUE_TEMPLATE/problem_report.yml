@@ -19,12 +19,16 @@ body:
     label: URL
     description: If possible, could you provide an example URL of where the problem is happening? (However, please do not post NSFW URLs.)
     placeholder: "Example: https://www.example.com/right-here"
+  validations:
+    required: true
 - type: input
   id: version
   attributes:
     label: Version
     description: What version are you using?
     placeholder: "Example: 0.8"
+  validations:
+    required: true
 - type: input
   id: browser
   attributes:
