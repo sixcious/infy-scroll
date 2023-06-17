@@ -17,7 +17,7 @@ body:
   id: url
   attributes:
     label: URL
-    description: If possible, could you provide an example URL of where the problem is happening? However, please do not post NSFW (Not Safe For Work) URLs. Enter "N/A" if not applicable.
+    description: If possible, could you provide an example URL of where the problem is happening? However, please do not post NSFW (Not Safe For Work) URLs. You may enter "N/A" if not applicable.
     placeholder: "Example: https://www.example.com/right-here"
   validations:
     required: true
@@ -51,6 +51,7 @@ body:
     label: Device
     description: What type of device are you using?
     options:
+      - Select a Device
       - PC
       - Phone
       - Other
