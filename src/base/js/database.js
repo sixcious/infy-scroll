@@ -24,16 +24,16 @@ class Database {
       { location: "statically.io", url: "https://cdn.statically.io/gh/cdnize/cdnize.github.io/main/databases/AutoPagerize/items_all.json" },
       { location: "github.io",     url: "https://cdnize.github.io/databases/AutoPagerize/items_all.json" },
       { location: "wedata.net",    url: "http://wedata.net/databases/AutoPagerize/items_all.json" }
-      // , { location: "pages.dev",     url: "https://infyscroll.pages.dev/databases/AutoPagerize/items_all.json" }
-      // , { location: "githubusercontent.com", url: "https://raw.githubusercontent.com/infyscroll/infyscroll.github.io/main/databases/AutoPagerize/items_all.json" }
+      // , { location: "pages.dev",     url: "https://cdnize.pages.dev/databases/AutoPagerize/items_all.json" }
+      // , { location: "githubusercontent.com", url: "https://raw.githubusercontent.com/cdnize/cdnize.github.io/main/databases/AutoPagerize/items_all.json" }
     ],
     IS: [
       { location: "jsdelivr.net",  url: "https://cdn.jsdelivr.net/gh/cdnize/cdnize.github.io/databases/InfyScroll/items_all.json" },
       { location: "statically.io", url: "https://cdn.statically.io/gh/cdnize/cdnize.github.io/main/databases/InfyScroll/items_all.json" },
       { location: "github.io",     url: "https://cdnize.github.io/databases/InfyScroll/items_all.json" },
       { location: "wedata.net",    url: "http://wedata.net/databases/InfyScroll/items_all.json" }
-      // , { location: "pages.dev",     url: "https://infyscroll.pages.dev/databases/InfyScroll/items_all.json" },
-      // , { location: "githubusercontent.com", url: "https://raw.githubusercontent.com/infyscroll/infyscroll.github.io/main/databases/InfyScroll/items_all.json" }
+      // , { location: "pages.dev",     url: "https://cdnize.pages.dev/databases/InfyScroll/items_all.json" },
+      // , { location: "githubusercontent.com", url: "https://raw.githubusercontent.com/cdnize/cdnize.github.io/main/databases/InfyScroll/items_all.json" }
     ]
   };
   static #urls;
