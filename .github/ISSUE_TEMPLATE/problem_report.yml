@@ -17,7 +17,7 @@ body:
   id: url
   attributes:
     label: URL
-    description: If possible, could you provide an example URL of where the problem is happening? (However, please do not post NSFW URLs.)
+    description: If possible, could you provide an example URL of where the problem is happening? However, please do not post NSFW (Not Safe For Work) URLs. Enter "N/A" if not applicable.
     placeholder: "Example: https://www.example.com/right-here"
   validations:
     required: true
@@ -35,12 +35,16 @@ body:
     label: Browser
     description: What browser and browser version are you using?
     placeholder: "Example: Chrome 100"
+  validations:
+    required: true
 - type: input
   id: os
   attributes:
     label: OS
     description: What operating system are you using?
     placeholder: "Example: Windows 10"
+  validations:
+    required: true
 - type: dropdown
   id: device
   attributes:
@@ -50,3 +54,5 @@ body:
       - PC
       - Phone
       - Other
+  validations:
+    required: true
