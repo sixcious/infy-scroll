@@ -75,6 +75,10 @@ Installing from GitHub is super simple. First, [download the zip](https://github
 ## Help Guide
 [View the Help Guide!](https://github.com/sixcious/infy-scroll/wiki)
 
+## Documentation
+- [Version History](https://github.com/sixcious/infy-scroll/wiki/Version-History)
+- [Future Roadmap](https://github.com/sixcious/infy-scroll/wiki/Roadmap)
+
 ## FAQ
 
 #### What happened to the Append Scripts and Styles options?
