@@ -9,7 +9,7 @@ body:
   id: feature-request
   attributes:
     label: Feature Request
-    description: Please describe your feature request. The more detailed you can be, the better. You can upload any screenshots here as well (but please do not upload images of the mascot). Important: Please only use this Feature Request report for actual features; do not use this report to request to make it work with a specific website.
+    description: Please describe your feature request. The more detailed you can be, the better. You can upload any screenshots here as well (but please do not upload images of the mascot). Please only use this Feature Request report for actual features. Do not use this report to request to make it work with a specific website.
     placeholder: Describe your feature request
   validations:
     required: true
