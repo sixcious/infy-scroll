@@ -662,6 +662,8 @@ svg.mdc-chip__icon--leading {
 }
 
 /* line-height: normal to keep the line-height normal in mdc-dialogs */
+/* letter-spacing needed to keep the letter spacing normal when balloon tooltips are placed on mdc-buttons */
+/* text-align: left needed to keep the text alignment to the left when adding tooltips to weird things like mdc-buttons (e.g. Add Save) */
 [aria-label][data-balloon-pos]:after {
   color: #EEEEEE;
   padding: 4px 8px;
@@ -669,11 +671,8 @@ svg.mdc-chip__icon--leading {
   border-radius: 4px;
   line-height: normal;
   max-width: 350px;
-}
-
-/* Needed to keep the letter spacing normal when balloon tooltips are placed on mdc-buttons */
-[aria-label][data-balloon-pos]:after {
   letter-spacing: normal;
+  text-align: left;
 }
 
 /* Custom Widths needed on certain tooltips in the Popup */
