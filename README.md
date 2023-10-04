@@ -37,7 +37,7 @@ Infy Scroll can let you add customized infinite scrolling to websites and auto l
 - No Ads, No Tracking, No Bloat
 
 ## Introducing AJAX
-Since releasing Infy Scroll in August 2020, if you were to ask me what is the one feature I was working my hardest to implement — it's always been an append mode for [AJAX websites](https://developer.mozilla.org/docs/Glossary/AJAX). After two years of on and off development, I'm really proud to offer this completely new and innovative append mode in Version 0.8, The Eightfinity Edition. AJAX comes in two versions: Iframe and Native. AJAX is mostly in the proof of concept stage right now, but does work on many sites, including Pixiv.
+Since releasing Infy Scroll in August 2020, if you were to ask me what is the one feature I was working my hardest to implement — it's always been an append mode for [AJAX websites](https://developer.mozilla.org/docs/Glossary/AJAX). After two years of on and off development, I'm really proud to offer this [completely new and innovative append mode](https://github.com/sixcious/infy-scroll/wiki/AJAX) in Version 0.8, The Eightfinity Edition. AJAX comes in two versions: Iframe and Native. AJAX is mostly in the proof of concept stage right now, but does work on many sites, including Pixiv.
 
 #### AJAX Demo (Pixiv)
 <img src="https://raw.githubusercontent.com/sixcious/infy-scroll/main/assets/ajax.gif">
