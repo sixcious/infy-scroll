@@ -13,3 +13,13 @@ body:
     placeholder: Describe your feature request
   validations:
     required: true
+- type: checkboxes
+  id: adherence
+  attributes:
+    label: Adherence
+    description: Feature requests should be about actual features that can be added into the app. Please check this to confirm that your feature request is an actual feature and isn't asking how (or requesting) to make it work with a specific website.
+    options:
+      - label: I adhere that my feature request is an actual feature and is not related to making it work with a specific website
+        required: true
+  validations:
+    required: true
