@@ -1,5 +1,5 @@
 name: Feature Request
-description: Request a feature
+description: Request a feature. Please only use this for actual features that can be added into the app.
 body:
 - type: markdown
   attributes:
