@@ -57,3 +57,13 @@ body:
       - Other
   validations:
     required: true
+- type: checkboxes
+  id: adherence
+  attributes:
+    label: Adherence
+    description: Please confirm that you've read the [Sticky](https://github.com/sixcious/infy-scroll/issues/50) before posting your issue or question. To avoid cluttering the Issues section, issues should really be about problems or questions directly related to the app and should not be about asking how (or requesting) to make it work with a specific website. (Please use the link in the Sticky for these types of requests.)
+    options:
+      - label: I have read the [Sticky](https://github.com/sixcious/infy-scroll/issues/50) and my issue is directly related with the app and is not related to making it work with a specific website
+        required: true
+  validations:
+    required: true
