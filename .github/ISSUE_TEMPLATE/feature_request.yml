@@ -17,9 +17,9 @@ body:
   id: adherence
   attributes:
     label: Adherence
-    description: Feature requests should be about actual features that can be added into the app. Please check this to confirm that your feature request is an actual feature and isn't asking how (or requesting) to make it work with a specific website.
+    description: Please confirm that you've read the [Sticky](https://github.com/sixcious/infy-scroll/issues/50) before posting your feature request. Feature requests should be about actual features that can be added into the app and should not be about asking how (or requesting) to make it work with a specific website.
     options:
-      - label: My feature request is an actual feature and is not related to making it work with a specific website
+      - label: I have read the [Sticky](https://github.com/sixcious/infy-scroll/issues/50) and my feature request is an actual feature that can be added into the app and is not related to making it work with a specific website
         required: true
   validations:
     required: true
