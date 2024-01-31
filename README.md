@@ -7,13 +7,19 @@
 <a href="https://microsoftedge.microsoft.com/addons/detail/infy-scroll/fmdemgjiipojpgemeljnbaabjeinicba" title="Download for Microsoft Edge"><img src="https://raw.githubusercontent.com/sixcious/assets/main/vendor/edge.png" height="64" alt="Microsoft Edge, Icon: By Source, Fair use, https://en.wikipedia.org/w/index.php?curid=62848768"></a>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <a href="https://addons.mozilla.org/firefox/addon/infy-scroll/" title="Download for Mozilla Firefox"><img src="https://raw.githubusercontent.com/sixcious/assets/main/vendor/firefox.svg?sanitize=true" height="64" alt="Mozilla Firefox"></a>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
-<br><br>
+<br><br><br>
 <img src="https://raw.githubusercontent.com/sixcious/assets/main/repository/infy-scroll/infy.png" height="600" alt="Infy" title="Infy" align="left">
 
 ## Important Note
 Infy is currently in beta. This means it might contain a few bugs and it might not work on every website you try it on! But I really want you to be 100% happy with Infy, so if something isn't working right, or if there's a feature you think is missing, please open an issue on GitHub and give me a chance to fix it before leaving a low rating/review, and I promise I will.
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br>
+### Discord
+Join the new Discord! (Beta) 💜
+<br><br>
+<a href="https://discord.gg/Z63tmCx4q5" title="Join the Discord"><img src="https://raw.githubusercontent.com/sixcious/assets/main/vendor/discord.svg?sanitize=true" height="64" alt="Discord"></a>
+<br><br><br><br><br><br><br><br><br><br><br>
 
 ## About
 Infy Scroll can let you add customized infinite scrolling to websites and auto load the next page as you scroll down. It's also compatible with the AutoPagerize Database, which means it supports thousands of websites automatically. Infy supports 4 different actions and 6 different append modes so you can customize each site's infinite scrolling to how you want it to be. Infy understands both CSS Selector and XPath expressions for finding next links, and it features an Element Picker that can generate them for you, similar to the original AutoPager. It can also increment URLs and perform special actions, like clicking "Load More" buttons. You can save your settings for each URL and Infy will auto-activate the next time you visit them.
