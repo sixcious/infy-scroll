@@ -9,7 +9,7 @@ body:
   id: description
   attributes:
     label: Description
-    description: What is this issue about? The more detailed you can be, the better. You can describe what you tried and what you expected to happen. You can also upload any screenshots or images here to help explain the issue (but please do not upload images of the mascot).
+    description: What is this issue about? The more detailed you can be, the better! You can describe what you tried and what you expected to happen. You can also upload any screenshots or images here to help explain the issue (but please do not upload images of the mascot).
     placeholder: Describe the issue
   validations:
     required: true
