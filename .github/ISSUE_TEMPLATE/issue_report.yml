@@ -1,0 +1,69 @@
+name: Issue Report
+description: Report a problem, request a feature, ask a question, or get general help with an issue.
+body:
+- type: markdown
+  attributes:
+    value: |
+      Thank you for taking the time to fill out this report.
+- type: textarea
+  id: description
+  attributes:
+    label: Description
+    description: What is this issue about? Please try to be as detailed as possible. You can describe what you tried and what you expected to happen. You can also upload any screenshots or images here to help explain the issue (but please do not upload images of the mascot).
+    placeholder: Describe the issue
+  validations:
+    required: true
+- type: input
+  id: url
+  attributes:
+    label: URL
+    description: If applicable, could you provide an example URL that relates to the issue? However, please do not post NSFW (Not Safe For Work) URLs. You may enter "N/A" if not applicable.
+    placeholder: "Example: https://www.example.com/foo/bar.html"
+  validations:
+    required: true
+- type: input
+  id: version
+  attributes:
+    label: Version
+    description: What version of the app are you using?
+    placeholder: "Example: 0.8"
+  validations:
+    required: true
+- type: input
+  id: browser
+  attributes:
+    label: Browser
+    description: What browser and browser version are you using?
+    placeholder: "Example: Chrome 100"
+  validations:
+    required: true
+- type: input
+  id: os
+  attributes:
+    label: OS
+    description: What operating system are you using?
+    placeholder: "Example: Windows 10"
+  validations:
+    required: true
+- type: dropdown
+  id: device
+  attributes:
+    label: Device
+    description: What type of device are you using?
+    options:
+      - 
+      - PC
+      - Phone
+      - Other
+  validations:
+    required: true
+- type: checkboxes
+  id: adherence
+  attributes:
+    label: Adherence
+    description: Please confirm that you've read the [Sticky](https://github.com/sixcious/infy-scroll/issues/50) before posting your issue or question. To avoid cluttering the Issues section, issues should really be about problems or questions directly related to the app and should not be about asking how (or requesting) to make it work with a specific website. (Please use the link in the Sticky for these types of requests.)
+    options:
+      - label: I have read the [Sticky](https://github.com/sixcious/infy-scroll/issues/50) and my issue is directly related with the app and is not related to making it work with a specific website
+        required: true
+  validations:
+    required: true
