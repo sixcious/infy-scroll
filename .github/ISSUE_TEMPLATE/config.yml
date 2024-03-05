@@ -1,1 +1,5 @@
 blank_issues_enabled: false
+contact_links:
+  - name: Website Help
+    url: https://github.com/sixcious/infy-scroll/issues/50
+    about: If you need help with making Infy work with a specific website, please check the Sticky and join the Discord.
