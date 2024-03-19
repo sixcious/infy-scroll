@@ -48,7 +48,9 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
 #### AJAX Demo (Pixiv)
 <img src="https://raw.githubusercontent.com/sixcious/infy-scroll/main/assets/ajax.gif">
 
-##### Settings Used:
+*The AJAX Native append mode working on Pixiv*
+
+##### Example Settings
 ````
 {
   "action": "click",
@@ -94,7 +96,7 @@ I'm real sorry, but due to the new Manifest V3 (MV3) restrictions, I was forced 
 I'm super sorry, but starting in Version 0.8, these two collections have been merged into your [Saves](https://github.com/sixcious/infy-scroll/wiki/Saves). The reason I had to merge them is because of how complex the activation code has become. As you can imagine, it became extremely hard to manage four different collections: Saves, Regular Database, Save Whitelist, and Custom Database. I decided to invest heavily into further developing Saves.
 
 #### Can you help me make it work with a specific website?
-I really wish I could! Please see the [Sticky Thread](https://github.com/sixcious/infy-scroll/issues/50) for a potential solution.
+I really wish I could! Please see the [Sticky](https://github.com/sixcious/infy-scroll/issues/50) for a potential solution.
 
 #### Why can't Infy Scroll execute custom scripts?
 Unfortunately, because browsers strongly discourage this from a security standpoint (especially now that Manifest V3 is out!). However, there's a workaround: you can write your own custom scripts inside a Userscript Manager (like [Violentmonkey](https://github.com/violentmonkey/violentmonkey)) by listening for Custom Events that Infy triggers whenever a new node or page has been appended or by implementing a [MutationObserver](https://developer.mozilla.org/docs/Web/API/MutationObserver). Feel free to read the [Scripts and Styles](https://github.com/sixcious/infy-scroll/wiki/Scripts-and-Styles) section for examples and more information.
