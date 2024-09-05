@@ -18,7 +18,7 @@ body:
   attributes:
     label: URL
     description: If applicable, could you provide an example URL that relates to the issue? However, please do not post NSFW (Not Safe For Work) URLs. You may enter "N/A" if not applicable.
-    placeholder: "Example: https://www.example.com/foo/bar.html"
+    placeholder: "Example: https://www.example.com/this/specific/url.html"
   validations:
     required: true
 - type: input
