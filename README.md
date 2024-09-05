@@ -67,19 +67,6 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
 ## SPA Support
 [SPAs (Single-page Applications)](https://developer.mozilla.org/docs/Glossary/SPA) are tricky to deal with because they update their page content dynamically, and sometimes don't even update the address bar. However, Infy now supports the [Navigation API](https://developer.mozilla.org/docs/Web/API/Navigation_API) (Chrome/Edge 102+ Only) to detect browser navigations and it can also watch for changes on the page and auto-activate and auto-deactivate itself if the website changes its content dynamically. It even works here on GitHub and on Pixiv. (If you're on Firefox, you can check the Late Activation setting in the UI Window's Scripts dialog and save the URL.) No more refreshing the page!
 
-## Installation
-Installing from GitHub is super simple. First, [download the zip](https://github.com/sixcious/infy-scroll/archive/refs/heads/main.zip) and unzip it. Then:
-
-#### Chrome and Edge
-- [Follow these instructions](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked) to enable Developer Mode and load an Unpacked Extension
-
-#### Firefox
-- [Follow these instructions](https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/Your_first_WebExtension#installing) to load a Temporary Add-on
-
-**Finally**: When prompted for the location, select the `src/base` folder (Firefox: select `manifest.json`) and it will install.
-
-**Important**: There is no version update path for the GitHub build, so use the [web store version](https://github.com/sixcious/infy-scroll#available-for) as your main version.
-
 ## Help Guide
 [View the Help Guide!](https://github.com/sixcious/infy-scroll/wiki)
 
@@ -88,13 +75,6 @@ Installing from GitHub is super simple. First, [download the zip](https://github
 - [Future Roadmap](https://github.com/sixcious/infy-scroll/wiki/Roadmap)
 
 ## FAQ
-
-#### What happened to the Append Scripts and Styles options?
-I'm real sorry, but due to the new Manifest V3 (MV3) restrictions, I was forced to remove these two settings starting in Version 0.8. Luckily, there's a great workaround: you can still append iframes, and iframes will always contain the scripts and styles for each page. Iframes are actually the better approach for this purpose as the scripts and styles will run in an isolated environment inside the iframe without affecting the top-level document. If a website is preventing you from appending iframes, please try using [Xframey](https://github.com/sixcious/xframey) or a similar app/extension. I'm very sorry once again.
-
-#### What happend to the Custom Database and Save Whitelist?
-I'm super sorry, but starting in Version 0.8, these two collections have been merged into your [Saves](https://github.com/sixcious/infy-scroll/wiki/Saves). The reason I had to merge them is because of how complex the activation code has become. As you can imagine, it became extremely hard to manage four different collections: Saves, Regular Database, Save Whitelist, and Custom Database. I decided to invest heavily into further developing Saves.
-
 #### Can you help me make it work with a specific website?
 I really wish I could! Please see the [Sticky](https://github.com/sixcious/infy-scroll/issues/50) for a potential solution.
 
@@ -102,7 +82,7 @@ I really wish I could! Please see the [Sticky](https://github.com/sixcious/infy-
 Unfortunately, because browsers strongly discourage this from a security standpoint (especially now that Manifest V3 is out!). However, there's a workaround: you can write your own custom scripts inside a Userscript Manager (like [Violentmonkey](https://github.com/violentmonkey/violentmonkey)) by listening for Custom Events that Infy triggers whenever a new node or page has been appended or by implementing a [MutationObserver](https://developer.mozilla.org/docs/Web/API/MutationObserver). Feel free to read the [Scripts and Styles](https://github.com/sixcious/infy-scroll/wiki/Scripts-and-Styles) section for examples and more information.
 
 #### What is the minimum browser version (and why is it to so high)?
-Infy currently requires Chrome/Edge/Firefox `102` and higher to run. I tend to update the minimum browser version about once a year so I can use the latest and greatest ECMAScript features without worry. It also significantly saves in my testing time in having to maintain older Chromium builds. In the past, I used to offer "modified" builds with a lower minimum version, but I can no longer do this. If your browser doesn't support Infy, I'm afraid you'll have to use another app/extension (sorry!).
+Infy currently requires Chrome/Edge `120` and Firefox `128` and higher to run. I tend to update the minimum browser version about once a year so I can use the latest and greatest ECMAScript features without worry. It also significantly saves in my testing time in having to maintain older Chromium builds. In the past, I used to offer "modified" builds with a lower minimum version, but I can no longer do this. If your browser doesn't support Infy, I'm afraid you'll have to use another app/extension (sorry!).
 
 #### Why is the production version's source code minified?
 I use [Terser](https://github.com/terser/terser) to minify the source code for production releases that I upload to your browser's web store. I mainly do this because I write a lot of comments and `console.log()` statements for debugging that you don't want to have and because it cuts down the file size significantly. That said, you can always view a "Pretty Print" of the source code by using a [CRX Viewer](https://robwu.nl/crxviewer/) to inspect it before installing it.
@@ -112,29 +92,6 @@ I use [Terser](https://github.com/terser/terser) to minify the source code for p
 
 ## Privacy Policy
 Infy Scroll does *not* track you. It does *not* use analytic services. It does *not* collect or transmit any data from your device or computer. All your data is stored locally on your device. Your data is *your* data.
-
-## Credits and Special Thanks
-<ul>
-  <li>Infy: <a href="https://twitter.com/thejoyfool" target="_blank">Joyfool</a></li>
-  <li>UI: <a href="https://material.io" target="_blank">Material Design</a></li>
-  <li>Fonts: <a href="https://fonts.google.com/specimen/Roboto" target="_blank">Roboto</a>, <a href="https://fonts.adobe.com/fonts/lithos" target="_blank">Lithos</a></li>
-  <li>Icons: <a href="https://fontawesome.com" target="_blank">FontAwesome</a>, <a href="https://github.com/feathericons/feather" target="_blank">Feather</a></li>
-  <li>Animations: <a href="https://ianlunn.github.io/Hover" target="_blank">Hover.css</a></li>
-  <li>Tooltips: <a href="https://kazzkiq.github.io/balloon.css" target="_blank">Balloon.css</a></li>
-  <li>Loading: <a href="https://loading.io" target="_blank">Loading.io</a></li>
-  <li>Charts: <a href="https://github.com/chartjs/Chart.js" target="_blank">Chart.js</a></li>
-  <li>Confetti: <a href="https://github.com/catdad/canvas-confetti" target="_blank">Canvas Confetti</a></li>
-  <li>Resizing: <a href="https://github.com/davidjbradshaw/iframe-resizer" target="_blank">Iframe Resizer</a></li>
-  <li>Hover Box: <a href="https://github.com/AlienKevin" target="_blank">AlienKevin</a></li>
-  <li>DOM Paths: <a href="https://github.com/chromium/chromium" target="_blank">Chromium</a></li>
-  <li>CDNs: <a href="https://www.jsdelivr.com" target="_blank">Jsdelivr</a>, <a href="http://statically.io" target="_blank">Statically</a></li>
-  <li>Database: <a href="http://wedata.net/users" target="_blank">Wedata Contributors</a></li>
-  <li>Shoutout To: <a href="#AutoPagerByWindLi">AutoPager</a>, <a href="https://github.com/swdyh/autopagerize" target="_blank">AutoPagerize</a>, <a href="https://github.com/hoothin/UserScripts/tree/master/Pagetual" target="_blank">Pagetual</a>, <a href="https://github.com/jkoomjian/PageZipper" target="_blank">PageZipper</a>, <a href="https://github.com/machsix/Super-preloader" target="_blank">Super-preloader</a>, <a href="https://github.com/Griever/userChromeJS/tree/master/uAutoPagerize">uAutoPagerize</a></li>
-  <li>With Special Thanks: <a href="#lostpacket">LostPacket</a>, <a href="#daydreaming5">DayDreaming</a>, <a href="https://github.com/Tanookirby" target="_b
-  '}:lank">Tanookirby</a>, and <a href="https://github.com/alexolog" target="_blank">Alex</a></li>
-</ul>
-
-... and most of all you for using Infy
 
 ## Contributing
 Thanks for considering to contribute! I'm currently not setup to accept PRs just yet, but you can [open an issue](https://github.com/sixcious/infy-scroll/issues) and we can discuss your idea or change.
