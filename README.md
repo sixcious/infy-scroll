@@ -67,10 +67,8 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
 ## SPA Support
 [SPAs (Single-page Applications)](https://developer.mozilla.org/docs/Glossary/SPA) are tricky to deal with because they update their page content dynamically, and sometimes don't even update the address bar. However, Infy now supports the [Navigation API](https://developer.mozilla.org/docs/Web/API/Navigation_API) (Chrome/Edge 102+ Only) to detect browser navigations and it can also watch for changes on the page and auto-activate and auto-deactivate itself if the website changes its content dynamically. It even works here on GitHub and on Pixiv. (If you're on Firefox, you can check the Late Activation setting in the UI Window's Scripts dialog and save the URL.) No more refreshing the page!
 
-## Help Guide
-[View the Help Guide!](https://github.com/sixcious/infy-scroll/wiki)
-
 ## Documentation
+- [Help Guide!](https://github.com/sixcious/infy-scroll/wiki)
 - [Version History](https://github.com/sixcious/infy-scroll/wiki/Version-History)
 - [Future Roadmap](https://github.com/sixcious/infy-scroll/wiki/Roadmap)
 
@@ -79,10 +77,10 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
 I really wish I could! Please see the [Sticky](https://github.com/sixcious/infy-scroll/issues/50) for a potential solution.
 
 #### Why can't Infy Scroll execute custom scripts?
-Unfortunately, because browsers strongly discourage this from a security standpoint (especially now that Manifest V3 is out!). However, there's a workaround: you can write your own custom scripts inside a Userscript Manager (like [Violentmonkey](https://github.com/violentmonkey/violentmonkey)) by listening for Custom Events that Infy triggers whenever a new node or page has been appended or by implementing a [MutationObserver](https://developer.mozilla.org/docs/Web/API/MutationObserver). Feel free to read the [Scripts and Styles](https://github.com/sixcious/infy-scroll/wiki/Scripts-and-Styles) section for examples and more information.
+Unfortunately, because browsers strongly discourage this from a security standpoint (especially now that Manifest V3 is out!). However, there's a workaround; feel free to read the [Scripts and Styles](https://github.com/sixcious/infy-scroll/wiki/Scripts-and-Styles) section for more information.
 
 #### What is the minimum browser version (and why is it to so high)?
-Infy currently requires Chrome/Edge `120` and Firefox `128` and higher to run. I tend to update the minimum browser version about once a year so I can use the latest and greatest ECMAScript features without worry. It also significantly saves in my testing time in having to maintain older Chromium builds. In the past, I used to offer "modified" builds with a lower minimum version, but I can no longer do this. If your browser doesn't support Infy, I'm afraid you'll have to use another app/extension (sorry!).
+Infy currently requires Chrome/Edge `120` and Firefox `128` and higher to run. I tend to update the minimum browser version about once a year so I can use the latest and greatest ECMAScript features without worry. If your browser doesn't support Infy, I'm afraid you'll have to use another app/extension (sorry!).
 
 #### Why is the production version's source code minified?
 I use [Terser](https://github.com/terser/terser) to minify the source code for production releases that I upload to your browser's web store. I mainly do this because I write a lot of comments and `console.log()` statements for debugging that you don't want to have and because it cuts down the file size significantly. That said, you can always view a "Pretty Print" of the source code by using a [CRX Viewer](https://robwu.nl/crxviewer/) to inspect it before installing it.
