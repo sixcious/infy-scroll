@@ -77,13 +77,13 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
 I really wish I could! Please see the [Sticky](https://github.com/sixcious/infy-scroll/issues/50) for a potential solution.
 
 #### Why can't Infy Scroll execute custom scripts?
-Unfortunately, because browsers strongly discourage this from a security standpoint (especially now that Manifest V3 is out!). However, there's a workaround; feel free to read the [Scripts and Styles](https://github.com/sixcious/infy-scroll/wiki/Scripts-and-Styles) section for more information.
+Unfortunately, because browsers strongly discourage this from a security standpoint (especially now that Manifest V3 is out!). Please  feel free to read the [Scripts and Styles](https://github.com/sixcious/infy-scroll/wiki/Scripts-and-Styles) section for more information and a potential solution.
 
 #### What is the minimum browser version (and why is it to so high)?
 Infy currently requires Chrome/Edge `120` and Firefox `128` and higher to run. I usually update the minimum browser version every time I do a release so I can use the latest and greatest ECMAScript features without worry. If your browser doesn't support Infy, I'm afraid you'll have to use another app/extension (sorry!).
 
 #### Why is the production version's source code minified?
-I use [Terser](https://github.com/terser/terser) to minify the source code for production releases that I upload to your browser's web store. I mainly do this because I write a lot of comments and `console.log()` statements for debugging that you don't want to have and because it cuts down the file size significantly. That said, you can always view a "Pretty Print" of the source code by using a [CRX Viewer](https://robwu.nl/crxviewer/) to inspect it before installing it.
+I use [Terser](https://github.com/terser/terser) to minify the source code for production releases that I upload to your browser's web store. I mainly do this because I write a lot of comments and `console.log()` statements for debugging and because it cuts down the file size significantly. That said, you can always view a "Pretty Print" of the source code by using a [CRX Viewer](https://robwu.nl/crxviewer/) to inspect it before installing it.
 
 ## Permissions Justification
 - `Read and change all your data on the websites you visit` - Infy needs to request this permission so that its content script can auto-activate on any Saved URL or Database URL you want it to.
