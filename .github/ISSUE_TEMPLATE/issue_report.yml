@@ -61,7 +61,7 @@ body:
   id: adherence
   attributes:
     label: Adherence
-    description: Please confirm that you've read the [Sticky](https://github.com/sixcious/infy-scroll/issues/50) before posting your issue or question. To avoid cluttering the Issues section, issues should really be about problems or questions directly related to the app and should not be about asking how (or requesting) to make it work with a specific website. This includes help with action and append mode settings (such as paths) and [fixing missing images](https://github.com/sixcious/infy-scroll/wiki/Missing-Images-or-Blank-Pages). (Please use the links in the Sticky for these types of requests.)
+    description: Please confirm that you've read the [Sticky](https://github.com/sixcious/infy-scroll/issues/50) before posting your issue or question. To avoid cluttering the Issues section, issues should really be about problems or questions directly related to the app and should not be about asking how (or requesting) to make it work with a specific website. This includes help with action and append mode settings (such as paths) and [fixing missing images](https://github.com/sixcious/infy-scroll/wiki/Missing-Images-or-Blank-Pages). (Please use the Discord and the links in the Sticky for these types of requests.)
     options:
       - label: I have read the [Sticky](https://github.com/sixcious/infy-scroll/issues/50) and my issue is directly related to the app and is not related to making it work with a specific website (including [how to make images load](https://github.com/sixcious/infy-scroll/wiki/Missing-Images-or-Blank-Pages))
         required: true
