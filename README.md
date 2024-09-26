@@ -45,7 +45,7 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
 *The AJAX Native append mode working on Pixiv*
 
 ##### Example Settings
-````
+````json
 {
   "action": "click",
   "append": "ajax",
