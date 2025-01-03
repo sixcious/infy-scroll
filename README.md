@@ -1,5 +1,5 @@
 # Infy Scroll
-<img src="https://raw.githubusercontent.com/sixcious/assets/main/repository/infy-scroll/icon.svg?sanitize=true" width="196" height="196" alt="Infy Scroll" title="Infy Scroll">
+<img src="https://raw.githubusercontent.com/sixcious/assets/main/repository/infy-scroll/icon.svg?sanitize=true" width="128" height="128" alt="Infy Scroll" title="Infy Scroll">
 
 ## Available For
 <a href="https://chromewebstore.google.com/detail/infy-scroll/gdnpnkfophbmbpcjdlbiajpkgdndlino" title="Download for Google Chrome"><img src="https://raw.githubusercontent.com/sixcious/assets/main/vendor/chrome.svg?sanitize=true" height="64" alt="Google Chrome"></a>
@@ -40,7 +40,7 @@ Infy Scroll can let you add customized infinite scrolling to websites and can au
 Since releasing Infy Scroll in August 2020, if you were to ask me what is the one feature I was working my hardest to implement — it's always been an append mode for [AJAX websites](https://developer.mozilla.org/docs/Glossary/AJAX). After two years of on and off development, I'm really proud to offer this [completely new and innovative append mode](https://github.com/sixcious/infy-scroll/wiki/AJAX) in Version 0.8, The Eightfinity Edition. AJAX comes in two versions: Iframe and Native. AJAX is mostly in the proof of concept stage right now, but does work on many sites, including Pixiv.
 
 #### AJAX Demo (Pixiv)
-<img src="https://raw.githubusercontent.com/sixcious/infy-scroll/main/assets/ajax.gif">
+<img src="https://raw.githubusercontent.com/sixcious/assets/main/repository/infy-scroll/ajax.gif">
 
 *The AJAX Native append mode working on Pixiv*
 
@@ -64,7 +64,6 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
 ## Documentation
 - [Help Guide](https://github.com/sixcious/infy-scroll/wiki)
 - [Version History](https://github.com/sixcious/infy-scroll/wiki/Version-History)
-- [Future Roadmap](https://github.com/sixcious/infy-scroll/wiki/Roadmap)
 
 ## FAQ
 #### Can you help me make it work with a specific website?
@@ -94,4 +93,4 @@ Thanks for considering to contribute! I'm currently not setup to accept PRs just
 ## Copyright
 Infy Scroll  
 Copyright &copy; 2015-2020 <a href="https://github.com/sixcious" target="_blank">Roy Six</a>  
-Character Design and Artwork Copyright &copy; 2020 <a href="https://twitter.com/thejoyfool" target="_blank">Joyfool</a>
+Character Design and Artwork Copyright &copy; 2020 <a href="https://x.com/thejoyfool" target="_blank">Joyfool</a>
