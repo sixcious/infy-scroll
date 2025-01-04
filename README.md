@@ -67,7 +67,7 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
 
 ## FAQ
 #### Can you help me make it work with a specific website?
-I really wish I could! Please see [this post](https://github.com/sixcious/infy-scroll/issues/50) for a potential solution.
+I really wish I could! Please see [this post](https://github.com/sixcious/infy-scroll/issues/100) for a potential solution.
 
 #### Why can't Infy Scroll execute custom scripts?
 Unfortunately, because browsers strongly discourage this from a security standpoint (especially now that Manifest V3 is out!). Please  feel free to read the [Scripts and Styles](https://github.com/sixcious/infy-scroll/wiki/Scripts-and-Styles) section for more information and a potential solution.
