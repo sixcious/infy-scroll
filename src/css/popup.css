@@ -1,0 +1,567 @@
+/**
+ * Infy Scroll
+ * @copyright © 2020 Roy Six
+ * @license https://github.com/sixcious/infy-scroll/blob/main/LICENSE
+ */
+
+/* Variables */
+
+/* We only have 800x600 pixels to work with so we need to squeeze every last bit we can get! */
+/*
+:root {
+  --mdc-typography-body1-font-size: 0.875rem;
+}
+*/
+
+/* This is a patch for the above override on mdc-typography. We still want this to be 1rem */
+.mdc-dialog__content > p {
+  font-size: 1rem;
+}
+/*
+
+.mdc-dialog .mdc-dialog__surface {
+  max-width: 600px;
+}
+*/
+
+/* Native */
+
+/* Gives us guaranteed width, worry-free. overflow-x:hidden fixes Firefox horizontal scrollbar issue. overflow-y: overlay fixes Chrome scrollbar issue with 800px width */
+/*
+html, body {
+  overflow-x: hidden !important;
+  overflow-y: overlay !important;
+}
+*/
+
+/* Controls */
+
+/* margin:8px+ instead of 4px to keep Firefox from displaying scrollbars and user-select: none to prevent highlighting text after clicking buttons */
+#controls {
+  margin: 10px;
+  user-select: none;
+}
+
+#controls-buttons {
+  margin-top: 0;
+}
+
+/* vertical-align: middle matches hover.css styling */
+#controls-buttons svg {
+  vertical-align: middle;
+  padding: 8px;
+  cursor: pointer;
+}
+
+#controls-buttons svg:not(:last-child) {
+  margin-right: 10px;
+}
+
+#controls-icons {
+  position: absolute;
+  top: 2px;
+  right: 10px;
+}
+
+#controls-icons span {
+  font-size: 1em;
+  font-weight: 500;
+}
+
+#controls-icons svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Setup */
+
+#setup {
+  margin: 0;
+  min-width: 780px;
+  min-height: 540px;
+}
+
+/* mdc-drawer */
+
+.mdc-drawer {
+  width: 200px;
+}
+
+.mdc-drawer .mdc-list-group__subheader {
+  font-size: 12px;
+  font-style: italic;
+}
+
+.mdc-drawer .mdc-drawer__header {
+  min-height: 0;
+}
+
+.mdc-drawer.mdc-drawer-mascot .mdc-drawer__title::before {
+  height: 32px;
+}
+
+.mdc-drawer.mdc-drawer-mascot .mdc-list {
+  padding-top: 4px;
+}
+
+.mdc-drawer.mdc-drawer-mascot .mdc-list-item {
+  margin: 0 8px;
+}
+
+.drawer-frame-root {
+  display: flex;
+}
+
+/* The drawer can have two images: the mascot or the extension icon. We use container divs to wrap the height since these are position absolute and need different heights */
+
+/* pointer-events: none so that Infy's image space that hangs outside the mdc-drawer doesn't overtake clickable inputs/checkboxes */
+#drawer-mascot-container {
+  height: 344px;
+  pointer-events: none;
+}
+
+#drawer-mascot {
+  position: absolute;
+  margin-left: -15px;
+  margin-top: -2px;
+}
+
+/*
+#drawer-extension-container {
+  height: 302px;
+}
+*/
+
+#drawer-extension {
+  position: absolute;
+  width: 142px;
+  height: 142px;
+  margin-top: -18px;
+  z-index: -1;
+}
+
+main {
+  padding: 1rem;
+  width: 100%;
+}
+
+/* mdc-snackbar */
+
+/* Don't make the snackbar so tall! */
+.mdc-snackbar--stacked .mdc-snackbar__label {
+  padding-bottom: 0;
+}
+
+/* Save URL */
+
+#save-url-button {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+}
+
+#save-title-textarea {
+  height: 32px;
+}
+
+#save-url-textarea {
+  height: 52px;
+}
+
+#save-url-text-field-container {
+  margin-top: 1rem;
+}
+
+/* No margin-top 1rem on the save-url flex-row to save space */
+#save-url-flex-row {
+  margin-top: 0;
+}
+
+/* align-self center keeps the response centered with the save type radios, override the height and font-size properties from the async-result  */
+#save-test-result {
+  align-self: center;
+  height: auto;
+  font-size: 0.85rem;
+}
+
+.dialog-notice, .dialog-warning {
+  color: var(--mdc-theme-primary);
+  font-weight: 500;
+  text-align: right;
+}
+
+.dialog-warning {
+  color: var(--mdc-theme-error);
+}
+
+/* Setup */
+
+#setup svg {
+  user-select: none;
+}
+
+#setup div.column > label, label.label-display-block {
+  display: block;
+  margin-bottom: 2px;
+}
+
+#setup div.column label.label-display-inline-block {
+  display: inline-block;
+}
+
+#increment-decrement div.column:not(:last-child), #auto div.column:not(:last-child) {
+  padding-right: 24px;
+}
+
+.section {
+  margin-bottom: 1rem;
+}
+
+/* Keep action sections the same height */
+#next-prev, #increment-decrement, #button, #list {
+  min-height: 255px;
+}
+
+header {
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+/* The height keeps the div containing the loading mdc-linear-progress indicator and the success and error responses the same height */
+.async-result {
+  height: 20px;
+  font-size: 14px;
+}
+
+/* Restrict loading width to keep it off the Save Heart */
+.result-loading {
+  width: 95%;
+  font-weight: 500;
+}
+
+.success-details {
+  color: var(--success-color);
+  font-weight: 500;
+}
+
+.error-details {
+  color: var(--error-color);
+  font-weight: 500;
+}
+
+.info-details {
+  color: var(--mdc-theme-primary);
+  font-weight: 500;
+}
+
+/* Next Prev */
+
+#next-prev-inputs {
+  position: relative;
+}
+
+#next-prev-link-type {
+  position: absolute;
+  bottom: -10px;
+  right: 0;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+#next-prev svg.mdc-chip__icon--leading {
+  width: 16px;
+  height: 16px;
+}
+
+/* Increment Decrement */
+
+#shuffle-urls-label {
+  color: var(--shuffle-color);
+  font-weight: 500;
+}
+
+/* Different width than in Options due to bigger 1rem size there. */
+#base-select .mdc-select__anchor {
+  width: 180px;
+}
+
+/* Different width than in Options due to bigger 1rem size there. */
+#interval-text-field {
+  width: 78px;
+}
+
+/* Different width than in Options due to no floating label there */
+#error-skip-text-field {
+  width: 90px;
+}
+
+#base-case label:not(:last-child) {
+  margin-right: 1em;
+}
+
+/* display inline-block to remove whitespace from link */
+#base-date-format-a, #base-custom-a {
+  display: inline-block;
+}
+
+#multi-button {
+  cursor: pointer;
+}
+
+#multi-button svg {
+  vertical-align: initial;
+}
+
+#multi-button svg.disabled {
+  opacity: 0.4;
+}
+
+/* Button */
+
+/* width: 95% to avoid collision with Save Heart */
+/*
+#button-header, #list-header {
+  border-bottom: 1px solid #888;
+  padding-bottom: 4px;
+  width: 95%;
+}
+*/
+
+/* Need to shorten the margin-bottom so the button section's total height matches the other sections */
+p#button-details {
+  margin-bottom: 0.5rem;
+}
+
+/* Keeps the row from breaking on the select (alternative is to use flex-row on the row) */
+#button-method-select {
+  display: inline-block;
+}
+
+/* List */
+
+/* Scroll */
+
+#scroll {
+  margin-top: 1rem;
+}
+
+#scroll > header, #auto header {
+  font-size: 1rem;
+  border-bottom: 1px solid;
+  padding-bottom: 4px;
+}
+
+/* margin-left due to bigger 410px infy, alternative is to make the drawer more width */
+.mdc-card-row {
+  margin-bottom: 1rem;
+  margin-left: 3px;
+}
+
+/* button mdc-card-row shouldn't be flex-row as there are only two cards, not four */
+.mdc-card-row:not(.flex-row) *:not(:last-child) {
+  margin-right: 12px;
+}
+
+/* position:relative because the Scroll Element Iframe checkbox is absolutely positioned inside the header */
+header#scroll-element-result {
+  position: relative;
+}
+
+header#scroll-element-result #scroll-element-iframe-form-field {
+  position: absolute;
+  top: -6px;
+  right: 0;
+}
+
+/* For Page Element Rule Tooltip width to be more fitting */
+#scroll-element-rule-text-field[aria-label][data-balloon-pos][data-balloon-length="medium"]:after {
+  width: 200px;
+}
+
+#scroll-element-result-details  {
+  color: var(--mdc-theme-primary);
+  font-weight: 500;
+}
+
+/* Auto */
+
+#auto {
+  margin-top: 1rem;
+}
+
+/* position:relative because the Auto Slideshow checkbox is absolutely positioned inside the header */
+#auto header {
+  color: var(--auto-color);
+  position: relative;
+}
+
+#auto header #auto-eta {
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+#auto header #auto-slideshow-form-field {
+  position: absolute;
+  top: -10px;
+  right: 8px;
+}
+
+#auto header #auto-slideshow-label {
+  color: var(--auto-color);
+  font-weight: 500;
+}
+
+#auto div.column {
+  padding-top: 3px;
+}
+
+#auto-times-input {
+  width: 55px;
+}
+
+#auto-seconds-input {
+  width: 50px;
+}
+
+/* Scripts and Styles */
+
+#scroll-append-custom-styles, #scroll-lazy-load-attribute {
+  margin-top: 1rem;
+}
+
+/* Setup Footer */
+
+/*#setup-footer {
+  margin: -1px 1rem 1rem;
+}*/
+#setup-footer {
+  margin: 1rem;
+}
+
+#setup-footer #buttons .mdc-button {
+  text-transform: uppercase;
+}
+
+#setup-footer #buttons > button:not(:last-child) {
+  margin-right: 24px;
+}
+
+#setup-footer #extras svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* This icon looks a little small compared to the other two at default width/height */
+#setup-footer #extras #scripts-and-styles-button svg {
+  width: 28px;
+}
+
+/* Switches */
+
+/*#setup #switches {
+  margin-left: 150px;
+}*/
+
+#setup #switches > div:not(:last-child) {
+  margin-right: 8px;
+}
+
+#auto-switch-label {
+  color: var(--auto-color);
+}
+
+/* Styles the AUTO Switch label the way I want it to appear (not MDC-style on purpose) */
+.mdc-switch__label {
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-weight: bold;
+  font-style: italic;
+  font-size: 18px;
+}
+
+/* Icon Button */
+
+.icon-button {
+  display: inline-block;
+}
+
+.icon-button label, .icon-button a {
+  padding: 8px;
+  cursor: pointer;
+}
+
+/* SVG Fill Colors */
+
+#save-url-icon, #scroll-header-icon /*, #button-header-icon, #list-header-icon*/ {
+  fill: var(--mdc-theme-primary);
+}
+
+.success-icon {
+  fill: var(--success-color);
+}
+
+.error-icon, #off-button {
+  fill: var(--error-color);
+}
+
+#auto-button, #auto-switch-icon, #auto-clock-icon, #auto-slideshow-icon, #auto-slideshow-checkbox-icon {
+  fill: var(--auto-color);
+}
+
+#shuffle-urls-icon, #shuffle-urls-checkbox-icon {
+  fill: var(--shuffle-color);
+}
+
+#database-icon {
+  fill: var(--default-color);
+}
+
+#multi-button-1 {
+  fill: var(--increment-decrement-1-color);
+}
+
+#multi-button-2 {
+  fill: var(--increment-decrement-2-color);
+}
+
+#multi-button-3 {
+  fill: var(--increment-decrement-3-color);
+}
+
+/* Messages */
+
+#messages {
+  margin: 8px;
+  width: 626px;
+  font-size: 1rem;
+}
+
+#messages-buttons {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+#messages-buttons .mdc-button:not(:last-child) {
+  margin-right: 1rem;
+}
+
+#popup-error-details, #popup-error-reason {
+  color: var(--mdc-theme-error);
+  font-weight: 500;
+}
+
+/* Version */
+
+/* 7 is the perfect number when dealing with mdc dialogs and drawers */
+#version-theme {
+  z-index: 7;
+  margin-left: -20px;
+}
+
+#version {
+  position: absolute;
+  right: 6px;
+  bottom: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mdc-theme-primary);
+}
