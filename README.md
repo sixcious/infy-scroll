@@ -85,7 +85,7 @@ I use [Terser](https://github.com/terser/terser) to minify the source code for p
 Infy Scroll does *not* track you. It does *not* use analytic services. It does *not* collect or transmit any data from your device or computer. All your data is stored locally on your device. Your data is *your* data.
 
 ## Contributing
-Thanks for considering to contribute! I'm currently not setup to accept PRs just yet, but you can [open an issue](https://github.com/sixcious/infy-scroll/issues) and we can discuss your idea or change.
+Thank you for considering to contribute! The best way you can help me is to leave a review on the [Chrome Web Store](https://chromewebstore.google.com/detail/infy-scroll/gdnpnkfophbmbpcjdlbiajpkgdndlino/reviews), [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/infy-scroll/fmdemgjiipojpgemeljnbaabjeinicba), or [Mozilla Firefox Add-ons](https://addons.mozilla.org/firefox/addon/infy-scroll/). I really appreciate your support.
 
 ## License
 <a href="https://github.com/sixcious/infy-scroll/blob/main/LICENSE">View License</a>  
