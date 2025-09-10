@@ -29,6 +29,7 @@ Infy Scroll can let you add customized infinite scrolling to websites and can au
 - Auto Mode: Automatically append pages, or use Slideshow Mode (supports Pause and Repeat)
 - AJAX Support: Infy features two unique and innovative AJAX append modes: Iframe and Native
 - SPA Support: Infy supports the Navigation API to detect navigation events so you don't have to refresh the page as often
+- XF: An innovative feature that improves compatibility with websites
 - Save URLs: Infy can save custom site-specific settings and then auto-activate on your favorite URLs
 - Database Support: Infy supports the AutoPagerize and InfyScroll Databases allowing it to support thousands of websites for you automatically
 - Custom Scripts: Infy has custom scripts for a few popular websites (such as Google Search) that will try to fix missing image thumbnails
