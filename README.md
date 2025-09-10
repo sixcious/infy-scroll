@@ -62,6 +62,9 @@ Since releasing Infy Scroll in August 2020, if you were to ask me what is the on
 ## SPA Support
 [SPAs (Single-page Applications)](https://developer.mozilla.org/docs/Glossary/SPA) are tricky to deal with because they update their page content dynamically, and sometimes don't even update the address bar. However, Infy now supports the [Navigation API](https://developer.mozilla.org/docs/Web/API/Navigation_API) (Chrome/Edge 102+ Only) to detect browser navigations and it can also watch for changes on the page and auto-activate and auto-deactivate itself if the website changes its content dynamically. (If you're on Firefox, you can check the Late Activation setting in the UI Window's Scripts dialog and save the URL.) No more refreshing the page!
 
+## XF — One Step Closer to the Endgame
+In developing something like Infy Scroll, my primary research is focused on answering the question: "Can it work on this site?" Starting in Version 9, XF makes many of these "impossible" sites — possible. It's tech that no one else is currently using (as of September 2025). That's Innovation — *that's* Infy.
+
 ## Documentation
 - [Help Guide](https://github.com/sixcious/infy-scroll/wiki)
 - [Version History](https://github.com/sixcious/infy-scroll/wiki/Version-History)
