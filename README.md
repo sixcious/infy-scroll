@@ -96,5 +96,5 @@ Thank you for considering to contribute! The best way you can help me is to leav
 
 ## Copyright
 Infy Scroll  
-Copyright &copy; 2015-2020 <a href="https://github.com/sixcious" target="_blank">Roy Six</a>  
+Copyright &copy; 2015-2020 <a href="https://github.com/sixcious" target="_blank">Six</a>  
 Character Design and Artwork Copyright &copy; 2020 <a href="https://x.com/thejoyfool" target="_blank">Joyfool</a>

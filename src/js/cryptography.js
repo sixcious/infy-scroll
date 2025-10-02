@@ -1,6 +1,6 @@
 /**
  * Infy Scroll
- * @copyright (c) 2020 Roy Six
+ * @copyright (c) 2020 Six
  * @license https://github.com/sixcious/infy-scroll/blob/main/LICENSE
  */
 
