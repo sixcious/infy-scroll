@@ -19,11 +19,11 @@ https://github.com/sixcious/infy-scroll/issues
 <br><br>
 
 ## About
-Infy Scroll can let you add customized infinite scrolling to websites and can auto-load the next page for you. Infy is is all about giving you 100% customization: you can customize each site's infinite scrolling settings exactly to how you want them to be, or you can let Infy analyze the page and try to apply the recommended settings for you. Note: Because each site is designed differently, Infy might not work on every site you try it on.
+Infy Scroll can let you add customized infinite scrolling to paginated websites and can auto-load the next page for you. Infy supports the AutoPagerize and InfyScroll databases so it can work automatically on many websites. Infy is is all about customization: you can customize each site's infinite scrolling settings exactly to how you want them to be, or you can let Infy analyze the page and try to apply the recommended settings for you. Note: Because each site is designed differently, Infy might not work on every site you try it on.
 
 ## Features
 - Auto Settings: Infy can analyze a page and apply the recommended settings for you with a confidence score using its algorithms (May not work on every website)
-- Customization: Customize every setting, from the paths Infy should use to the color of the page divider
+- Customization: Customize settings in the UI Window for any site
 - Main Features: 4 Actions and 6 Append Modes to support many websites
 - Auto Mode: Automatically append pages, or use Slideshow Mode (supports Pause and Repeat)
 - Save URLs: Infy can save your settings and then auto-activate on your favorite URLs
@@ -66,6 +66,8 @@ Infy Scroll does *not* track you. It does *not* use analytic services. It does *
 
 ## Contributing
 Thank you for considering to contribute! The best way you can help me is to leave a review on the [Chrome Web Store](https://chromewebstore.google.com/detail/infy-scroll/gdnpnkfophbmbpcjdlbiajpkgdndlino/reviews), [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/infy-scroll/fmdemgjiipojpgemeljnbaabjeinicba), or [Mozilla Firefox Add-ons](https://addons.mozilla.org/firefox/addon/infy-scroll/). I really appreciate your support.
+
+Kind Note: I am currently unable to accept code contributions or pull requests; if you have an idea or improvement in mind, please feel free to open an issue instead.
 
 ## License
 <a href="https://github.com/sixcious/infy-scroll/blob/main/LICENSE">View License</a>  
